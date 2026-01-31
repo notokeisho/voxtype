@@ -242,9 +242,9 @@ extension HotkeyManager {
         settings.hotkeyModifiers = modifiers
     }
 
-    /// Reset hotkey to default (Cmd+Shift+V).
+    /// Reset hotkey to default (Option+Space).
     func resetToDefault() {
-        settings.hotkeyKeyCode = 9 // V key
-        settings.hotkeyModifiers = 0x180000 // Command + Shift
+        settings.hotkeyKeyCode = 49 // Space key
+        settings.hotkeyModifiers = 0x080000 // Option only
     }
 }
