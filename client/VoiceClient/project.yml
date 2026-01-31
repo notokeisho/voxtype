@@ -1,0 +1,48 @@
+name: VoiceClient
+options:
+  bundleIdPrefix: com.kumakuma
+  deploymentTarget:
+    macOS: "13.0"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.9"
+
+targets:
+  VoiceClient:
+    type: application
+    platform: macOS
+    sources:
+      - path: VoiceClient
+        excludes:
+          - "*.xcassets"
+          - Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kumakuma.voiceclient
+        INFOPLIST_FILE: VoiceClient/Info.plist
+        CODE_SIGN_ENTITLEMENTS: VoiceClient/VoiceClient.entitlements
+        LD_RUNPATH_SEARCH_PATHS: "@executable_path/../Frameworks"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_HARDENED_RUNTIME: YES
+        # Menu bar app settings
+        LSUIElement: YES
+    info:
+      path: VoiceClient/Info.plist
+      properties:
+        CFBundleDisplayName: VoiceClient
+        CFBundleName: VoiceClient
+        NSMicrophoneUsageDescription: VoiceClient needs microphone access for voice-to-text transcription.
+        LSUIElement: true
+    entitlements:
+      path: VoiceClient/VoiceClient.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.device.audio-input: true
+        com.apple.security.network.client: true
