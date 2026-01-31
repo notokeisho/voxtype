@@ -924,9 +924,9 @@ class ClipboardManager {
 ### 4.11 アプリ配布
 
 **タスク**:
-- [ ] アプリをビルド（Release 構成）
-- [ ] GitHub Releases にアップロード
-- [ ] インストール手順を README に記載
+- [x] アプリをビルド（Release 構成）
+- [x] GitHub Releases にアップロード
+- [x] インストール手順を README に記載
 
 **配布方法**: GitHub Releases
 
@@ -1129,10 +1129,10 @@ This project uses the following open source software:
 | 1 | 4 | 4 | 100% |
 | 2 | 8 | 8 | 100% |
 | 3 | 5 | 5 | 100% |
-| 4 | 12 | 11 | 92% |
+| 4 | 12 | 12 | 100% |
 | 5 | 8 | 8 | 100% |
 | 6 | 4 | 0 | 0% |
-| **合計** | **44** | **39** | **89%** |
+| **合計** | **44** | **40** | **91%** |
 
 ---
 
@@ -1146,4 +1146,4 @@ This project uses the following open source software:
 | 2026-01-30 | 追加決定事項反映（管理者Whitelist免除、手動モデルDL、Mac配布方法、開発環境モック） |
 | 2026-01-30 | 辞書機能追加（グローバル辞書+個人辞書、個人辞書100件上限、Macアプリで編集） |
 | 2026-01-30 | ライセンス表記タスク追加（README、Macアプリ About画面） |
-| 2026-01-31 | Phase 4 (4.3.1-4.10)、Phase 5完了を記録 |
+| 2026-01-31 | Phase 4、Phase 5完了を記録（Task 4.11含む） |
