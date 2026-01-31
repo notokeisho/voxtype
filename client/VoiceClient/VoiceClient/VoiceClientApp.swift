@@ -66,9 +66,10 @@ class AppCoordinator: ObservableObject {
         setupHotkeyCallbacks()
         startHotkeyMonitoring()
 
-        // Check auth status on launch
+        // Check auth status and request notification permission on launch
         Task {
             await authService.checkAuthStatus()
+            _ = await NotificationManager.shared.requestAuthorization()
         }
     }
 
@@ -142,7 +143,8 @@ class AppCoordinator: ObservableObject {
 
             } catch let error as APIError {
                 appState.setError(error.localizedDescription)
-                // TODO: Show notification for critical errors (Task 4.9)
+                // Show notification for critical errors
+                error.showNotificationIfNeeded()
             } catch {
                 appState.setError(error.localizedDescription)
             }
