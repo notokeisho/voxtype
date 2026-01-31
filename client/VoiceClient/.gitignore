@@ -6,3 +6,9 @@
 # Xcode
 VoiceClient.xcodeproj/xcuserdata/
 *.xcuserstate
+
+# Build artifacts
+build/
+*.app
+*.dSYM
+*.xcarchive
