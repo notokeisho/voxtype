@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 
+from app.api.dictionary import router as dictionary_router
 from app.api.protected import router as api_router
 from app.api.status import router as status_router
 from app.api.transcribe import router as transcribe_router
@@ -22,6 +23,7 @@ app.include_router(auth_router)
 app.include_router(api_router)
 app.include_router(status_router)
 app.include_router(transcribe_router)
+app.include_router(dictionary_router)
 
 
 @app.get("/")
