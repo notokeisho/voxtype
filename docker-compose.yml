@@ -1,38 +1,32 @@
 services:
-  db:
-    image: postgres:15
-    expose:
-      - "5432"
-    ports:
-      - "5434:5432"  # Development only (host:container)
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB:-voice_server}
-      - POSTGRES_USER=${POSTGRES_USER:-voice}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-voice} -d ${POSTGRES_DB:-voice_server}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  whisper:
+  server:
     build:
-      context: ./whisper
+      context: ./server
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./voice.db
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-in-production}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - APP_NAME=KumaKuma AI Voice Server
+      - DEBUG=false
     volumes:
-      - ./whisper/models:/app/models:ro
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      - ./data:/app/data
     restart: unless-stopped
 
-volumes:
-  postgres_data:
+  admin-web:
+    build:
+      context: ./admin-web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
