@@ -863,45 +863,97 @@ struct DictionaryEntryRow: View {
 
 // MARK: - About Tab
 
-/// About tab.
+/// About tab with version info and licenses.
 struct AboutView: View {
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+    }
+
+    private var buildNumber: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    }
+
     var body: some View {
-        VStack(spacing: 16) {
-            Spacer()
+        ScrollView {
+            VStack(spacing: 16) {
+                Spacer(minLength: 20)
 
-            Image(systemName: "mic.circle.fill")
-                .font(.system(size: 64))
-                .foregroundColor(.accentColor)
+                Image(systemName: "mic.circle.fill")
+                    .font(.system(size: 64))
+                    .foregroundColor(.accentColor)
 
-            Text("VoiceClient")
-                .font(.title)
-                .fontWeight(.bold)
+                Text("VoiceClient")
+                    .font(.title)
+                    .fontWeight(.bold)
 
-            Text("Version 1.0.0")
-                .foregroundColor(.secondary)
-
-            Text("Voice-to-text client for KumaKuma AI")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
-            Spacer()
-
-            HStack(spacing: 16) {
-                Link("GitHub", destination: URL(string: "https://github.com")!)
-                Text("•")
+                Text("Version \(appVersion) (\(buildNumber))")
                     .foregroundColor(.secondary)
-                Link("Documentation", destination: URL(string: "https://github.com")!)
+
+                Text("Voice-to-text client for KumaKuma AI")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Divider()
+                    .padding(.vertical, 8)
+
+                // License section
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Open Source Licenses")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    LicenseRow(name: "whisper.cpp", license: "MIT", url: "https://github.com/ggerganov/whisper.cpp")
+                    LicenseRow(name: "OpenAI Whisper", license: "MIT", url: "https://github.com/openai/whisper")
+                    LicenseRow(name: "FastAPI", license: "MIT", url: "https://fastapi.tiangolo.com")
+                    LicenseRow(name: "SQLAlchemy", license: "MIT", url: "https://www.sqlalchemy.org")
+                }
+                .padding(.horizontal)
+
+                Divider()
+                    .padding(.vertical, 8)
+
+                HStack(spacing: 16) {
+                    Link("GitHub", destination: URL(string: "https://github.com")!)
+                    Text("•")
+                        .foregroundColor(.secondary)
+                    Link("Documentation", destination: URL(string: "https://github.com")!)
+                }
+                .font(.caption)
+
+                Text("© 2025 KumaKuma AI")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+
+                Spacer(minLength: 20)
             }
-            .font(.caption)
-
-            Text("© 2025 KumaKuma AI")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-
-            Spacer()
+            .frame(maxWidth: .infinity)
+            .padding()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
+    }
+}
+
+/// Row displaying license information for a dependency.
+struct LicenseRow: View {
+    let name: String
+    let license: String
+    let url: String
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name)
+                    .font(.subheadline)
+                Text(license)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+            Link(destination: URL(string: url)!) {
+                Image(systemName: "arrow.up.right.square")
+                    .foregroundColor(.accentColor)
+            }
+        }
+        .padding(.vertical, 4)
     }
 }
 

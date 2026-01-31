@@ -1096,8 +1096,8 @@ This project uses the following open source software:
 ### 6.3 Mac アプリ About 画面
 
 **タスク**:
-- [ ] About 画面にバージョン情報表示
-- [ ] ライセンス情報へのリンク追加
+- [x] About 画面にバージョン情報表示（動的取得）
+- [x] ライセンス情報へのリンク追加（4ライブラリ）
 
 ---
 
