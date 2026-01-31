@@ -25,9 +25,11 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 COPY --from=builder /build/whisper.cpp/build/bin/whisper-server /app/
+COPY --from=builder /build/whisper.cpp/build/src/libwhisper.so* /usr/local/lib/
+COPY --from=builder /build/whisper.cpp/build/ggml/src/libggml*.so* /usr/local/lib/
 COPY start.sh /app/
 
-RUN chmod +x /app/start.sh /app/whisper-server
+RUN ldconfig && chmod +x /app/start.sh /app/whisper-server
 
 EXPOSE 8080
 
