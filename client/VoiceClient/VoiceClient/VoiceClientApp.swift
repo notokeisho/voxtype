@@ -125,14 +125,20 @@ class AppCoordinator: ObservableObject {
         guard let appState = appState else { return }
 
         let apiClient = APIClient.shared
+        let clipboardManager = ClipboardManager.shared
 
         Task {
             do {
                 // Send audio to server for transcription
                 let response = try await apiClient.transcribe(audioURL: url)
 
-                // Complete with transcribed text
-                appState.completeTranscription(text: response.text)
+                // Paste the transcribed text at cursor position
+                clipboardManager.pasteText(response.text) {
+                    // Complete after paste is done
+                    Task { @MainActor in
+                        appState.completeTranscription(text: response.text)
+                    }
+                }
 
             } catch let error as APIError {
                 appState.setError(error.localizedDescription)
