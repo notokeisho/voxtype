@@ -124,12 +124,22 @@ class AppCoordinator: ObservableObject {
     private func processRecording(url: URL) {
         guard let appState = appState else { return }
 
-        // TODO: Implement in Task 4.7 (API Client)
-        // For now, just simulate completion
+        let apiClient = APIClient.shared
+
         Task {
-            // Placeholder: will be replaced with actual API call
-            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
-            appState.setError("API client not implemented yet")
+            do {
+                // Send audio to server for transcription
+                let response = try await apiClient.transcribe(audioURL: url)
+
+                // Complete with transcribed text
+                appState.completeTranscription(text: response.text)
+
+            } catch let error as APIError {
+                appState.setError(error.localizedDescription)
+                // TODO: Show notification for critical errors (Task 4.9)
+            } catch {
+                appState.setError(error.localizedDescription)
+            }
         }
     }
 }
