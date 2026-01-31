@@ -4,9 +4,16 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var settings = AppSettings.shared
+    @StateObject private var authService = AuthService.shared
 
     var body: some View {
         TabView {
+            AccountSettingsView()
+                .environmentObject(authService)
+                .tabItem {
+                    Label("Account", systemImage: "person.circle")
+                }
+
             GeneralSettingsView()
                 .environmentObject(settings)
                 .tabItem {
@@ -20,6 +27,7 @@ struct SettingsView: View {
                 }
 
             DictionarySettingsView()
+                .environmentObject(authService)
                 .tabItem {
                     Label("Dictionary", systemImage: "text.book.closed")
                 }
@@ -29,7 +37,149 @@ struct SettingsView: View {
                     Label("About", systemImage: "info.circle")
                 }
         }
-        .frame(width: 480, height: 320)
+        .frame(width: 480, height: 360)
+    }
+}
+
+// MARK: - Account Settings Tab
+
+/// Account settings tab with login/logout functionality.
+struct AccountSettingsView: View {
+    @EnvironmentObject var authService: AuthService
+
+    var body: some View {
+        Form {
+            Section {
+                switch authService.state {
+                case .unknown:
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("Checking authentication...")
+                            .foregroundColor(.secondary)
+                    }
+
+                case .notAuthenticated:
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Not logged in")
+                            .font(.headline)
+
+                        Text("Log in with GitHub to sync your settings and use the transcription service.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        Button(action: {
+                            authService.login()
+                        }) {
+                            HStack {
+                                Image(systemName: "person.badge.key")
+                                Text("Log in with GitHub")
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+
+                case .authenticating:
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("Logging in...")
+                            .foregroundColor(.secondary)
+                    }
+
+                case .authenticated(let user):
+                    HStack(spacing: 12) {
+                        // User avatar
+                        if let avatarURL = user.githubAvatar,
+                           let url = URL(string: avatarURL) {
+                            AsyncImage(url: url) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            } placeholder: {
+                                Image(systemName: "person.circle.fill")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(width: 48, height: 48)
+                            .clipShape(Circle())
+                        } else {
+                            Image(systemName: "person.circle.fill")
+                                .font(.system(size: 40))
+                                .foregroundColor(.secondary)
+                        }
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(user.githubId)
+                                .font(.headline)
+
+                            HStack(spacing: 4) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                Text("Logged in")
+                                    .foregroundColor(.secondary)
+
+                                if user.isAdmin {
+                                    Text("(Admin)")
+                                        .font(.caption)
+                                        .foregroundColor(.orange)
+                                }
+                            }
+                            .font(.caption)
+                        }
+
+                        Spacer()
+
+                        Button("Log out") {
+                            authService.logout()
+                        }
+                        .foregroundColor(.red)
+                    }
+
+                case .error(let message):
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.red)
+                            Text("Authentication Error")
+                                .font(.headline)
+                        }
+
+                        Text(message)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        Button("Try Again") {
+                            authService.login()
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                }
+            } header: {
+                Text("GitHub Account")
+            }
+
+            if authService.isAuthenticated {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Your data is synced with the server", systemImage: "icloud.and.arrow.up")
+                        Label("Personal dictionary is available", systemImage: "text.book.closed")
+                        Label("Voice transcription is enabled", systemImage: "waveform")
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                } header: {
+                    Text("Account Features")
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+        .onAppear {
+            Task {
+                await authService.checkAuthStatus()
+            }
+        }
     }
 }
 
@@ -270,20 +420,19 @@ struct ModifierToggle: View {
 
 /// Dictionary settings tab with full API integration.
 struct DictionarySettingsView: View {
+    @EnvironmentObject var authService: AuthService
     @StateObject private var service = DictionaryService.shared
     @State private var newPattern = ""
     @State private var newReplacement = ""
     @State private var showingDeleteConfirmation = false
     @State private var entryToDelete: DictionaryEntry?
 
-    // TODO: Get from AuthService when implemented (Task 4.4)
     private var authToken: String? {
-        // Placeholder - will be replaced with actual token from Keychain
-        nil
+        authService.token
     }
 
     private var isAuthenticated: Bool {
-        authToken != nil
+        authService.isAuthenticated
     }
 
     var body: some View {

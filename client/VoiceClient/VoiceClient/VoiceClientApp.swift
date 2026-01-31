@@ -5,12 +5,21 @@ import SwiftUI
 @main
 struct VoiceClientApp: App {
     @StateObject private var appState = AppState()
+    @StateObject private var authService = AuthService.shared
+
+    init() {
+        // Check authentication status on launch
+        Task { @MainActor in
+            await AuthService.shared.checkAuthStatus()
+        }
+    }
 
     var body: some Scene {
         // Menu bar extra (system tray icon)
         MenuBarExtra {
             MenuBarView()
                 .environmentObject(appState)
+                .environmentObject(authService)
         } label: {
             MenuBarLabel()
                 .environmentObject(appState)
@@ -21,6 +30,7 @@ struct VoiceClientApp: App {
         Settings {
             SettingsView()
                 .environmentObject(appState)
+                .environmentObject(authService)
         }
     }
 }

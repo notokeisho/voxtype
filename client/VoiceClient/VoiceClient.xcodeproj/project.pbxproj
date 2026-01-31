@@ -8,11 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		15ED57A58A48D98A4DE53A52 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFEA6E049770D3D7140AC1A9 /* MenuBarView.swift */; };
+		250A4197F47B95AFE907AA59 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF30B4CB03D8EED13F32282E /* KeychainHelper.swift */; };
 		2BA099087DF49EE08C7E813E /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 134200AFDE7C812E8BC81750 /* AppState.swift */; };
 		6503CD601B53BE51654B7B2D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5911DC29831C70EC4494C7BE /* SettingsView.swift */; };
 		6E5A2CE0EE146BA5534713F7 /* DictionaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 628FDACA5FC5A627113A2E3C /* DictionaryService.swift */; };
 		B904F88192AD3C1E97F31CA6 /* VoiceClientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52386EF7B1CDE58A6F14B834 /* VoiceClientApp.swift */; };
 		E2647972CEE4A979ECEA5C05 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EEBB0CFC5934EF000B0BB94 /* AppSettings.swift */; };
+		F79BCD49BFDCCDD2F4A2B67A /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C15AA769E41934A16BCC4CB4 /* AuthService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +25,8 @@
 		5911DC29831C70EC4494C7BE /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		628FDACA5FC5A627113A2E3C /* DictionaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryService.swift; sourceTree = "<group>"; };
 		7BE1B540B99D4478E82A1AA3 /* VoiceClient.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VoiceClient.entitlements; sourceTree = "<group>"; };
+		BF30B4CB03D8EED13F32282E /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		C15AA769E41934A16BCC4CB4 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		EFEA6E049770D3D7140AC1A9 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -51,7 +55,9 @@
 		70BCD5386DAFE80F37454DDE /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				C15AA769E41934A16BCC4CB4 /* AuthService.swift */,
 				628FDACA5FC5A627113A2E3C /* DictionaryService.swift */,
+				BF30B4CB03D8EED13F32282E /* KeychainHelper.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -142,7 +148,9 @@
 			files = (
 				E2647972CEE4A979ECEA5C05 /* AppSettings.swift in Sources */,
 				2BA099087DF49EE08C7E813E /* AppState.swift in Sources */,
+				F79BCD49BFDCCDD2F4A2B67A /* AuthService.swift in Sources */,
 				6E5A2CE0EE146BA5534713F7 /* DictionaryService.swift in Sources */,
+				250A4197F47B95AFE907AA59 /* KeychainHelper.swift in Sources */,
 				15ED57A58A48D98A4DE53A52 /* MenuBarView.swift in Sources */,
 				6503CD601B53BE51654B7B2D /* SettingsView.swift in Sources */,
 				B904F88192AD3C1E97F31CA6 /* VoiceClientApp.swift in Sources */,

@@ -40,6 +40,10 @@ targets:
         CFBundleName: VoiceClient
         NSMicrophoneUsageDescription: VoiceClient needs microphone access for voice-to-text transcription.
         LSUIElement: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.kumakuma.voiceclient
+            CFBundleURLSchemes:
+              - voiceclient
     entitlements:
       path: VoiceClient/VoiceClient.entitlements
       properties:

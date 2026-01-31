@@ -3,6 +3,7 @@ import SwiftUI
 /// View displayed in the menu bar dropdown.
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var authService: AuthService
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -51,10 +52,16 @@ struct MenuBarView: View {
                 Text(appState.statusText)
                     .font(.headline)
 
-                if appState.isAuthenticated {
-                    Text("Authenticated")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                if authService.isAuthenticated {
+                    if let user = authService.currentUser {
+                        Text(user.githubId)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text("Authenticated")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
                 } else {
                     Text("Not logged in")
                         .font(.caption2)
@@ -159,12 +166,12 @@ struct MenuBarView: View {
 
     private var menuItems: some View {
         VStack(spacing: 0) {
-            if appState.isAuthenticated {
-                Button(action: openSettings) {
-                    Label("Settings...", systemImage: "gear")
-                }
-                .keyboardShortcut(",", modifiers: .command)
+            Button(action: openSettings) {
+                Label("Settings...", systemImage: "gear")
+            }
+            .keyboardShortcut(",", modifiers: .command)
 
+            if authService.isAuthenticated {
                 Button(action: logout) {
                     Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
                 }
@@ -192,12 +199,11 @@ struct MenuBarView: View {
     }
 
     private func login() {
-        // TODO: Implement OAuth login (Task 4.4)
+        authService.login()
     }
 
     private func logout() {
-        // TODO: Implement logout (Task 4.4)
-        appState.isAuthenticated = false
+        authService.logout()
     }
 
     private func quitApp() {
@@ -238,31 +244,16 @@ struct MenuBarView_Previews: PreviewProvider {
         Group {
             // Idle state
             MenuBarView()
-                .environmentObject(makeAppState(status: .idle))
+                .environmentObject(AppState())
+                .environmentObject(AuthService.shared)
                 .previewDisplayName("Idle")
 
             // Recording state
             MenuBarView()
-                .environmentObject(makeAppState(status: .recording))
+                .environmentObject(AppState())
+                .environmentObject(AuthService.shared)
                 .previewDisplayName("Recording")
-
-            // Completed state
-            MenuBarView()
-                .environmentObject(makeAppState(status: .completed, lastText: "This is a test transcription."))
-                .previewDisplayName("Completed")
-
-            // Error state
-            MenuBarView()
-                .environmentObject(makeAppState(status: .error, error: "Connection failed"))
-                .previewDisplayName("Error")
         }
-    }
-
-    static func makeAppState(status: AppStatus, lastText: String? = nil, error: String? = nil) -> AppState {
-        let state = AppState()
-        // Note: In preview, we can't directly set private(set) properties
-        // This is just for preview purposes
-        return state
     }
 }
 #endif

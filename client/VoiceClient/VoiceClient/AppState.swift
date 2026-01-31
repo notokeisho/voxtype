@@ -79,9 +79,6 @@ class AppState: ObservableObject {
     /// Last error message, if any.
     @Published var lastError: String?
 
-    /// Whether the user is authenticated.
-    @Published var isAuthenticated: Bool = false
-
     /// The transcribed text from the last successful transcription.
     @Published var lastTranscribedText: String?
 
