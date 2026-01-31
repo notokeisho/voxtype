@@ -1,0 +1,25 @@
+"""Pytest configuration and fixtures."""
+
+import pytest
+
+
+@pytest.fixture
+def sample_audio_content() -> bytes:
+    """Sample audio content for testing."""
+    # Minimal WAV header (44 bytes) + silence
+    wav_header = bytes([
+        0x52, 0x49, 0x46, 0x46,  # RIFF
+        0x24, 0x00, 0x00, 0x00,  # File size - 8
+        0x57, 0x41, 0x56, 0x45,  # WAVE
+        0x66, 0x6D, 0x74, 0x20,  # fmt
+        0x10, 0x00, 0x00, 0x00,  # Chunk size (16)
+        0x01, 0x00,              # Audio format (PCM)
+        0x01, 0x00,              # Channels (1)
+        0x80, 0x3E, 0x00, 0x00,  # Sample rate (16000)
+        0x00, 0x7D, 0x00, 0x00,  # Byte rate
+        0x02, 0x00,              # Block align
+        0x10, 0x00,              # Bits per sample (16)
+        0x64, 0x61, 0x74, 0x61,  # data
+        0x00, 0x00, 0x00, 0x00,  # Data size
+    ])
+    return wav_header
