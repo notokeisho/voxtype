@@ -62,6 +62,9 @@ class AppCoordinator: ObservableObject {
     /// The previously active application (for focus restoration after paste).
     private var previousApp: NSRunningApplication?
 
+    /// Whether the current recording was triggered from the menu bar UI.
+    private var wasTriggeredFromMenuBar = false
+
     private var isSetup = false
 
     private init() {}
@@ -178,11 +181,13 @@ class AppCoordinator: ObservableObject {
 
     /// Start recording manually (called from UI button).
     func startRecordingFromUI() {
+        wasTriggeredFromMenuBar = true
         handleHotkeyDown()
     }
 
     /// Stop recording manually (called from UI button).
     func stopRecordingFromUI() {
+        wasTriggeredFromMenuBar = true
         handleHotkeyUp()
     }
 
@@ -197,18 +202,16 @@ class AppCoordinator: ObservableObject {
                 // Send audio to server for transcription
                 let response = try await apiClient.transcribe(audioURL: url)
 
-                // Close any open menus first by deactivating VoiceClient
-                NSApp.hide(nil)
+                // Reset the menu bar trigger flag
+                self.wasTriggeredFromMenuBar = false
 
-                // Small delay to let the menu close
-                try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                // Close menu bar window if open (orderOut does nothing if not open)
+                NSApp.keyWindow?.orderOut(nil)
 
                 // Restore focus to the previous app before pasting
                 if let app = self.previousApp {
-                    print("📱 [Focus] Restoring focus to: \(app.localizedName ?? "unknown")")
-                    // Try to activate the app
                     let success = app.activate(options: [.activateIgnoringOtherApps, .activateAllWindows])
-                    print("📱 [Focus] activate() returned: \(success)")
+                    print("📱 [Focus] Restoring focus to: \(app.localizedName ?? "unknown"), success: \(success)")
                 } else {
                     print("📱 [Focus] WARNING: previousApp is nil!")
                 }
@@ -216,10 +219,8 @@ class AppCoordinator: ObservableObject {
                 // Wait for focus to be restored, then paste
                 try await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
 
-                print("📋 [Paste] Pasting text...")
                 // Paste the transcribed text at cursor position
                 clipboardManager.pasteText(response.text) {
-                    // Complete after paste is done
                     Task { @MainActor in
                         appState.completeTranscription(text: response.text)
                     }
@@ -227,7 +228,6 @@ class AppCoordinator: ObservableObject {
 
             } catch let error as APIError {
                 appState.setError(error.localizedDescription)
-                // Show notification for critical errors
                 error.showNotificationIfNeeded()
             } catch {
                 appState.setError(error.localizedDescription)
