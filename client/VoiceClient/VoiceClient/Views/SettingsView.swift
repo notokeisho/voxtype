@@ -336,6 +336,8 @@ struct HotkeySettingsView: View {
         ("Y", 16), ("Z", 6),
         ("0", 29), ("1", 18), ("2", 19), ("3", 20), ("4", 21),
         ("5", 23), ("6", 22), ("7", 26), ("8", 28), ("9", 25),
+        (",", 43), (".", 47), ("/", 44), (";", 41),
+        ("[", 33), ("]", 30), ("-", 27),
         ("F1", 122), ("F2", 120), ("F3", 99), ("F4", 118), ("F5", 96),
         ("F6", 97), ("F7", 98), ("F8", 100), ("F9", 101), ("F10", 109),
         ("F11", 103), ("F12", 111)
@@ -472,9 +474,9 @@ struct HotkeySettingsView: View {
             }
 
             Section {
-                Button("Reset to Default (⌥Space)") {
-                    settings.hotkeyModifiers = 0x080000  // Option only
-                    settings.hotkeyKeyCode = 49          // Space
+                Button("Reset to Default (⌃.)") {
+                    settings.hotkeyModifiers = 0x040000  // Control only
+                    settings.hotkeyKeyCode = 47          // Period (.)
                 }
             }
         }
