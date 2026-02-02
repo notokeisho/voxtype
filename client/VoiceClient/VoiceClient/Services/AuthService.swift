@@ -199,54 +199,44 @@ class AuthService: NSObject, ObservableObject {
         }
 
         guard let callbackURL = callbackURL,
-              let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false),
-              let code = components.queryItems?.first(where: { $0.name == "code" })?.value else {
+              let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false) else {
             state = .error("Invalid callback URL")
             return
         }
 
-        do {
-            let authResponse = try await exchangeCodeForToken(code: code)
-            KeychainHelper.save(authResponse.accessToken, forKey: KeychainHelper.tokenKey)
-            state = .authenticated(authResponse.user)
-        } catch {
-            state = .error(error.localizedDescription)
-        }
-    }
+        // Check for error from server
+        if let errorCode = components.queryItems?.first(where: { $0.name == "error" })?.value {
+            let errorMessage = components.queryItems?.first(where: { $0.name == "message" })?.value ?? "Authentication failed"
 
-    private func exchangeCodeForToken(code: String) async throws -> AuthResponse {
-        let settings = AppSettings.shared
-        guard let baseURL = URL(string: settings.serverURL) else {
-            throw AuthError.invalidURL
-        }
-
-        let url = baseURL.appendingPathComponent("/auth/github/callback")
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let body = ["code": code]
-        request.httpBody = try JSONEncoder().encode(body)
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw AuthError.invalidResponse
-        }
-
-        switch httpResponse.statusCode {
-        case 200:
-            let decoder = JSONDecoder()
-            return try decoder.decode(AuthResponse.self, from: data)
-        case 401:
-            throw AuthError.unauthorized
-        case 403:
-            throw AuthError.notWhitelisted
-        default:
-            if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
-                throw AuthError.serverError(errorResponse.detail)
+            switch errorCode {
+            case "not_whitelisted":
+                state = .error("Your account is not in the whitelist. Please contact an administrator.")
+            case "github_error":
+                state = .error("GitHub authentication failed: \(errorMessage)")
+            case "github_auth_failed":
+                state = .error("Failed to authenticate with GitHub: \(errorMessage)")
+            default:
+                state = .error(errorMessage)
             }
-            throw AuthError.serverError("Server returned status \(httpResponse.statusCode)")
+            return
+        }
+
+        // Check for token from server
+        guard let token = components.queryItems?.first(where: { $0.name == "token" })?.value else {
+            state = .error("Invalid callback: missing token")
+            return
+        }
+
+        // Save token and validate
+        KeychainHelper.save(token, forKey: KeychainHelper.tokenKey)
+
+        do {
+            let user = try await validateToken(token)
+            state = .authenticated(user)
+        } catch {
+            // Token validation failed, clear it
+            KeychainHelper.delete(forKey: KeychainHelper.tokenKey)
+            state = .error(error.localizedDescription)
         }
     }
 
@@ -256,7 +246,7 @@ class AuthService: NSObject, ObservableObject {
             throw AuthError.invalidURL
         }
 
-        let url = baseURL.appendingPathComponent("/auth/me")
+        let url = baseURL.appendingPathComponent("/api/me")
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")

@@ -1,6 +1,7 @@
 """FastAPI application entry point."""
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.admin.dictionary import router as admin_dictionary_router
@@ -17,6 +18,18 @@ from app.config import settings
 app = FastAPI(
     title=settings.app_name,
     debug=settings.debug,
+)
+
+# Add CORS middleware for admin-web
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",  # admin-web dev server
+        "http://localhost:3000",  # admin-web production
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Add session middleware for OAuth (required by authlib)
