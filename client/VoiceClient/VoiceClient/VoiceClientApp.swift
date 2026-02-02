@@ -59,6 +59,9 @@ class AppCoordinator: ObservableObject {
     /// Recording overlay window for visual feedback.
     private let recordingOverlay = RecordingOverlayWindow.shared
 
+    /// The previously active application (for focus restoration after paste).
+    private var previousApp: NSRunningApplication?
+
     private var isSetup = false
 
     private init() {}
@@ -77,6 +80,7 @@ class AppCoordinator: ObservableObject {
 
         setupHotkeyCallbacks()
         startHotkeyMonitoring()
+        setupPreviousAppTracking()
 
         // Check auth status and request permissions on launch
         Task {
@@ -108,6 +112,32 @@ class AppCoordinator: ObservableObject {
             hotkeyManager.startMonitoring()
         } else {
             hotkeyManager.requestAccessibilityPermission()
+        }
+    }
+
+    private func setupPreviousAppTracking() {
+        // Initialize with current frontmost app (if not VoiceClient)
+        if let currentApp = NSWorkspace.shared.frontmostApplication,
+           currentApp.bundleIdentifier != Bundle.main.bundleIdentifier {
+            previousApp = currentApp
+            print("📱 [Focus] Initial previousApp: \(currentApp.localizedName ?? "unknown")")
+        }
+
+        // Track the previously active app (excluding VoiceClient itself)
+        // This is used to restore focus before pasting transcribed text
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                  app.bundleIdentifier != Bundle.main.bundleIdentifier else {
+                return
+            }
+            Task { @MainActor in
+                self?.previousApp = app
+                print("📱 [Focus] previousApp updated: \(app.localizedName ?? "unknown")")
+            }
         }
     }
 
@@ -167,6 +197,26 @@ class AppCoordinator: ObservableObject {
                 // Send audio to server for transcription
                 let response = try await apiClient.transcribe(audioURL: url)
 
+                // Close any open menus first by deactivating VoiceClient
+                NSApp.hide(nil)
+
+                // Small delay to let the menu close
+                try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+
+                // Restore focus to the previous app before pasting
+                if let app = self.previousApp {
+                    print("📱 [Focus] Restoring focus to: \(app.localizedName ?? "unknown")")
+                    // Try to activate the app
+                    let success = app.activate(options: [.activateIgnoringOtherApps, .activateAllWindows])
+                    print("📱 [Focus] activate() returned: \(success)")
+                } else {
+                    print("📱 [Focus] WARNING: previousApp is nil!")
+                }
+
+                // Wait for focus to be restored, then paste
+                try await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+
+                print("📋 [Paste] Pasting text...")
                 // Paste the transcribed text at cursor position
                 clipboardManager.pasteText(response.text) {
                     // Complete after paste is done
