@@ -14,6 +14,14 @@ struct MenuBarView: View {
 
             Divider()
 
+            // Recording button
+            if authService.isAuthenticated {
+                recordingButton
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                Divider()
+            }
+
             // Recording info (shown during recording)
             if appState.status == .recording {
                 recordingInfo
@@ -125,6 +133,33 @@ struct MenuBarView: View {
     }
 
     @State private var pulsingOpacity: Double = 1.0
+
+    @ViewBuilder
+    private var recordingButton: some View {
+        switch appState.status {
+        case .idle, .error, .completed:
+            Button(action: { AppCoordinator.shared.startRecordingFromUI() }) {
+                Label("録音開始", systemImage: "record.circle")
+            }
+            .buttonStyle(RecordingButtonStyle(isRecording: false))
+
+        case .recording:
+            Button(action: { AppCoordinator.shared.stopRecordingFromUI() }) {
+                Label("録音停止", systemImage: "stop.circle.fill")
+            }
+            .buttonStyle(RecordingButtonStyle(isRecording: true))
+
+        case .processing:
+            HStack {
+                ProgressView()
+                    .scaleEffect(0.7)
+                Text("処理中...")
+                    .font(.subheadline)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+        }
+    }
 
     private func lastTranscribedSection(text: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -243,6 +278,21 @@ struct MenuButtonStyle: ButtonStyle {
             .padding(.vertical, 6)
             .background(configuration.isPressed ? Color.accentColor.opacity(0.2) : Color.clear)
             .contentShape(Rectangle())
+    }
+}
+
+struct RecordingButtonStyle: ButtonStyle {
+    let isRecording: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(isRecording ? Color.red : Color.accentColor)
+            .foregroundColor(.white)
+            .cornerRadius(8)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
     }
 }
 

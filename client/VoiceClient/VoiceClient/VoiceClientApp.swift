@@ -144,6 +144,18 @@ class AppCoordinator: ObservableObject {
         }
     }
 
+    // MARK: - Public Methods for UI
+
+    /// Start recording manually (called from UI button).
+    func startRecordingFromUI() {
+        handleHotkeyDown()
+    }
+
+    /// Stop recording manually (called from UI button).
+    func stopRecordingFromUI() {
+        handleHotkeyUp()
+    }
+
     private func processRecording(url: URL) {
         guard let appState = appState else { return }
 
