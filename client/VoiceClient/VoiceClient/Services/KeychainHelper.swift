@@ -18,7 +18,10 @@ final class KeychainHelper {
     /// - Returns: `true` if save was successful, `false` otherwise.
     @discardableResult
     static func save(_ value: String, forKey key: String) -> Bool {
+        print("💾 [Keychain] save: key=\(key), value長さ=\(value.count)")
+
         guard let data = value.data(using: .utf8) else {
+            print("❌ [Keychain] save: UTF8変換失敗")
             return false
         }
 
@@ -35,6 +38,7 @@ final class KeychainHelper {
         ]
 
         let status = SecItemAdd(query as CFDictionary, nil)
+        print("💾 [Keychain] save: status=\(status) (0=成功)")
         return status == errSecSuccess
     }
 
@@ -44,6 +48,8 @@ final class KeychainHelper {
     /// - Parameter key: The key associated with the value.
     /// - Returns: The stored string value, or `nil` if not found.
     static func load(forKey key: String) -> String? {
+        print("📖 [Keychain] load: key=\(key)")
+
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -54,13 +60,16 @@ final class KeychainHelper {
 
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
+        print("📖 [Keychain] load: status=\(status) (-25300=見つからない, 0=成功)")
 
         guard status == errSecSuccess,
               let data = result as? Data,
               let string = String(data: data, encoding: .utf8) else {
+            print("📖 [Keychain] load: 結果=nil")
             return nil
         }
 
+        print("📖 [Keychain] load: 結果=値あり (長さ: \(string.count))")
         return string
     }
 
@@ -71,6 +80,8 @@ final class KeychainHelper {
     /// - Returns: `true` if deletion was successful or item didn't exist, `false` otherwise.
     @discardableResult
     static func delete(forKey key: String) -> Bool {
+        print("🗑️ [Keychain] delete: key=\(key)")
+
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -78,6 +89,7 @@ final class KeychainHelper {
         ]
 
         let status = SecItemDelete(query as CFDictionary)
+        print("🗑️ [Keychain] delete: status=\(status) (0=成功, -25300=元々なかった)")
         return status == errSecSuccess || status == errSecItemNotFound
     }
 

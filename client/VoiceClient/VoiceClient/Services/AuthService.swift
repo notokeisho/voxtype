@@ -56,12 +56,12 @@ struct AuthResponse: Codable {
 /// JWT token payload for expiration checking.
 struct JWTPayload: Codable {
     let exp: TimeInterval
-    let sub: String
+    let userId: Int
     let githubId: String
 
     enum CodingKeys: String, CodingKey {
         case exp
-        case sub
+        case userId = "user_id"
         case githubId = "github_id"
     }
 }
@@ -110,22 +110,31 @@ class AuthService: NSObject, ObservableObject {
 
     /// Check current authentication status on app launch.
     func checkAuthStatus() async {
+        print("🔍 [Auth] checkAuthStatus: 開始")
+
         guard let token = KeychainHelper.load(forKey: KeychainHelper.tokenKey) else {
+            print("❌ [Auth] checkAuthStatus: トークンがKeychainにない")
             state = .notAuthenticated
             return
         }
+        print("✅ [Auth] checkAuthStatus: トークン読み込み成功 (長さ: \(token.count))")
 
         // Check if token is expired
         if isTokenExpired(token) {
+            print("⏰ [Auth] checkAuthStatus: トークン期限切れ → logout()呼び出し")
             logout()
             return
         }
+        print("✅ [Auth] checkAuthStatus: トークン有効期限内")
 
         // Validate token with server
         do {
+            print("🌐 [Auth] checkAuthStatus: サーバー検証開始...")
             let user = try await validateToken(token)
+            print("✅ [Auth] checkAuthStatus: サーバー検証成功 (user.id: \(user.id))")
             state = .authenticated(user)
         } catch {
+            print("❌ [Auth] checkAuthStatus: サーバー検証失敗 - \(error) → logout()呼び出し")
             // Token is invalid, clear it
             logout()
         }
@@ -170,8 +179,10 @@ class AuthService: NSObject, ObservableObject {
 
     /// Logout and clear stored credentials.
     func logout() {
+        print("🚪 [Auth] logout: 呼び出された")
         KeychainHelper.delete(forKey: KeychainHelper.tokenKey)
         state = .notAuthenticated
+        print("🚪 [Auth] logout: 完了 (トークン削除、状態をnotAuthenticatedに)")
     }
 
     /// Refresh authentication if token is about to expire.
@@ -223,17 +234,22 @@ class AuthService: NSObject, ObservableObject {
 
         // Check for token from server
         guard let token = components.queryItems?.first(where: { $0.name == "token" })?.value else {
+            print("❌ [Auth] handleAuthCallback: トークンがコールバックにない")
             state = .error("Invalid callback: missing token")
             return
         }
+        print("✅ [Auth] handleAuthCallback: トークン受信 (長さ: \(token.count))")
 
         // Save token and validate
-        KeychainHelper.save(token, forKey: KeychainHelper.tokenKey)
+        let saveResult = KeychainHelper.save(token, forKey: KeychainHelper.tokenKey)
+        print("💾 [Auth] handleAuthCallback: Keychain保存結果 = \(saveResult)")
 
         do {
             let user = try await validateToken(token)
+            print("✅ [Auth] handleAuthCallback: 認証成功 (user.id: \(user.id))")
             state = .authenticated(user)
         } catch {
+            print("❌ [Auth] handleAuthCallback: 検証失敗 - \(error)")
             // Token validation failed, clear it
             KeychainHelper.delete(forKey: KeychainHelper.tokenKey)
             state = .error(error.localizedDescription)
@@ -307,9 +323,13 @@ class AuthService: NSObject, ObservableObject {
     /// Check if JWT token is expired.
     func isTokenExpired(_ token: String) -> Bool {
         guard let payload = decodeJWTPayload(token) else {
+            print("⏰ [Auth] isTokenExpired: JWTデコード失敗 → 期限切れとみなす")
             return true
         }
-        return Date().timeIntervalSince1970 >= payload.exp
+        let now = Date().timeIntervalSince1970
+        let isExpired = now >= payload.exp
+        print("⏰ [Auth] isTokenExpired: now=\(now), exp=\(payload.exp), 差分=\(payload.exp - now)秒, 期限切れ=\(isExpired)")
+        return isExpired
     }
 
     /// Decode JWT payload without verification.
