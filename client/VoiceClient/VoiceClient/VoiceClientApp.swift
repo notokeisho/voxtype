@@ -9,6 +9,12 @@ struct VoiceClientApp: App {
     @StateObject private var hotkeyManager = HotkeyManager.shared
     @StateObject private var coordinator = AppCoordinator.shared
 
+    init() {
+        // Request accessibility permission on app launch
+        // This shows the system dialog before user interacts with the menu
+        HotkeyManager.shared.requestAccessibilityPermissionOnLaunch()
+    }
+
     var body: some Scene {
         // Menu bar extra (system tray icon)
         MenuBarExtra {
@@ -72,10 +78,13 @@ class AppCoordinator: ObservableObject {
         setupHotkeyCallbacks()
         startHotkeyMonitoring()
 
-        // Check auth status and request notification permission on launch
+        // Check auth status and request permissions on launch
         Task {
             await authService.checkAuthStatus()
             _ = await NotificationManager.shared.requestAuthorization()
+
+            // Request microphone permission on launch to avoid dialog during recording
+            _ = await appState.checkMicrophonePermission()
         }
     }
 

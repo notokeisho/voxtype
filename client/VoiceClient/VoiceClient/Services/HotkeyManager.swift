@@ -110,18 +110,30 @@ class HotkeyManager: ObservableObject {
     func checkAccessibilityPermission() -> Bool {
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: false] as CFDictionary
         hasAccessibilityPermission = AXIsProcessTrustedWithOptions(options)
+        print("🔐 [Accessibility] checkAccessibilityPermission: 権限=\(hasAccessibilityPermission)")
         return hasAccessibilityPermission
     }
 
     /// Request accessibility permission (shows system dialog).
     func requestAccessibilityPermission() {
+        print("🔐 [Accessibility] requestAccessibilityPermission: ダイアログ表示を試みる")
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-        AXIsProcessTrustedWithOptions(options)
+        let result = AXIsProcessTrustedWithOptions(options)
+        print("🔐 [Accessibility] requestAccessibilityPermission: 結果=\(result)")
 
         // Check again after a delay (user might grant permission)
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             self?.checkAccessibilityPermission()
         }
+    }
+
+    /// Request accessibility permission on app launch.
+    /// This is called from App init() to show the dialog immediately.
+    nonisolated func requestAccessibilityPermissionOnLaunch() {
+        print("🔐 [Accessibility] requestAccessibilityPermissionOnLaunch: アプリ起動時に権限リクエスト")
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+        let result = AXIsProcessTrustedWithOptions(options)
+        print("🔐 [Accessibility] requestAccessibilityPermissionOnLaunch: 結果=\(result)")
     }
 
     // MARK: - Private Methods

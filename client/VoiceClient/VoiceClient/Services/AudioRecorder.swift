@@ -169,21 +169,15 @@ class AudioRecorder: NSObject, ObservableObject {
     // MARK: - Permission Handling
 
     /// Check if microphone permission is granted.
+    /// Note: Permission should be requested on app launch, not during recording.
     func checkMicrophonePermission() -> Bool {
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .authorized:
             return true
         case .notDetermined:
-            // Request permission synchronously for simplicity
-            // In production, this should be async
-            var granted = false
-            let semaphore = DispatchSemaphore(value: 0)
-            AVCaptureDevice.requestAccess(for: .audio) { result in
-                granted = result
-                semaphore.signal()
-            }
-            semaphore.wait()
-            return granted
+            // Don't request here - should be requested on app launch
+            // Return false to prevent recording without permission
+            return false
         case .denied, .restricted:
             return false
         @unknown default:

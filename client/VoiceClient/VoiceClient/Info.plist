@@ -33,6 +33,8 @@
 	<string>1</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAccessibilityUsageDescription</key>
+	<string>VoiceClient needs accessibility access to monitor global hotkeys for voice recording.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>VoiceClient needs microphone access for voice-to-text transcription.</string>
 </dict>
