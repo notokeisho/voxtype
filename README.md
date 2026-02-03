@@ -1,6 +1,6 @@
-# Voice Server
+# VoxType
 
-Aqua Voice の代替として構築する音声入力システム。whisper.cpp を使用した音声認識サーバーと Mac クライアントで構成される。
+whisper.cpp を使用した音声認識サーバーと Mac クライアントで構成される音声入力システム。
 
 ## 概要
 
@@ -33,7 +33,7 @@ flowchart LR
 ## ディレクトリ構成
 
 ```
-voice-server/
+voxtype/
 ├── server/        # FastAPI サーバー
 ├── whisper/       # whisper.cpp サーバー
 ├── admin-web/     # React 管理画面
