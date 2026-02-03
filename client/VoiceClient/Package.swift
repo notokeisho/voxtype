@@ -2,16 +2,16 @@
 import PackageDescription
 
 let package = Package(
-    name: "VoiceClient",
+    name: "VoxType",
     platforms: [
         .macOS(.v13)
     ],
     products: [
-        .executable(name: "VoiceClient", targets: ["VoiceClient"])
+        .executable(name: "VoxType", targets: ["VoxType"])
     ],
     targets: [
         .executableTarget(
-            name: "VoiceClient",
+            name: "VoxType",
             path: "VoiceClient",
             exclude: [
                 "Info.plist",
