@@ -12,10 +12,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "VoxType",
-            path: "VoiceClient",
+            path: "VoxType",
             exclude: [
                 "Info.plist",
-                "VoiceClient.entitlements"
+                "VoxType.entitlements"
             ]
         )
     ]
