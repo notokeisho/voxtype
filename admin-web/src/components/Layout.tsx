@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { removeToken, type User } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { LanguageSwitcher } from '@/lib/i18n'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -33,23 +34,26 @@ export function Layout({ children, user }: LayoutProps) {
             <h1 className="text-xl font-bold text-gray-900">
               VoiceServer Admin
             </h1>
-            {user && (
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  {user.github_avatar && (
-                    <img
-                      src={user.github_avatar}
-                      alt={user.github_id}
-                      className="w-8 h-8 rounded-full"
-                    />
-                  )}
-                  <span className="text-sm text-gray-700">{user.github_id}</span>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleLogout}>
-                  ログアウト
-                </Button>
-              </div>
-            )}
+            <div className="flex items-center gap-4">
+              <LanguageSwitcher />
+              {user && (
+                <>
+                  <div className="flex items-center gap-2">
+                    {user.github_avatar && (
+                      <img
+                        src={user.github_avatar}
+                        alt={user.github_id}
+                        className="w-8 h-8 rounded-full"
+                      />
+                    )}
+                    <span className="text-sm text-gray-700">{user.github_id}</span>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleLogout}>
+                    ログアウト
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>

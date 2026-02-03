@@ -8,6 +8,7 @@ import { UsersPage } from '@/pages/Users'
 import { WhitelistPage } from '@/pages/Whitelist'
 import { DictionaryPage } from '@/pages/Dictionary'
 import { isAuthenticated, getMe, type User } from '@/lib/api'
+import { LanguageProvider } from '@/lib/i18n'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -54,8 +55,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <LanguageProvider>
+      <BrowserRouter>
+        <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route
@@ -91,8 +93,9 @@ function App() {
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </LanguageProvider>
   )
 }
 
