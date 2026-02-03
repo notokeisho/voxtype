@@ -250,7 +250,7 @@ export function WhitelistPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('whitelist.githubId')}</TableHead>
+                <TableHead>{t('whitelist.githubUsername')}</TableHead>
                 <TableHead>{t('whitelist.createdAt')}</TableHead>
                 <TableHead>{t('whitelist.actions')}</TableHead>
               </TableRow>
@@ -258,7 +258,7 @@ export function WhitelistPage() {
             <TableBody>
               {entries.map((entry) => (
                 <TableRow key={entry.id}>
-                  <TableCell className="font-medium">{entry.github_id}</TableCell>
+                  <TableCell className="font-medium">{entry.github_username || entry.github_id}</TableCell>
                   <TableCell>{formatDate(entry.created_at)}</TableCell>
                   <TableCell>
                     <Button
