@@ -58,7 +58,7 @@ class NotificationManager: ObservableObject {
     /// - Parameter message: The error message to display.
     func showError(_ message: String) {
         showNotification(
-            title: "VoiceClient Error",
+            title: "VoxType Error",
             body: message,
             category: .error
         )
@@ -68,7 +68,7 @@ class NotificationManager: ObservableObject {
     /// - Parameter message: The success message to display.
     func showSuccess(_ message: String) {
         showNotification(
-            title: "VoiceClient",
+            title: "VoxType",
             body: message,
             category: .success
         )
@@ -78,7 +78,7 @@ class NotificationManager: ObservableObject {
     /// - Parameter message: The warning message to display.
     func showWarning(_ message: String) {
         showNotification(
-            title: "VoiceClient Warning",
+            title: "VoxType Warning",
             body: message,
             category: .warning
         )
@@ -88,7 +88,7 @@ class NotificationManager: ObservableObject {
     func showAuthError() {
         showNotification(
             title: "Authentication Required",
-            body: "Please log in to continue using VoiceClient",
+            body: "Please log in to continue using VoxType",
             category: .error
         )
     }
