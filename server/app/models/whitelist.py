@@ -16,11 +16,12 @@ class Whitelist(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     github_id: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    github_username: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     def __repr__(self) -> str:
-        return f"<Whitelist(id={self.id}, github_id={self.github_id})>"
+        return f"<Whitelist(id={self.id}, github_id={self.github_id}, github_username={self.github_username})>"
 
 
 async def is_whitelisted(session: AsyncSession, github_id: str) -> bool:
@@ -38,19 +39,27 @@ async def is_whitelisted(session: AsyncSession, github_id: str) -> bool:
 
 
 async def add_to_whitelist(
-    session: AsyncSession, github_id: str, created_by: int | None = None
+    session: AsyncSession,
+    github_id: str,
+    created_by: int | None = None,
+    github_username: str | None = None,
 ) -> Whitelist:
     """Add a GitHub user to the whitelist.
 
     Args:
         session: Database session
-        github_id: GitHub username to add
+        github_id: GitHub user ID to add
         created_by: User ID of the admin who added this entry
+        github_username: GitHub username for display purposes
 
     Returns:
         The created Whitelist entry
     """
-    entry = Whitelist(github_id=github_id, created_by=created_by)
+    entry = Whitelist(
+        github_id=github_id,
+        created_by=created_by,
+        github_username=github_username,
+    )
     session.add(entry)
     await session.commit()
     return entry

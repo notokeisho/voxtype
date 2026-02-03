@@ -95,3 +95,46 @@ async def test_remove_from_whitelist(db_session: AsyncSession):
     # Remove user from whitelist
     await remove_from_whitelist(db_session, "tempuser")
     assert await is_whitelisted(db_session, "tempuser") is False
+
+
+@pytest.mark.asyncio
+async def test_create_whitelist_entry_with_username(db_session: AsyncSession):
+    """Test that a whitelist entry can be created with github_username."""
+    from app.models.whitelist import Whitelist
+
+    # Clean up first
+    await db_session.execute(text("DELETE FROM whitelist WHERE github_id = '12345678'"))
+    await db_session.commit()
+
+    entry = Whitelist(github_id="12345678", github_username="testuser")
+    db_session.add(entry)
+    await db_session.flush()
+
+    assert entry.id is not None
+    assert entry.github_id == "12345678"
+    assert entry.github_username == "testuser"
+    assert entry.created_at is not None
+
+    # Clean up
+    await db_session.execute(text("DELETE FROM whitelist WHERE github_id = '12345678'"))
+    await db_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_add_to_whitelist_with_username(db_session: AsyncSession):
+    """Test the add_to_whitelist function with github_username."""
+    from app.models.whitelist import Whitelist, add_to_whitelist
+
+    # Clean up first
+    await db_session.execute(text("DELETE FROM whitelist WHERE github_id = '87654321'"))
+    await db_session.commit()
+
+    # Add user to whitelist with username
+    entry = await add_to_whitelist(db_session, "87654321", github_username="anotherusername")
+
+    assert entry.github_id == "87654321"
+    assert entry.github_username == "anotherusername"
+
+    # Clean up
+    await db_session.execute(text("DELETE FROM whitelist WHERE github_id = '87654321'"))
+    await db_session.commit()
