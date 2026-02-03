@@ -99,7 +99,7 @@ class AuthService: NSObject, ObservableObject {
     }
 
     /// Callback scheme for OAuth redirect.
-    private let callbackScheme = "voiceclient"
+    private let callbackScheme = "voxtype"
 
     /// Current web authentication session.
     private var authSession: ASWebAuthenticationSession?
