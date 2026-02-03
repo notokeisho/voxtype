@@ -105,7 +105,7 @@ export function WhitelistPage() {
     try {
       setAdding(true)
       setError(null)
-      await addToWhitelist(searchResult.id)
+      await addToWhitelist(searchResult.id, searchResult.login)
       setSearchResult(null)
       setSearchUsername('')
       await fetchWhitelist()

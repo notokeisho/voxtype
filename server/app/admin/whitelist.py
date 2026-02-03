@@ -22,6 +22,7 @@ class WhitelistEntryResponse(BaseModel):
 
     id: int
     github_id: str
+    github_username: str | None
     created_at: datetime
     created_by: int | None
 
@@ -30,6 +31,7 @@ class AddWhitelistRequest(BaseModel):
     """Request model for adding to whitelist."""
 
     github_id: str
+    github_username: str | None = None
 
 
 @router.get("/whitelist", response_model=list[WhitelistEntryResponse])
@@ -76,6 +78,7 @@ async def add_to_whitelist(
 
         entry = Whitelist(
             github_id=request.github_id,
+            github_username=request.github_username,
             created_by=admin.id,
         )
         session.add(entry)

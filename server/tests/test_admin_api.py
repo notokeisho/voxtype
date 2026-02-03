@@ -263,6 +263,30 @@ class TestAdminWhitelist:
 
         assert response.status_code == 204
 
+    @pytest.mark.asyncio
+    async def test_add_to_whitelist_with_username(self, admin_user, admin_token):
+        """Test adding to whitelist with github_username."""
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.post(
+                "/admin/api/whitelist",
+                headers={"Authorization": f"Bearer {admin_token}"},
+                json={"github_id": "99999999", "github_username": "testusername"},
+            )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["github_id"] == "99999999"
+        assert data["github_username"] == "testusername"
+
+        # Cleanup
+        async with async_session_factory() as session:
+            await session.execute(
+                delete(Whitelist).where(Whitelist.github_id == "99999999")
+            )
+            await session.commit()
+
 
 class TestAdminDictionary:
     """Tests for admin global dictionary management endpoints."""

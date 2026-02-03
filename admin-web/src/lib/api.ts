@@ -83,10 +83,13 @@ export async function getWhitelist(): Promise<WhitelistEntry[]> {
   return apiFetch<WhitelistEntry[]>('/admin/api/whitelist')
 }
 
-export async function addToWhitelist(githubId: string): Promise<WhitelistEntry> {
+export async function addToWhitelist(
+  githubId: string,
+  githubUsername: string
+): Promise<WhitelistEntry> {
   return apiFetch<WhitelistEntry>('/admin/api/whitelist', {
     method: 'POST',
-    body: JSON.stringify({ github_id: githubId }),
+    body: JSON.stringify({ github_id: githubId, github_username: githubUsername }),
   })
 }
 
@@ -139,6 +142,7 @@ export interface User {
 export interface WhitelistEntry {
   id: number
   github_id: string
+  github_username: string | null
   created_at: string
   created_by: number | null
 }
