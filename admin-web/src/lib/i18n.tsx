@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react'
+import { Globe, ChevronDown } from 'lucide-react'
 
 type Language = 'ja' | 'en'
 
@@ -105,29 +106,63 @@ export function useLanguage() {
 
 export function LanguageSwitcher() {
   const { language, setLanguage } = useLanguage()
+  const [isOpen, setIsOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false)
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [])
 
   return (
-    <div className="flex items-center gap-1 text-sm">
+    <div className="relative" ref={ref}>
       <button
-        onClick={() => setLanguage('ja')}
-        className={`px-2 py-1 rounded ${
-          language === 'ja'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-        }`}
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded"
       >
-        JA
+        <Globe className="w-4 h-4" />
+        {language.toUpperCase()}
+        <ChevronDown className="w-4 h-4" />
       </button>
-      <button
-        onClick={() => setLanguage('en')}
-        className={`px-2 py-1 rounded ${
-          language === 'en'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-        }`}
-      >
-        EN
-      </button>
+      {isOpen && (
+        <div className="absolute right-0 mt-1 bg-white border rounded shadow-lg z-50 min-w-[100px]">
+          <button
+            onClick={() => {
+              setLanguage('ja')
+              setIsOpen(false)
+            }}
+            className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
+              language === 'ja' ? 'bg-gray-50 font-medium' : ''
+            }`}
+          >
+            日本語
+          </button>
+          <button
+            onClick={() => {
+              setLanguage('en')
+              setIsOpen(false)
+            }}
+            className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
+              language === 'en' ? 'bg-gray-50 font-medium' : ''
+            }`}
+          >
+            English
+          </button>
+        </div>
+      )}
     </div>
   )
 }
