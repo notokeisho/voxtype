@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     initial_admin_github_id: str | None = None
     initial_admin_github_username: str | None = None
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()
