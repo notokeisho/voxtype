@@ -4,7 +4,7 @@ import Security
 /// Helper class for secure token storage in Keychain.
 final class KeychainHelper {
     /// Service identifier for Keychain items.
-    private static let service = "com.kumakuma.voiceclient"
+    private static let service = "com.voxtype.app"
 
     /// Keychain key for JWT token.
     static let tokenKey = "jwt_token"
