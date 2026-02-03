@@ -1,1 +1,1 @@
-"""Services module for Voice Server."""
+"""Services module for VoxType Server."""

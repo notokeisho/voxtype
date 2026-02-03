@@ -1,1 +1,1 @@
-# Voice Server Application
+# VoxType Server Application
