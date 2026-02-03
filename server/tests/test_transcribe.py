@@ -241,7 +241,7 @@ class TestTranscribeEndpointFileHandling:
             original_write = Path.write_bytes
 
             def track_write(self, data):
-                if "voice-server" in str(self):
+                if "voxtype" in str(self):
                     temp_files_created.append(str(self))
                 return original_write(self, data)
 
