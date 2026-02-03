@@ -1,4 +1,4 @@
-# Voice Server
+# VoxType Server
 
 FastAPI server for voice recognition using whisper.cpp.
 
