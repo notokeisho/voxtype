@@ -11,7 +11,7 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">VoiceServer Admin</CardTitle>
+          <CardTitle className="text-2xl">VoxType Admin</CardTitle>
           <CardDescription>
             管理画面にアクセスするには GitHub でログインしてください
           </CardDescription>
