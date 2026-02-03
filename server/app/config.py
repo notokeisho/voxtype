@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     github_client_id: str = ""
     github_client_secret: str = ""
 
+    # Initial admin (optional, for bootstrapping)
+    initial_admin_github_id: str | None = None
+    initial_admin_github_username: str | None = None
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 
