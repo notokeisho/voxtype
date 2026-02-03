@@ -189,12 +189,21 @@ class AuthService: NSObject, ObservableObject {
 
     /// Refresh authentication if token is about to expire.
     func refreshIfNeeded() async {
-        guard let token = self.token else { return }
+        guard let token = self.token else {
+            print("🔄 [Auth] refreshIfNeeded: トークンがない")
+            return
+        }
 
         // Refresh if token expires within 3 days (259200 seconds)
-        if let payload = decodeJWTPayload(token),
-           payload.exp - Date().timeIntervalSince1970 < 259200 {
-            await refreshToken()
+        if let payload = decodeJWTPayload(token) {
+            let remaining = payload.exp - Date().timeIntervalSince1970
+            print("🔄 [Auth] refreshIfNeeded: 残り\(Int(remaining))秒 (\(Int(remaining/86400))日)")
+            if remaining < 259200 {
+                print("🔄 [Auth] refreshIfNeeded: 閾値以内なのでリフレッシュ実行")
+                await refreshToken()
+            } else {
+                print("🔄 [Auth] refreshIfNeeded: 十分な期間があるのでスキップ")
+            }
         }
     }
 
@@ -289,6 +298,7 @@ class AuthService: NSObject, ObservableObject {
     }
 
     private func refreshToken() async {
+        print("🔄 [Auth] refreshToken: 開始")
         guard let currentToken = token else { return }
 
         let settings = AppSettings.shared
@@ -303,8 +313,11 @@ class AuthService: NSObject, ObservableObject {
             let (data, response) = try await URLSession.shared.data(for: request)
 
             guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ [Auth] refreshToken: レスポンスが不正")
                 return
             }
+
+            print("🔄 [Auth] refreshToken: ステータス \(httpResponse.statusCode)")
 
             switch httpResponse.statusCode {
             case 200:
@@ -319,15 +332,19 @@ class AuthService: NSObject, ObservableObject {
 
                 let refreshResponse = try JSONDecoder().decode(RefreshResponse.self, from: data)
                 KeychainHelper.save(refreshResponse.accessToken, forKey: KeychainHelper.tokenKey)
+                print("✅ [Auth] refreshToken: 新しいトークンを保存")
             case 401, 403:
                 // Token invalid or user not whitelisted: logout
+                print("⚠️ [Auth] refreshToken: 認証エラー(\(httpResponse.statusCode)) → ログアウト")
                 logout()
             default:
                 // Other errors: silently fail, will retry on next check
+                print("⚠️ [Auth] refreshToken: その他のエラー(\(httpResponse.statusCode)) → 次回再試行")
                 break
             }
         } catch {
             // Network error: silently fail, will retry on next check
+            print("⚠️ [Auth] refreshToken: ネットワークエラー - \(error.localizedDescription)")
         }
     }
 
