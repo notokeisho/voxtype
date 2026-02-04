@@ -8,6 +8,7 @@ struct VoxTypeApp: App {
     @StateObject private var authService = AuthService.shared
     @StateObject private var hotkeyManager = HotkeyManager.shared
     @StateObject private var coordinator = AppCoordinator.shared
+    @StateObject private var localization = LocalizationManager.shared
 
     init() {
         // Request accessibility permission on app launch
@@ -22,6 +23,7 @@ struct VoxTypeApp: App {
                 .environmentObject(appState)
                 .environmentObject(authService)
                 .environmentObject(hotkeyManager)
+                .environmentObject(localization)
                 .onAppear {
                     // Initialize coordinator with shared instances
                     coordinator.setup(
@@ -42,6 +44,7 @@ struct VoxTypeApp: App {
                 .environmentObject(appState)
                 .environmentObject(authService)
                 .environmentObject(hotkeyManager)
+                .environmentObject(localization)
         }
     }
 }
