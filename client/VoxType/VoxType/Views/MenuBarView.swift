@@ -139,13 +139,13 @@ struct MenuBarView: View {
         switch appState.status {
         case .idle, .error, .completed:
             Button(action: { AppCoordinator.shared.startRecordingFromUI() }) {
-                Label("録音開始", systemImage: "record.circle")
+                Label("Start Recording", systemImage: "record.circle")
             }
             .buttonStyle(RecordingButtonStyle(isRecording: false))
 
         case .recording:
             Button(action: { AppCoordinator.shared.stopRecordingFromUI() }) {
-                Label("録音停止", systemImage: "stop.circle.fill")
+                Label("Stop Recording", systemImage: "stop.circle.fill")
             }
             .buttonStyle(RecordingButtonStyle(isRecording: true))
 
@@ -153,7 +153,7 @@ struct MenuBarView: View {
             HStack {
                 ProgressView()
                     .scaleEffect(0.7)
-                Text("処理中...")
+                Text("Processing...")
                     .font(.subheadline)
             }
             .frame(maxWidth: .infinity)
