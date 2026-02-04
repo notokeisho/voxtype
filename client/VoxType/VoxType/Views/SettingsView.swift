@@ -3,6 +3,7 @@ import SwiftUI
 /// Settings view for the application.
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var localization: LocalizationManager
     @StateObject private var settings = AppSettings.shared
     @StateObject private var authService = AuthService.shared
 
@@ -10,31 +11,42 @@ struct SettingsView: View {
         TabView {
             AccountSettingsView()
                 .environmentObject(authService)
+                .environmentObject(localization)
                 .tabItem {
-                    Label("Account", systemImage: "person.circle")
+                    Label(localization.t("settings.account"), systemImage: "person.circle")
                 }
 
             GeneralSettingsView()
                 .environmentObject(settings)
+                .environmentObject(localization)
                 .tabItem {
-                    Label("General", systemImage: "gear")
+                    Label(localization.t("settings.general"), systemImage: "gear")
                 }
 
             HotkeySettingsView()
                 .environmentObject(settings)
+                .environmentObject(localization)
                 .tabItem {
-                    Label("Hotkey", systemImage: "keyboard")
+                    Label(localization.t("settings.hotkey"), systemImage: "keyboard")
                 }
 
             DictionarySettingsView()
                 .environmentObject(authService)
+                .environmentObject(localization)
                 .tabItem {
-                    Label("Dictionary", systemImage: "text.book.closed")
+                    Label(localization.t("settings.dictionary"), systemImage: "text.book.closed")
+                }
+
+            LanguageSettingsView()
+                .environmentObject(localization)
+                .tabItem {
+                    Label(localization.t("settings.language"), systemImage: "globe")
                 }
 
             AboutView()
+                .environmentObject(localization)
                 .tabItem {
-                    Label("About", systemImage: "info.circle")
+                    Label(localization.t("settings.about"), systemImage: "info.circle")
                 }
         }
         .frame(width: 480, height: 360)
@@ -956,6 +968,34 @@ struct LicenseRow: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Language Settings Tab
+
+/// Language settings tab for changing app display language.
+struct LanguageSettingsView: View {
+    @EnvironmentObject var localization: LocalizationManager
+
+    var body: some View {
+        Form {
+            Section {
+                Picker(localization.t("language.appLanguage"), selection: $localization.language) {
+                    ForEach(Language.allCases, id: \.self) { lang in
+                        Text(lang.displayName).tag(lang)
+                    }
+                }
+                .pickerStyle(.inline)
+
+                Text(localization.t("language.description"))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            } header: {
+                Text(localization.t("language.title"))
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
     }
 }
 
