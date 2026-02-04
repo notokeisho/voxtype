@@ -4,6 +4,7 @@ import { removeToken, type User } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { LanguageSwitcher, useLanguage } from '@/lib/i18n'
 import { LayoutDashboard, Users, UserCheck, BookOpen, type LucideIcon } from 'lucide-react'
+import logo from '@/assets/logo.svg'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -37,11 +38,14 @@ export function Layout({ children, user }: LayoutProps) {
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="px-6">
           <div className="flex justify-between h-16 items-center">
-            <h1 className="text-xl font-bold text-gray-900">
-              VoxType Admin
-            </h1>
+            <div className="flex items-center gap-3">
+              <img src={logo} alt="VoxType" className="w-8 h-8" />
+              <h1 className="text-xl font-bold text-gray-900">
+                VoxType Admin
+              </h1>
+            </div>
             <div className="flex items-center gap-4">
               {user && (
                 <>

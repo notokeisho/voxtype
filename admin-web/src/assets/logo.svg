@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="coreGradOverlap" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#fbbf24"/>
+      <stop offset="60%" style="stop-color:#f97316"/>
+      <stop offset="100%" style="stop-color:#ea580c"/>
+    </radialGradient>
+    <clipPath id="bgClipOverlap">
+      <rect x="32" y="32" width="960" height="960" rx="220"/>
+    </clipPath>
+  </defs>
+
+  <!-- 黒い角丸背景 -->
+  <rect x="32" y="32" width="960" height="960" rx="220" fill="#1a1a1a"/>
+
+  <g clip-path="url(#bgClipOverlap)">
+    <!-- 中心のコア -->
+    <circle cx="512" cy="512" r="186" fill="url(#coreGradOverlap)"/>
+    <circle cx="512" cy="512" r="70" fill="#1a1a1a"/>
+
+    <!-- 螺旋アーム1（2点、被り気味） -->
+    <circle cx="745" cy="372" r="93" fill="#c2410c"/>
+    <circle cx="838" cy="605" r="70" fill="#f97316"/>
+
+    <!-- 螺旋アーム2（2点、被り気味） -->
+    <circle cx="279" cy="651" r="93" fill="#c2410c"/>
+    <circle cx="186" cy="419" r="70" fill="#f97316"/>
+  </g>
+</svg>
