@@ -53,6 +53,7 @@ whisper: whisper-build ## Start whisper.cpp server
 			--name whisper-server \
 			-p 8080:8080 \
 			-v $(PWD)/whisper/models:/app/models:ro \
+			-e VOICE_LANGUAGE=$(or $(VOICE_LANGUAGE),ja) \
 			whisper-server; \
 	fi
 	@echo "Waiting for Whisper server to be ready..."
