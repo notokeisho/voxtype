@@ -54,6 +54,8 @@ whisper: whisper-build ## Start whisper.cpp server
 			-p 8080:8080 \
 			-v $(PWD)/whisper/models:/app/models:ro \
 			-e VOICE_LANGUAGE=$(or $(VOICE_LANGUAGE),ja) \
+			-e WHISPER_MODEL=/app/models/ggml-small.bin \
+			-e ENABLE_VAD=false \
 			whisper-server; \
 	fi
 	@echo "Waiting for Whisper server to be ready..."
