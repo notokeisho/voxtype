@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.config import settings
-from app.services.postprocess import apply_dictionary
+from app.services.postprocess import apply_dictionary, remove_fillers
 
 
 def run_async(coro):
@@ -280,5 +280,69 @@ class TestEmptyAndEdgeCases:
             result = run_async(apply_dictionary(text_input, user_id))
 
             assert result == "人工知能と人工知能と人工知能"
+        finally:
+            cleanup_test_data(github_id)
+
+
+class TestFillerRemoval:
+    """Tests for Japanese filler word removal."""
+
+    def test_remove_single_filler(self):
+        """Test removal of a single filler word."""
+        assert remove_fillers("えーとこんにちは") == "こんにちは"
+        assert remove_fillers("えっとテストです") == "テストです"
+        assert remove_fillers("ええとわかりました") == "わかりました"
+
+    def test_remove_multiple_fillers(self):
+        """Test removal of multiple filler words."""
+        assert remove_fillers("えーとまあテストです") == "テストです"
+        assert remove_fillers("なんかえーとうーん") == ""
+
+    def test_filler_with_long_vowel(self):
+        """Test removal of fillers with long vowels."""
+        assert remove_fillers("あのーテストです") == "テストです"
+        assert remove_fillers("うーん難しいですね") == "難しいですね"
+
+    def test_maa_filler(self):
+        """Test removal of まあ/まぁ filler."""
+        assert remove_fillers("まあいいでしょう") == "いいでしょう"
+        assert remove_fillers("まぁそうですね") == "そうですね"
+
+    def test_nanka_filler(self):
+        """Test removal of なんか filler."""
+        assert remove_fillers("なんかよくわからない") == "よくわからない"
+
+    def test_safe_words_not_removed(self):
+        """Test that safe words containing filler patterns are not affected."""
+        # あの without long vowel should NOT be removed (excluded from list)
+        assert remove_fillers("あの人が来ました") == "あの人が来ました"
+        # その should NOT be removed (excluded from list)
+        assert remove_fillers("その通りです") == "その通りです"
+        # こう should NOT be removed (excluded from list)
+        assert remove_fillers("こういうことです") == "こういうことです"
+
+    def test_empty_text(self):
+        """Test with empty text."""
+        assert remove_fillers("") == ""
+        assert remove_fillers(None) is None
+
+    def test_whitespace_normalization(self):
+        """Test that multiple spaces are normalized to single space."""
+        assert remove_fillers("えーと  テストです") == "テストです"
+        assert remove_fillers("まあ   いいでしょう") == "いいでしょう"
+
+    def test_filler_removal_in_apply_dictionary(self):
+        """Test that fillers are removed before dictionary replacement."""
+        github_id = "filler_dict_test_1"
+        try:
+            user_id = setup_test_data(github_id)
+            add_global_entry("テスト", "test")
+
+            # Filler should be removed, then dictionary applied
+            text_input = "えーとテストです"
+            result = run_async(apply_dictionary(text_input, user_id))
+
+            assert "えーと" not in result
+            assert "test" in result
         finally:
             cleanup_test_data(github_id)

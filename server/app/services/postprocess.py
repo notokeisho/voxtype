@@ -2,6 +2,7 @@
 
 This service applies dictionary replacements to transcribed text,
 supporting both global and user-specific dictionaries with case-insensitive matching.
+It also removes Japanese filler words for cleaner output.
 """
 
 import re
@@ -10,15 +11,57 @@ from app.database import async_session_factory
 from app.models.global_dictionary import get_global_entries
 from app.models.user_dictionary import get_user_entries
 
+# Japanese filler words to remove (safe patterns only)
+# Excluded: あの, その, こう, うん, ほら, ね, さ (may break words like あの人, その通り, こういう)
+JAPANESE_FILLERS = [
+    "えーと", "えっと", "ええと",
+    "あのー",
+    "うーん",
+    "えー", "ええ",
+    "まあ", "まぁ",
+    "なんか",
+]
+
+
+def remove_fillers(text: str) -> str:
+    """Remove Japanese filler words from text.
+
+    Args:
+        text: The text to process
+
+    Returns:
+        The text with filler words removed
+    """
+    if not text:
+        return text
+
+    result = text
+
+    # Remove filler words (with optional trailing comma/space)
+    for filler in JAPANESE_FILLERS:
+        # Remove filler followed by comma and optional space
+        result = result.replace(filler + "、", "")
+        result = result.replace(filler + "，", "")
+        # Remove filler alone
+        result = result.replace(filler, "")
+
+    # Remove leading punctuation
+    result = re.sub(r'^[、，\s]+', '', result)
+
+    # Normalize whitespace (multiple spaces to single space)
+    result = re.sub(r'\s+', ' ', result).strip()
+    return result
+
 
 async def apply_dictionary(text: str, user_id: int) -> str:
     """Apply dictionary replacements to text.
 
     Processing order:
-    1. Get user dictionary entries (higher priority)
-    2. Get global dictionary entries
-    3. Apply user dictionary replacements first (case-insensitive)
-    4. Apply global dictionary replacements for unmatched patterns (case-insensitive)
+    1. Remove filler words
+    2. Get user dictionary entries (higher priority)
+    3. Get global dictionary entries
+    4. Apply user dictionary replacements first (case-insensitive)
+    5. Apply global dictionary replacements for unmatched patterns (case-insensitive)
 
     Args:
         text: The text to process
@@ -30,13 +73,15 @@ async def apply_dictionary(text: str, user_id: int) -> str:
     if not text:
         return text
 
+    # Step 1: Remove filler words first
+    result = remove_fillers(text)
+
     async with async_session_factory() as session:
         # Get dictionary entries
         user_entries = await get_user_entries(session, user_id)
         global_entries = await get_global_entries(session)
 
         # Apply user dictionary first (higher priority)
-        result = text
         applied_patterns = set()
 
         for entry in user_entries:
