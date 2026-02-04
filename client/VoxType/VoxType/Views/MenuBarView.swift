@@ -4,6 +4,7 @@ import SwiftUI
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var localization: LocalizationManager
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -66,12 +67,12 @@ struct MenuBarView: View {
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     } else {
-                        Text("Authenticated")
+                        Text(localization.t("menu.authenticated"))
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                 } else {
-                    Text("Not logged in")
+                    Text(localization.t("menu.notLoggedIn"))
                         .font(.caption2)
                         .foregroundColor(.orange)
                 }
@@ -115,7 +116,7 @@ struct MenuBarView: View {
                 .opacity(pulsingOpacity)
                 .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: pulsingOpacity)
 
-            Text("Recording")
+            Text(localization.t("menu.recording"))
                 .font(.subheadline)
                 .foregroundColor(.red)
 
@@ -139,13 +140,13 @@ struct MenuBarView: View {
         switch appState.status {
         case .idle, .error, .completed:
             Button(action: { AppCoordinator.shared.startRecordingFromUI() }) {
-                Label("Start Recording", systemImage: "record.circle")
+                Label(localization.t("menu.startRecording"), systemImage: "record.circle")
             }
             .buttonStyle(RecordingButtonStyle(isRecording: false))
 
         case .recording:
             Button(action: { AppCoordinator.shared.stopRecordingFromUI() }) {
-                Label("Stop Recording", systemImage: "stop.circle.fill")
+                Label(localization.t("menu.stopRecording"), systemImage: "stop.circle.fill")
             }
             .buttonStyle(RecordingButtonStyle(isRecording: true))
 
@@ -153,7 +154,7 @@ struct MenuBarView: View {
             HStack {
                 ProgressView()
                     .scaleEffect(0.7)
-                Text("Processing...")
+                Text(localization.t("menu.processing"))
                     .font(.subheadline)
             }
             .frame(maxWidth: .infinity)
@@ -163,7 +164,7 @@ struct MenuBarView: View {
 
     private func lastTranscribedSection(text: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Last transcription:")
+            Text(localization.t("menu.lastTranscription"))
                 .font(.caption)
                 .foregroundColor(.secondary)
 
@@ -175,7 +176,7 @@ struct MenuBarView: View {
                 .background(Color.secondary.opacity(0.1))
                 .cornerRadius(6)
 
-            Button("Copy to Clipboard") {
+            Button(localization.t("menu.copyToClipboard")) {
                 copyToClipboard(text)
             }
             .buttonStyle(.link)
@@ -206,11 +207,11 @@ struct MenuBarView: View {
 
             if authService.isAuthenticated {
                 Button(action: logout) {
-                    Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
+                    Label(localization.t("menu.logout"), systemImage: "rectangle.portrait.and.arrow.right")
                 }
             } else {
                 Button(action: login) {
-                    Label("Login with GitHub", systemImage: "person.badge.key")
+                    Label(localization.t("menu.login"), systemImage: "person.badge.key")
                 }
             }
 
@@ -218,7 +219,7 @@ struct MenuBarView: View {
                 .padding(.vertical, 4)
 
             Button(action: quitApp) {
-                Label("Quit VoxType", systemImage: "power")
+                Label(localization.t("menu.quit"), systemImage: "power")
             }
             .keyboardShortcut("q", modifiers: .command)
         }
@@ -229,14 +230,14 @@ struct MenuBarView: View {
     private var settingsButton: some View {
         if #available(macOS 14.0, *) {
             SettingsLink {
-                Label("Settings...", systemImage: "gear")
+                Label(localization.t("menu.settings"), systemImage: "gear")
             }
             .simultaneousGesture(TapGesture().onEnded {
                 bringSettingsToFront()
             })
         } else {
             Button(action: openSettingsLegacy) {
-                Label("Settings...", systemImage: "gear")
+                Label(localization.t("menu.settings"), systemImage: "gear")
             }
         }
     }
