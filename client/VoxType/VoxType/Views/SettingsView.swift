@@ -883,6 +883,8 @@ struct DictionaryEntryRow: View {
 
 /// About tab with version info and licenses.
 struct AboutView: View {
+    @EnvironmentObject var localization: LocalizationManager
+
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
     }
@@ -904,10 +906,10 @@ struct AboutView: View {
                     .font(.title)
                     .fontWeight(.bold)
 
-                Text("Version \(appVersion) (\(buildNumber))")
+                Text("\(localization.t("about.version")) \(appVersion) (\(buildNumber))")
                     .foregroundColor(.secondary)
 
-                Text("Voice to Text")
+                Text(localization.t("about.voiceToText"))
                     .font(.caption)
                     .foregroundColor(.secondary)
 
@@ -916,7 +918,7 @@ struct AboutView: View {
 
                 // License section
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Open Source Licenses")
+                    Text(localization.t("about.licenses"))
                         .font(.headline)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -931,10 +933,10 @@ struct AboutView: View {
                     .padding(.vertical, 8)
 
                 HStack(spacing: 16) {
-                    Link("GitHub", destination: URL(string: "https://github.com")!)
+                    Link(localization.t("about.github"), destination: URL(string: "https://github.com")!)
                     Text("•")
                         .foregroundColor(.secondary)
-                    Link("Documentation", destination: URL(string: "https://github.com")!)
+                    Link(localization.t("about.documentation"), destination: URL(string: "https://github.com")!)
                 }
                 .font(.caption)
 
