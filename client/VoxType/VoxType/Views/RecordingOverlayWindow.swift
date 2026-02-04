@@ -153,9 +153,13 @@ private struct RecordingOverlayContentView: View {
 
     var body: some View {
         ZStack {
-            // Background with blur effect
-            VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+            // Dark gray background (not pure black) for better visibility
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color(red: 0.15, green: 0.15, blue: 0.17).opacity(0.95))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color(red: 0.95, green: 0.6, blue: 0.3), lineWidth: 1.5)
+                )
 
             // Visualizer content
             AudioVisualizerView(audioLevel: appState.audioLevel)

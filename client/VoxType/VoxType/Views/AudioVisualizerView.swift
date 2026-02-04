@@ -50,9 +50,16 @@ struct AudioVisualizerView: View {
 
     // MARK: - Private Computed Properties
 
-    /// Bar color that adapts to system appearance.
-    private var barColor: Color {
-        Color.primary.opacity(0.8)
+    /// Brand orange color for the visualizer bars (muted tone).
+    private var barColor: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color(red: 0.95, green: 0.65, blue: 0.35).opacity(0.85),  // Soft orange
+                Color(red: 0.85, green: 0.50, blue: 0.25).opacity(0.85)   // Muted dark orange
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
     }
 
     // MARK: - Private Methods
