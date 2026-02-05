@@ -559,6 +559,10 @@ struct DictionarySettingsView: View {
     @State private var showingDeleteConfirmation = false
     @State private var entryToDelete: DictionaryEntry?
 
+    // Focus management for keyboard navigation
+    @State private var isPatternFocused = false
+    @State private var isReplacementFocused = false
+
     private var authToken: String? {
         authService.token
     }
@@ -596,6 +600,12 @@ struct DictionarySettingsView: View {
         }
         .onAppear {
             loadEntries()
+            // Auto-focus pattern field when tab appears
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                if isAuthenticated {
+                    isPatternFocused = true
+                }
+            }
         }
         .alert(localization.t("dictionary.deleteTitle"), isPresented: $showingDeleteConfirmation) {
             Button(localization.t("common.cancel"), role: .cancel) {}
@@ -732,8 +742,17 @@ struct DictionarySettingsView: View {
                     Text(localization.t("dictionary.pattern"))
                         .font(.caption2)
                         .foregroundColor(.secondary)
-                    IMETextField(text: $newPattern, placeholder: "e.g., くろーど")
-                        .frame(height: 22)
+                    IMETextField(
+                        text: $newPattern,
+                        placeholder: "e.g., くろーど",
+                        onSubmit: {
+                            // Move focus to replacement field
+                            isPatternFocused = false
+                            isReplacementFocused = true
+                        },
+                        isFocused: $isPatternFocused
+                    )
+                    .frame(height: 22)
                 }
 
                 Text("→")
@@ -744,8 +763,22 @@ struct DictionarySettingsView: View {
                     Text(localization.t("dictionary.replacement"))
                         .font(.caption2)
                         .foregroundColor(.secondary)
-                    IMETextField(text: $newReplacement, placeholder: "e.g., Claude")
-                        .frame(height: 22)
+                    IMETextField(
+                        text: $newReplacement,
+                        placeholder: "e.g., Claude",
+                        onSubmit: {
+                            // Add entry and return focus to pattern field
+                            if canAdd {
+                                addEntry()
+                                isReplacementFocused = false
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    isPatternFocused = true
+                                }
+                            }
+                        },
+                        isFocused: $isReplacementFocused
+                    )
+                    .frame(height: 22)
                 }
 
                 Button {
