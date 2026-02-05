@@ -93,6 +93,8 @@ services:
     build:
       context: ./admin-web
       dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-https://voxtype.oshiruko.dev}
     expose:
       - "80"
     depends_on:
