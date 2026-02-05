@@ -159,11 +159,9 @@ dmg: client-build ## Build macOS client and create DMG (VERSION=x.x.x to overrid
 	@echo ""
 	@echo "Creating DMG for VoxType v$(VERSION)..."
 	@mkdir -p $(CLIENT_DMG_RESOURCES) $(CLIENT_DIST)
-	@# Create orange gradient background if not exists
-	@if [ ! -f "$(CLIENT_DMG_RESOURCES)/dmg-background.png" ]; then \
-		echo "Creating orange gradient background..."; \
-		magick -size 540x380 gradient:'#FF6B35'-'#FF8C42' $(CLIENT_DMG_RESOURCES)/dmg-background.png; \
-	fi
+	@# Create diagonal gradient background (top-left cream to bottom-right deep orange)
+	@echo "Creating diagonal gradient background..."
+	@magick -size 540x380 xc: -sparse-color Bilinear '0,0 #FFF8DC 540,380 #E65100' $(CLIENT_DMG_RESOURCES)/dmg-background.png
 	@# Remove old DMG if exists
 	@rm -f $(CLIENT_DIST)/VoxType-$(VERSION).dmg
 	@# Create DMG
