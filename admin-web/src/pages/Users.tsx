@@ -81,7 +81,9 @@ export function UsersPage() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
-    return new Date(dateString).toLocaleString(language === 'ja' ? 'ja-JP' : 'en-US')
+    // Ensure the date is parsed as UTC (server returns UTC without timezone suffix)
+    const utcDate = dateString.endsWith('Z') ? dateString : dateString + 'Z'
+    return new Date(utcDate).toLocaleString(language === 'ja' ? 'ja-JP' : 'en-US')
   }
 
   const getUserDisplayName = (user: User) => {

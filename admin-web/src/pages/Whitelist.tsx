@@ -148,7 +148,9 @@ export function WhitelistPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString(language === 'ja' ? 'ja-JP' : 'en-US')
+    // Ensure the date is parsed as UTC (server returns UTC without timezone suffix)
+    const utcDate = dateString.endsWith('Z') ? dateString : dateString + 'Z'
+    return new Date(utcDate).toLocaleString(language === 'ja' ? 'ja-JP' : 'en-US')
   }
 
   if (loading) {
