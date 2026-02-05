@@ -732,8 +732,8 @@ struct DictionarySettingsView: View {
                     Text(localization.t("dictionary.pattern"))
                         .font(.caption2)
                         .foregroundColor(.secondary)
-                    TextField("e.g., くろーど", text: $newPattern)
-                        .textFieldStyle(.roundedBorder)
+                    IMETextField(text: $newPattern, placeholder: "e.g., くろーど")
+                        .frame(height: 22)
                 }
 
                 Text("→")
@@ -744,8 +744,8 @@ struct DictionarySettingsView: View {
                     Text(localization.t("dictionary.replacement"))
                         .font(.caption2)
                         .foregroundColor(.secondary)
-                    TextField("e.g., Claude", text: $newReplacement)
-                        .textFieldStyle(.roundedBorder)
+                    IMETextField(text: $newReplacement, placeholder: "e.g., Claude")
+                        .frame(height: 22)
                 }
 
                 Button {
