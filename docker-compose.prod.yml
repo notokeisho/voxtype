@@ -82,6 +82,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - VOICE_LANGUAGE=${VOICE_LANGUAGE:-ja}
+      - WHISPER_MODEL=/app/models/ggml-small.bin
+      - ENABLE_VAD=false
     expose:
       - "8080"
     volumes:
