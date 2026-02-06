@@ -73,11 +73,11 @@ services:
       timeout: 5s
       retries: 5
 
-  # Whisper Speech Recognition
+  # Whisper Speech Recognition (GPU)
   whisper:
     build:
       context: ./whisper
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.gpu
     environment:
       - VOICE_LANGUAGE=${VOICE_LANGUAGE:-ja}
       - WHISPER_MODEL=/app/models/ggml-small.bin
@@ -87,6 +87,13 @@ services:
     volumes:
       - ./whisper/models:/app/models:ro
     restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
   # Admin Web UI
   admin-web:
