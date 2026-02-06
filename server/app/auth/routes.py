@@ -32,7 +32,9 @@ async def _handle_login(request: Request):
 
     redirect_uri = str(request.url_for("callback"))
     # Force HTTPS for production (Cloudflare Tunnel terminates TLS)
-    redirect_uri = redirect_uri.replace("http://", "https://")
+    # Skip for localhost development
+    if "localhost" not in redirect_uri and "127.0.0.1" not in redirect_uri:
+        redirect_uri = redirect_uri.replace("http://", "https://")
     github = oauth.create_client("github")
     return await github.authorize_redirect(request, redirect_uri)
 
