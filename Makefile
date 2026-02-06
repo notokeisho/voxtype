@@ -3,7 +3,7 @@
 # ===========================================
 
 .PHONY: help db whisper backend up down clean migrate logs dmg client-build \
-	prod-setup prod-up prod-down prod-ps prod-migrate prod-download-model prod-restart
+	prod-setup prod-up prod-down prod-ps prod-migrate prod-download-model prod-restart prod-build prod-rebuild
 
 # Load environment variables (optional, for local development)
 -include .env
@@ -215,7 +215,10 @@ prod-logs: ## Show production logs (all services)
 prod-logs-server: ## Show production server logs
 	docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f server
 
-prod-setup: prod-download-model ## Initial production setup (download model, migrate, start)
+prod-build: ## Build production images
+	docker compose -f docker-compose.prod.yml --env-file .env.prod build
+
+prod-setup: prod-download-model prod-build ## Initial production setup (download model, build, migrate, start)
 	@echo "=== Starting database ==="
 	docker compose -f docker-compose.prod.yml --env-file .env.prod up -d db
 	@echo "=== Waiting for database to be ready ==="
@@ -227,4 +230,14 @@ prod-setup: prod-download-model ## Initial production setup (download model, mig
 	@echo ""
 	@echo "==================================="
 	@echo "Production setup complete!"
+	@echo "==================================="
+
+prod-rebuild: prod-build ## Rebuild and restart production (pull, build, migrate, restart)
+	@echo "=== Running migrations ==="
+	$(MAKE) prod-migrate
+	@echo "=== Restarting all services ==="
+	docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+	@echo ""
+	@echo "==================================="
+	@echo "Production rebuild complete!"
 	@echo "==================================="
