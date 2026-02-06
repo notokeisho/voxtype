@@ -2,10 +2,11 @@
 # VoxType - Local Development
 # ===========================================
 
-.PHONY: help db whisper backend up down clean migrate logs dmg client-build
+.PHONY: help db whisper backend up down clean migrate logs dmg client-build \
+	prod-setup prod-up prod-down prod-ps prod-migrate prod-download-model prod-restart
 
-# Load environment variables
-include .env
+# Load environment variables (optional, for local development)
+-include .env
 export
 
 help: ## Show this help
@@ -181,4 +182,49 @@ dmg: client-build ## Build macOS client and create DMG (VERSION=x.x.x to overrid
 	@echo "==================================="
 	@echo "DMG created successfully!"
 	@echo "Location: $(CLIENT_DIST)/VoxType-$(VERSION).dmg"
+	@echo "==================================="
+
+# ===========================================
+# Production
+# ===========================================
+
+prod-download-model: ## Download Whisper model for production
+	@echo "=== Downloading Whisper model ==="
+	mkdir -p whisper/models
+	cd whisper/whisper.cpp/models && ./download-ggml-model.sh small && mv ggml-small.bin ../../models/
+	@echo "=== Model download complete ==="
+
+prod-migrate: ## Run production database migrations
+	docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm server alembic upgrade head
+
+prod-up: ## Start production services
+	docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+
+prod-down: ## Stop production services
+	docker compose -f docker-compose.prod.yml --env-file .env.prod down
+
+prod-restart: ## Restart production services
+	docker compose -f docker-compose.prod.yml --env-file .env.prod restart
+
+prod-ps: ## Show production container status
+	docker compose -f docker-compose.prod.yml --env-file .env.prod ps
+
+prod-logs: ## Show production logs (all services)
+	docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f
+
+prod-logs-server: ## Show production server logs
+	docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f server
+
+prod-setup: prod-download-model ## Initial production setup (download model, migrate, start)
+	@echo "=== Starting database ==="
+	docker compose -f docker-compose.prod.yml --env-file .env.prod up -d db
+	@echo "=== Waiting for database to be ready ==="
+	sleep 10
+	@echo "=== Running migrations ==="
+	$(MAKE) prod-migrate
+	@echo "=== Starting all services ==="
+	$(MAKE) prod-up
+	@echo ""
+	@echo "==================================="
+	@echo "Production setup complete!"
 	@echo "==================================="
