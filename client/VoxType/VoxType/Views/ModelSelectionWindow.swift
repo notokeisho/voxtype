@@ -120,7 +120,7 @@ private struct ModelSelectionContentView: View {
             }
 
             Text(localization.t("modelPopup.hint"))
-                .font(.caption)
+                .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(Color(red: 0.85, green: 0.85, blue: 0.9))
         }
         .padding(14)
