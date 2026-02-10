@@ -216,11 +216,12 @@ class AppCoordinator: ObservableObject {
 
         let apiClient = APIClient.shared
         let clipboardManager = ClipboardManager.shared
+        let selectedModel = AppSettings.shared.whisperModel
 
         Task {
             do {
                 // Send audio to server for transcription
-                let response = try await apiClient.transcribe(audioURL: url)
+                let response = try await apiClient.transcribe(audioURL: url, model: selectedModel)
 
                 // Close menu bar window if open (orderOut does nothing if not open)
                 NSApp.keyWindow?.orderOut(nil)
