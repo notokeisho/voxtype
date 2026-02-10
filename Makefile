@@ -2,8 +2,8 @@
 # VoxType - Local Development
 # ===========================================
 
-.PHONY: help db whisper backend up down clean migrate logs dmg client-build \
-	prod-setup prod-up prod-down prod-ps prod-migrate prod-download-model prod-restart prod-build prod-rebuild
+.PHONY: help db whisper backend up down clean migrate logs dmg client-build download-models \
+	prod-setup prod-up prod-down prod-ps prod-migrate prod-download-models prod-restart prod-build prod-rebuild
 
 # Load environment variables (optional, for local development)
 -include .env
@@ -65,6 +65,23 @@ whisper: whisper-build ## Start whisper.cpp server
 
 whisper-stop: ## Stop whisper.cpp server
 	docker stop whisper-server || true
+
+download-models: ## Download all Whisper models (skip existing)
+	@echo "=== Downloading Whisper models ==="
+	@mkdir -p whisper/models
+	@if [ ! -f whisper/models/ggml-small.bin ]; then \
+		echo "Downloading small model..."; \
+		cd whisper/whisper.cpp/models && ./download-ggml-model.sh small && mv ggml-small.bin ../../models/; \
+	else \
+		echo "small model already exists, skipping"; \
+	fi
+	@if [ ! -f whisper/models/ggml-medium.bin ]; then \
+		echo "Downloading medium model..."; \
+		cd whisper/whisper.cpp/models && ./download-ggml-model.sh medium && mv ggml-medium.bin ../../models/; \
+	else \
+		echo "medium model already exists, skipping"; \
+	fi
+	@echo "=== Model download complete ==="
 
 # ===========================================
 # Backend Server
@@ -188,10 +205,21 @@ dmg: client-build ## Build macOS client and create DMG (VERSION=x.x.x to overrid
 # Production
 # ===========================================
 
-prod-download-model: ## Download Whisper model for production
-	@echo "=== Downloading Whisper model ==="
-	mkdir -p whisper/models
-	cd whisper/whisper.cpp/models && ./download-ggml-model.sh small && mv ggml-small.bin ../../models/
+prod-download-models: ## Download all Whisper models for production (skip existing)
+	@echo "=== Downloading Whisper models ==="
+	@mkdir -p whisper/models
+	@if [ ! -f whisper/models/ggml-small.bin ]; then \
+		echo "Downloading small model..."; \
+		cd whisper/whisper.cpp/models && ./download-ggml-model.sh small && mv ggml-small.bin ../../models/; \
+	else \
+		echo "small model already exists, skipping"; \
+	fi
+	@if [ ! -f whisper/models/ggml-medium.bin ]; then \
+		echo "Downloading medium model..."; \
+		cd whisper/whisper.cpp/models && ./download-ggml-model.sh medium && mv ggml-medium.bin ../../models/; \
+	else \
+		echo "medium model already exists, skipping"; \
+	fi
 	@echo "=== Model download complete ==="
 
 prod-migrate: ## Run production database migrations
@@ -218,7 +246,7 @@ prod-logs-server: ## Show production server logs
 prod-build: ## Build production images
 	docker compose -f docker-compose.prod.yml --env-file .env.prod build
 
-prod-setup: prod-download-model prod-build ## Initial production setup (download model, build, migrate, start)
+prod-setup: prod-download-models prod-build ## Initial production setup (download models, build, migrate, start)
 	@echo "=== Starting database ==="
 	docker compose -f docker-compose.prod.yml --env-file .env.prod up -d db
 	@echo "=== Waiting for database to be ready ==="
