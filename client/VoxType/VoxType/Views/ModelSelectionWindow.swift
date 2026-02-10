@@ -65,6 +65,11 @@ final class ModelSelectionWindow: NSPanel {
         onClose = nil
     }
 
+    func confirmSelectionAndClose() {
+        settings.whisperModel = state.selection
+        closePopup()
+    }
+
     override func close() {
         closePopup()
     }
@@ -76,8 +81,7 @@ final class ModelSelectionWindow: NSPanel {
         case 125: // Down arrow
             moveSelection(delta: 1)
         case 36, 76: // Enter, Keypad Enter
-            settings.whisperModel = state.selection
-            closePopup()
+            confirmSelectionAndClose()
         case 53: // Escape
             closePopup()
         default:
