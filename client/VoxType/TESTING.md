@@ -105,6 +105,8 @@ open VoxType.xcodeproj
 - [ ] Settings > General でサーバーURLを変更できる
 - [ ] 「Test Connection」で接続テストができる
 - [ ] Settings > Hotkey でホットキー設定を確認できる
+- [ ] Settings > Hotkey でモデル変更ホットキーが Control + M になっている
+- [ ] モデル変更ホットキーを変更してアプリ再起動後も維持される
 - [ ] Settings > Dictionary で辞書エントリを追加/削除できる
 
 ---

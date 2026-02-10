@@ -12,6 +12,8 @@ class AppSettings: ObservableObject {
         static let serverURL = "serverURL"
         static let hotkeyModifiers = "hotkeyModifiers"
         static let hotkeyKeyCode = "hotkeyKeyCode"
+        static let modelHotkeyModifiers = "modelHotkeyModifiers"
+        static let modelHotkeyKeyCode = "modelHotkeyKeyCode"
         static let launchAtLogin = "launchAtLogin"
         static let showInDock = "showInDock"
         static let whisperModel = "whisperModel"
@@ -23,6 +25,8 @@ class AppSettings: ObservableObject {
         static let serverURL = "http://localhost:8000"
         static let hotkeyModifiers: UInt = 0x040000  // Control only
         static let hotkeyKeyCode: UInt16 = 47        // Period key (.)
+        static let modelHotkeyModifiers: UInt = 0x040000  // Control only
+        static let modelHotkeyKeyCode: UInt16 = 46        // M key
     }
 
     // MARK: - Published Properties
@@ -45,6 +49,20 @@ class AppSettings: ObservableObject {
     @Published var hotkeyKeyCode: UInt16 {
         didSet {
             UserDefaults.standard.set(Int(hotkeyKeyCode), forKey: Keys.hotkeyKeyCode)
+        }
+    }
+
+    /// Model change hotkey modifier flags.
+    @Published var modelHotkeyModifiers: UInt {
+        didSet {
+            UserDefaults.standard.set(modelHotkeyModifiers, forKey: Keys.modelHotkeyModifiers)
+        }
+    }
+
+    /// Model change hotkey key code.
+    @Published var modelHotkeyKeyCode: UInt16 {
+        didSet {
+            UserDefaults.standard.set(Int(modelHotkeyKeyCode), forKey: Keys.modelHotkeyKeyCode)
         }
     }
 
@@ -73,22 +91,12 @@ class AppSettings: ObservableObject {
 
     /// Human-readable hotkey string.
     var hotkeyDisplayString: String {
-        var parts: [String] = []
+        formatHotkeyDisplayString(modifiers: hotkeyModifiers, keyCode: hotkeyKeyCode)
+    }
 
-        if hotkeyModifiers & (1 << 18) != 0 { parts.append("⌃") }  // Control
-        if hotkeyModifiers & (1 << 19) != 0 { parts.append("⌥") }  // Option
-        if hotkeyModifiers & (1 << 17) != 0 { parts.append("⇧") }  // Shift
-        if hotkeyModifiers & (1 << 20) != 0 { parts.append("⌘") }  // Command
-
-        // Default to ⌘⇧ if no modifiers set
-        if parts.isEmpty {
-            parts = ["⌘", "⇧"]
-        }
-
-        let keyName = keyCodeToString(hotkeyKeyCode)
-        parts.append(keyName)
-
-        return parts.joined()
+    /// Human-readable model change hotkey string.
+    var modelHotkeyDisplayString: String {
+        formatHotkeyDisplayString(modifiers: modelHotkeyModifiers, keyCode: modelHotkeyKeyCode)
     }
 
     /// Server URL as URL object.
@@ -109,6 +117,8 @@ class AppSettings: ObservableObject {
         let storedServerURL = UserDefaults.standard.string(forKey: Keys.serverURL)
         let storedModifiers = UserDefaults.standard.integer(forKey: Keys.hotkeyModifiers)
         let storedKeyCode = UserDefaults.standard.integer(forKey: Keys.hotkeyKeyCode)
+        let storedModelModifiers = UserDefaults.standard.integer(forKey: Keys.modelHotkeyModifiers)
+        let storedModelKeyCode = UserDefaults.standard.integer(forKey: Keys.modelHotkeyKeyCode)
         let storedLaunchAtLogin = UserDefaults.standard.bool(forKey: Keys.launchAtLogin)
         let storedShowInDock = UserDefaults.standard.bool(forKey: Keys.showInDock)
         let storedWhisperModel = UserDefaults.standard.string(forKey: Keys.whisperModel)
@@ -116,6 +126,8 @@ class AppSettings: ObservableObject {
         self.serverURL = storedServerURL ?? Defaults.serverURL
         self.hotkeyModifiers = storedModifiers != 0 ? UInt(storedModifiers) : Defaults.hotkeyModifiers
         self.hotkeyKeyCode = storedKeyCode != 0 ? UInt16(storedKeyCode) : Defaults.hotkeyKeyCode
+        self.modelHotkeyModifiers = storedModelModifiers != 0 ? UInt(storedModelModifiers) : Defaults.modelHotkeyModifiers
+        self.modelHotkeyKeyCode = storedModelKeyCode != 0 ? UInt16(storedModelKeyCode) : Defaults.modelHotkeyKeyCode
         self.launchAtLogin = storedLaunchAtLogin
         self.showInDock = storedShowInDock
         self.whisperModel = storedWhisperModel.flatMap { WhisperModel(rawValue: $0) } ?? .fast
@@ -128,9 +140,30 @@ class AppSettings: ObservableObject {
         serverURL = Defaults.serverURL
         hotkeyModifiers = Defaults.hotkeyModifiers
         hotkeyKeyCode = Defaults.hotkeyKeyCode
+        modelHotkeyModifiers = Defaults.modelHotkeyModifiers
+        modelHotkeyKeyCode = Defaults.modelHotkeyKeyCode
         launchAtLogin = false
         showInDock = false
         whisperModel = .fast
+    }
+
+    private func formatHotkeyDisplayString(modifiers: UInt, keyCode: UInt16) -> String {
+        var parts: [String] = []
+
+        if modifiers & (1 << 18) != 0 { parts.append("⌃") }  // Control
+        if modifiers & (1 << 19) != 0 { parts.append("⌥") }  // Option
+        if modifiers & (1 << 17) != 0 { parts.append("⇧") }  // Shift
+        if modifiers & (1 << 20) != 0 { parts.append("⌘") }  // Command
+
+        // Default to ⌘⇧ if no modifiers set
+        if parts.isEmpty {
+            parts = ["⌘", "⇧"]
+        }
+
+        let keyName = keyCodeToString(keyCode)
+        parts.append(keyName)
+
+        return parts.joined()
     }
 
     /// Convert key code to human-readable string.
