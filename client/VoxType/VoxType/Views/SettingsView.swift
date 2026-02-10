@@ -360,6 +360,7 @@ struct HotkeySettingsView: View {
     @EnvironmentObject var localization: LocalizationManager
     @StateObject private var hotkeyManager = HotkeyManager.shared
     @State private var isEditing = false
+    @State private var isEditingModelHotkey = false
 
     // Editing state
     @State private var useCommand = false
@@ -367,6 +368,11 @@ struct HotkeySettingsView: View {
     @State private var useControl = false
     @State private var useOption = true
     @State private var selectedKeyCode: UInt16 = 49  // Space
+    @State private var modelUseCommand = false
+    @State private var modelUseShift = false
+    @State private var modelUseControl = false
+    @State private var modelUseOption = true
+    @State private var modelSelectedKeyCode: UInt16 = 49  // Space
 
     // Available keys for selection
     private let availableKeys: [(String, UInt16)] = [
@@ -475,6 +481,11 @@ struct HotkeySettingsView: View {
                                     .font(.caption)
                                     .foregroundColor(.red)
                             }
+                            if isRecordingHotkeyDuplicate {
+                                Text(localization.t("hotkey.duplicateWarning"))
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            }
 
                             HStack {
                                 Button(localization.t("hotkey.cancel")) {
@@ -487,7 +498,7 @@ struct HotkeySettingsView: View {
                                     isEditing = false
                                 }
                                 .buttonStyle(.borderedProminent)
-                                .disabled(!hasValidModifiers)
+                                .disabled(!hasValidModifiers || isRecordingHotkeyDuplicate)
                             }
                         }
                         .padding()
@@ -501,6 +512,88 @@ struct HotkeySettingsView: View {
                 }
             } header: {
                 Text(localization.t("hotkey.title"))
+            }
+
+            Section {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text(localization.t("hotkey.modelTitle"))
+                            .font(.headline)
+                        Spacer()
+                        Text(settings.modelHotkeyDisplayString)
+                            .font(.system(size: 20, weight: .medium, design: .rounded))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.accentColor.opacity(0.15))
+                            .cornerRadius(8)
+                    }
+
+                    if !isEditingModelHotkey {
+                        Button(localization.t("hotkey.modelChange")) {
+                            loadCurrentModelHotkeySettings()
+                            isEditingModelHotkey = true
+                        }
+                        .buttonStyle(.borderedProminent)
+                    } else {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(localization.t("hotkey.selectModifiers"))
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            HStack(spacing: 8) {
+                                ModifierToggle(label: "⌃", isOn: $modelUseControl)
+                                ModifierToggle(label: "⌥", isOn: $modelUseOption)
+                                ModifierToggle(label: "⇧", isOn: $modelUseShift)
+                                ModifierToggle(label: "⌘", isOn: $modelUseCommand)
+
+                                Text("+")
+                                    .foregroundColor(.secondary)
+
+                                Picker("Key", selection: $modelSelectedKeyCode) {
+                                    ForEach(availableKeys, id: \.1) { key in
+                                        Text(key.0).tag(key.1)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .frame(width: 100)
+                            }
+
+                            if !hasValidModelModifiers {
+                                Text(localization.t("hotkey.modifierRequired"))
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            }
+                            if isModelHotkeyDuplicate {
+                                Text(localization.t("hotkey.duplicateWarning"))
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            }
+
+                            HStack {
+                                Button(localization.t("hotkey.cancel")) {
+                                    isEditingModelHotkey = false
+                                }
+                                .buttonStyle(.bordered)
+
+                                Button(localization.t("hotkey.save")) {
+                                    saveModelHotkey()
+                                    isEditingModelHotkey = false
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(!hasValidModelModifiers || isModelHotkeyDuplicate)
+                            }
+                        }
+                        .padding()
+                        .background(Color.secondary.opacity(0.1))
+                        .cornerRadius(8)
+                    }
+
+                    Text(localization.t("hotkey.modelDescription"))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            } header: {
+                Text(localization.t("hotkey.modelTitle"))
             }
 
             Section {
@@ -533,6 +626,20 @@ struct HotkeySettingsView: View {
         useCommand || useShift || useControl || useOption
     }
 
+    private var hasValidModelModifiers: Bool {
+        modelUseCommand || modelUseShift || modelUseControl || modelUseOption
+    }
+
+    private var isRecordingHotkeyDuplicate: Bool {
+        let modifiers = currentRecordingModifiers()
+        return modifiers == settings.modelHotkeyModifiers && selectedKeyCode == settings.modelHotkeyKeyCode
+    }
+
+    private var isModelHotkeyDuplicate: Bool {
+        let modifiers = currentModelModifiers()
+        return modifiers == settings.hotkeyModifiers && modelSelectedKeyCode == settings.hotkeyKeyCode
+    }
+
     private func loadCurrentSettings() {
         let mods = settings.hotkeyModifiers
         useControl = (mods & (1 << 18)) != 0
@@ -542,15 +649,43 @@ struct HotkeySettingsView: View {
         selectedKeyCode = settings.hotkeyKeyCode
     }
 
+    private func loadCurrentModelHotkeySettings() {
+        let mods = settings.modelHotkeyModifiers
+        modelUseControl = (mods & (1 << 18)) != 0
+        modelUseOption = (mods & (1 << 19)) != 0
+        modelUseShift = (mods & (1 << 17)) != 0
+        modelUseCommand = (mods & (1 << 20)) != 0
+        modelSelectedKeyCode = settings.modelHotkeyKeyCode
+    }
+
     private func saveHotkey() {
+        let modifiers = currentRecordingModifiers()
+        settings.hotkeyModifiers = modifiers
+        settings.hotkeyKeyCode = selectedKeyCode
+    }
+
+    private func saveModelHotkey() {
+        let modifiers = currentModelModifiers()
+        settings.modelHotkeyModifiers = modifiers
+        settings.modelHotkeyKeyCode = modelSelectedKeyCode
+    }
+
+    private func currentRecordingModifiers() -> UInt {
         var modifiers: UInt = 0
         if useControl { modifiers |= (1 << 18) }
         if useOption { modifiers |= (1 << 19) }
         if useShift { modifiers |= (1 << 17) }
         if useCommand { modifiers |= (1 << 20) }
+        return modifiers
+    }
 
-        settings.hotkeyModifiers = modifiers
-        settings.hotkeyKeyCode = selectedKeyCode
+    private func currentModelModifiers() -> UInt {
+        var modifiers: UInt = 0
+        if modelUseControl { modifiers |= (1 << 18) }
+        if modelUseOption { modifiers |= (1 << 19) }
+        if modelUseShift { modifiers |= (1 << 17) }
+        if modelUseCommand { modifiers |= (1 << 20) }
+        return modifiers
     }
 }
 
