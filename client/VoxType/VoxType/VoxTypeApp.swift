@@ -191,7 +191,11 @@ class AppCoordinator: ObservableObject {
     private func handleModelHotkeyPressed() {
         guard let appState = appState else { return }
         guard appState.status != .recording && appState.status != .processing else { return }
-        guard !ModelSelectionWindow.shared.isVisible else { return }
+
+        if ModelSelectionWindow.shared.isVisible {
+            ModelSelectionWindow.shared.confirmSelectionAndClose()
+            return
+        }
 
         pausePreviousAppTracking()
         ModelSelectionWindow.shared.show { [weak self] in
