@@ -11,6 +11,28 @@ struct TranscribeResponse: Codable {
     }
 }
 
+/// Available Whisper models for transcription.
+enum WhisperModel: String, CaseIterable {
+    case fast = "fast"
+    case smart = "smart"
+
+    /// Display name for the UI.
+    var displayName: String {
+        switch self {
+        case .fast: return "Fast"
+        case .smart: return "Smart"
+        }
+    }
+
+    /// Description for the UI.
+    var description: String {
+        switch self {
+        case .fast: return "High speed, everyday use"
+        case .smart: return "High accuracy, important documents"
+        }
+    }
+}
+
 /// API client for communicating with VoxType server.
 @MainActor
 class APIClient: ObservableObject {
@@ -43,9 +65,11 @@ class APIClient: ObservableObject {
     // MARK: - Public Methods
 
     /// Transcribe an audio file.
-    /// - Parameter audioURL: URL of the audio file to transcribe.
+    /// - Parameters:
+    ///   - audioURL: URL of the audio file to transcribe.
+    ///   - model: Whisper model to use for transcription. Defaults to `.fast`.
     /// - Returns: The transcription response.
-    func transcribe(audioURL: URL) async throws -> TranscribeResponse {
+    func transcribe(audioURL: URL, model: WhisperModel = .fast) async throws -> TranscribeResponse {
         guard let token = authService.token else {
             throw APIError.notAuthenticated
         }
@@ -64,7 +88,7 @@ class APIClient: ObservableObject {
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
         // Build multipart body
-        let httpBody = try createMultipartBody(audioURL: audioURL, boundary: boundary)
+        let httpBody = try createMultipartBody(audioURL: audioURL, model: model, boundary: boundary)
         request.httpBody = httpBody
 
         isLoading = true
@@ -147,7 +171,7 @@ class APIClient: ObservableObject {
 
     // MARK: - Private Methods
 
-    private func createMultipartBody(audioURL: URL, boundary: String) throws -> Data {
+    private func createMultipartBody(audioURL: URL, model: WhisperModel, boundary: String) throws -> Data {
         var body = Data()
 
         // Read audio file
@@ -160,6 +184,11 @@ class APIClient: ObservableObject {
         body.append("Content-Type: audio/wav\r\n\r\n".data(using: .utf8)!)
         body.append(audioData)
         body.append("\r\n".data(using: .utf8)!)
+
+        // Add model field
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"model\"\r\n\r\n".data(using: .utf8)!)
+        body.append("\(model.rawValue)\r\n".data(using: .utf8)!)
 
         // End boundary
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
