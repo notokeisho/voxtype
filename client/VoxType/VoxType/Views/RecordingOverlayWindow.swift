@@ -158,7 +158,7 @@ private struct RecordingOverlayContentView: View {
                 .fill(Color(red: 0.15, green: 0.15, blue: 0.17).opacity(0.95))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color(red: 0.95, green: 0.6, blue: 0.3), lineWidth: 1.5)
+                        .stroke(Color(red: 0.976, green: 0.451, blue: 0.086), lineWidth: 1.5)
                 )
 
             // Visualizer content
