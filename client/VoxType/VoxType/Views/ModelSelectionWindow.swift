@@ -27,21 +27,17 @@ final class ModelSelectionWindow: NSPanel {
     private init() {
         super.init(
             contentRect: NSRect(x: 0, y: 0, width: 280, height: 160),
-            styleMask: [.titled, .closable],
+            styleMask: [.borderless],
             backing: .buffered,
             defer: false
         )
 
-        titleVisibility = .hidden
-        titlebarAppearsTransparent = true
+        isOpaque = false
+        backgroundColor = .clear
         isMovableByWindowBackground = false
         isReleasedWhenClosed = false
         level = .floating
         collectionBehavior = [.canJoinAllSpaces, .stationary]
-
-        standardWindowButton(.closeButton)?.isHidden = true
-        standardWindowButton(.miniaturizeButton)?.isHidden = true
-        standardWindowButton(.zoomButton)?.isHidden = true
 
         let view = ModelSelectionContentView(state: state, localization: localization)
         let hosting = NSHostingView(rootView: view)
@@ -103,27 +99,38 @@ private struct ModelSelectionContentView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            Text(localization.t("modelPopup.title"))
-                .font(.headline)
-                .foregroundColor(Color(red: 0.95, green: 0.6, blue: 0.3))
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color(red: 0.15, green: 0.15, blue: 0.17).opacity(0.95))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color(red: 0.95, green: 0.6, blue: 0.3), lineWidth: 1.5)
+                    )
 
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(WhisperModel.allCases, id: \.self) { model in
-                    HStack(spacing: 8) {
-                        Text(state.selection == model ? "●" : "○")
-                            .foregroundColor(Color(red: 0.95, green: 0.6, blue: 0.3))
-                        Text(model.displayName)
-                            .foregroundColor(.white)
+                VStack(spacing: 12) {
+                    Text(localization.t("modelPopup.title"))
+                        .font(.headline)
+                        .foregroundColor(Color(red: 0.95, green: 0.6, blue: 0.3))
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(WhisperModel.allCases, id: \.self) { model in
+                            HStack(spacing: 8) {
+                                Text(state.selection == model ? "●" : "○")
+                                    .foregroundColor(Color(red: 0.95, green: 0.6, blue: 0.3))
+                                Text(model.displayName)
+                                    .foregroundColor(.white)
+                            }
+                            .font(.system(size: 14, weight: .medium))
+                        }
                     }
-                    .font(.system(size: 14, weight: .medium))
-                }
-            }
 
-            Text(localization.t("modelPopup.hint"))
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(Color(red: 0.85, green: 0.85, blue: 0.9))
+                    Text(localization.t("modelPopup.hint"))
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(red: 0.85, green: 0.85, blue: 0.9))
+                }
+                .padding(14)
+            }
         }
-        .padding(14)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
