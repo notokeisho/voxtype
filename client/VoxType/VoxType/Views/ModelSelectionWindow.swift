@@ -127,8 +127,8 @@ private struct ModelSelectionContentView: View {
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(Color(red: 0.85, green: 0.85, blue: 0.9))
             }
-            .padding(.horizontal, 11)
-            .padding(.vertical, 9)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 8)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
