@@ -172,6 +172,8 @@ export interface DictionaryEntry {
 
 export interface StatusResponse {
   status: string
-  whisper_server: string
+  whisper_fast: string
+  whisper_smart: string
+  whisper_overall: string
   database: string
 }

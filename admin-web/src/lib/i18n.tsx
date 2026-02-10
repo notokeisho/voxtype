@@ -21,6 +21,10 @@ const translations = {
     'dashboard.whisperServer': 'Whisper サーバー',
     'dashboard.speechEngine': '音声認識エンジン',
     'dashboard.connected': '接続済み',
+    'dashboard.degraded': '注意',
+    'dashboard.whisperOverall': '全体',
+    'dashboard.whisperFast': 'Fast',
+    'dashboard.whisperSmart': 'Smart',
     'dashboard.database': 'データベース',
 
     // Users
@@ -114,6 +118,10 @@ const translations = {
     'dashboard.whisperServer': 'Whisper Server',
     'dashboard.speechEngine': 'Speech Recognition Engine',
     'dashboard.connected': 'Connected',
+    'dashboard.degraded': 'Degraded',
+    'dashboard.whisperOverall': 'Overall',
+    'dashboard.whisperFast': 'Fast',
+    'dashboard.whisperSmart': 'Smart',
     'dashboard.database': 'Database',
 
     // Users
