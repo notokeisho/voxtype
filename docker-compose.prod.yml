@@ -41,14 +41,17 @@ services:
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
       - INITIAL_ADMIN_GITHUB_ID=${INITIAL_ADMIN_GITHUB_ID}
       - INITIAL_ADMIN_GITHUB_USERNAME=${INITIAL_ADMIN_GITHUB_USERNAME}
-      - WHISPER_SERVER_URL=http://whisper:8080
+      - WHISPER_SERVER_URL_FAST=http://whisper-fast:8080
+      - WHISPER_SERVER_URL_SMART=http://whisper-smart:8080
       - APP_NAME=${APP_NAME:-VoxType}
       - DEBUG=${DEBUG:-false}
     depends_on:
       db:
         condition: service_healthy
-      whisper:
-        condition: service_started
+      whisper-fast:
+        condition: service_healthy
+      whisper-smart:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/"]
@@ -73,8 +76,8 @@ services:
       timeout: 5s
       retries: 5
 
-  # Whisper Speech Recognition (GPU)
-  whisper:
+  # Whisper Speech Recognition - Fast (GPU, small model)
+  whisper-fast:
     build:
       context: ./whisper
       dockerfile: Dockerfile.gpu
@@ -87,6 +90,40 @@ services:
     volumes:
       - ./whisper/models:/app/models:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Whisper Speech Recognition - Smart (GPU, medium model)
+  whisper-smart:
+    build:
+      context: ./whisper
+      dockerfile: Dockerfile.gpu
+    environment:
+      - VOICE_LANGUAGE=${VOICE_LANGUAGE:-ja}
+      - WHISPER_MODEL=/app/models/ggml-medium.bin
+      - ENABLE_VAD=false
+    expose:
+      - "8080"
+    volumes:
+      - ./whisper/models:/app/models:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     deploy:
       resources:
         reservations:
