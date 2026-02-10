@@ -65,6 +65,8 @@ class AppCoordinator: ObservableObject {
     /// The previously active application (for focus restoration after paste).
     private var previousApp: NSRunningApplication?
 
+    private var isPreviousAppTrackingPaused = false
+
     private var isSetup = false
 
     private init() {}
@@ -111,6 +113,10 @@ class AppCoordinator: ObservableObject {
         hotkeyManager.onHotkeyUp = { [weak self] in
             self?.handleHotkeyUp()
         }
+
+        hotkeyManager.onModelHotkeyPressed = { [weak self] in
+            self?.handleModelHotkeyPressed()
+        }
     }
 
     private func startHotkeyMonitoring() {
@@ -138,6 +144,7 @@ class AppCoordinator: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] notification in
+            guard let self, !self.isPreviousAppTrackingPaused else { return }
             guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
                   app.bundleIdentifier != Bundle.main.bundleIdentifier else {
                 return
@@ -178,6 +185,17 @@ class AppCoordinator: ObservableObject {
 
         if let url = audioURL {
             processRecording(url: url)
+        }
+    }
+
+    private func handleModelHotkeyPressed() {
+        guard let appState = appState else { return }
+        guard appState.status != .recording && appState.status != .processing else { return }
+        guard !ModelSelectionWindow.shared.isVisible else { return }
+
+        pausePreviousAppTracking()
+        ModelSelectionWindow.shared.show { [weak self] in
+            self?.resumePreviousAppTracking()
         }
     }
 
@@ -234,6 +252,14 @@ class AppCoordinator: ObservableObject {
                 appState.setError(error.localizedDescription)
             }
         }
+    }
+
+    private func pausePreviousAppTracking() {
+        isPreviousAppTrackingPaused = true
+    }
+
+    private func resumePreviousAppTracking() {
+        isPreviousAppTrackingPaused = false
     }
 }
 

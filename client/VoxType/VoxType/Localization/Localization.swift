@@ -129,6 +129,8 @@ class LocalizationManager: ObservableObject {
         "hotkey.tip.holdRelease": "Hold to record, release to transcribe",
         "hotkey.tip.autoStop": "Recording stops automatically after 60 seconds",
         "hotkey.resetToDefault": "Reset to Default (⌃.)",
+        "modelPopup.title": "Model Selection",
+        "modelPopup.hint": "Use ↑↓ to select, Enter to confirm",
 
         // Dictionary tab
         "dictionary.title": "Personal Dictionary",
@@ -255,6 +257,8 @@ class LocalizationManager: ObservableObject {
         "hotkey.tip.holdRelease": "押し続けて録音、離して文字起こし",
         "hotkey.tip.autoStop": "録音は60秒後に自動停止します",
         "hotkey.resetToDefault": "デフォルトに戻す (⌃.)",
+        "modelPopup.title": "モデル選択",
+        "modelPopup.hint": "↑↓で選択、Enterで確定",
 
         // Dictionary tab
         "dictionary.title": "個人辞書",
