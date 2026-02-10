@@ -14,7 +14,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://voice:password@localhost:5434/voice_server"
 
     # Whisper Server
-    whisper_server_url: str = "http://localhost:8080"
+    whisper_server_url_fast: str = "http://localhost:8080"
+    whisper_server_url_smart: str = "http://localhost:8081"
 
     # JWT
     jwt_secret: str = "change-me-in-production"
