@@ -150,7 +150,7 @@ class AppCoordinator: ObservableObject {
                 return
             }
             Task { @MainActor in
-                self?.previousApp = app
+                self.previousApp = app
             }
         }
     }
