@@ -2,9 +2,10 @@
 
 import tempfile
 import uuid
+from enum import Enum
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 
 from app.auth.dependencies import get_current_user
 from app.models.user import User
@@ -12,6 +13,13 @@ from app.services.postprocess import apply_dictionary
 from app.services.whisper_client import WhisperError, whisper_client
 
 router = APIRouter(prefix="/api", tags=["transcribe"])
+
+
+class WhisperModel(str, Enum):
+    """Available Whisper models for transcription."""
+
+    FAST = "fast"
+    SMART = "smart"
 
 # Temporary directory for audio files
 TEMP_DIR = Path(tempfile.gettempdir()) / "voxtype"
@@ -25,6 +33,7 @@ def ensure_temp_dir():
 @router.post("/transcribe")
 async def transcribe_audio(
     audio: UploadFile,
+    model: WhisperModel = Form(default=WhisperModel.FAST),
     current_user: User = Depends(get_current_user),
 ):
     """Transcribe an audio file to text.
@@ -34,6 +43,7 @@ async def transcribe_audio(
 
     Args:
         audio: The audio file to transcribe (WAV format recommended)
+        model: Whisper model to use ("fast" or "smart"). Defaults to "fast".
         current_user: The authenticated user
 
     Returns:
@@ -56,7 +66,7 @@ async def transcribe_audio(
 
         # Transcribe audio
         try:
-            raw_text = await whisper_client.transcribe(str(temp_path))
+            raw_text = await whisper_client.transcribe(str(temp_path), model=model.value)
         except WhisperError as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
