@@ -103,19 +103,19 @@ private struct ModelSelectionContentView: View {
                 .fill(Color(red: 0.15, green: 0.15, blue: 0.17).opacity(0.95))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color(red: 0.95, green: 0.6, blue: 0.3), lineWidth: 1.5)
+                        .stroke(Color(red: 0.976, green: 0.451, blue: 0.086), lineWidth: 1.5)
                 )
 
             VStack(spacing: 10) {
                 Text(localization.t("modelPopup.title"))
                     .font(.headline)
-                    .foregroundColor(Color(red: 0.95, green: 0.6, blue: 0.3))
+                    .foregroundColor(Color(red: 0.976, green: 0.451, blue: 0.086))
 
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(WhisperModel.allCases, id: \.self) { model in
                         HStack(spacing: 6) {
                             Text(state.selection == model ? "●" : "○")
-                                .foregroundColor(Color(red: 0.95, green: 0.6, blue: 0.3))
+                                .foregroundColor(Color(red: 0.976, green: 0.451, blue: 0.086))
                             Text(model.displayName)
                                 .foregroundColor(.white)
                         }
