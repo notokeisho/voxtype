@@ -16,8 +16,8 @@ final class ModelSelectionWindow: NSPanel {
     private let settings = AppSettings.shared
     private let localization = LocalizationManager.shared
     private let state = ModelSelectionState(selection: .fast)
-    private let windowWidth: CGFloat = 280
-    private let windowHeight: CGFloat = 160
+    private let windowWidth: CGFloat = 260
+    private let windowHeight: CGFloat = 150
 
     private var onClose: (() -> Void)?
 
@@ -55,7 +55,7 @@ final class ModelSelectionWindow: NSPanel {
         if let screen = NSScreen.main {
             let frame = screen.visibleFrame
             let originX = frame.midX - (windowWidth / 2)
-            let originY = frame.midY - (windowHeight / 2)
+            let originY = frame.maxY - windowHeight - 40
             setFrameOrigin(NSPoint(x: originX, y: originY))
         }
 
