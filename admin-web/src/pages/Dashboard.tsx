@@ -28,6 +28,8 @@ export function DashboardPage() {
       case 'ok':
       case 'connected':
         return 'text-green-600 bg-green-100'
+      case 'degraded':
+        return 'text-yellow-600 bg-yellow-100'
       case 'error':
       case 'disconnected':
         return 'text-red-600 bg-red-100'
@@ -75,9 +77,30 @@ export function DashboardPage() {
             <CardDescription>{t('dashboard.speechEngine')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status?.whisper_server || '')}`}>
-              {status?.whisper_server === 'connected' ? t('dashboard.connected') : status?.whisper_server}
-            </span>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{t('dashboard.whisperOverall')}</span>
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status?.whisper_overall || '')}`}>
+                  {status?.whisper_overall === 'connected'
+                    ? t('dashboard.connected')
+                    : status?.whisper_overall === 'degraded'
+                      ? t('dashboard.degraded')
+                      : status?.whisper_overall}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{t('dashboard.whisperFast')}</span>
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status?.whisper_fast || '')}`}>
+                  {status?.whisper_fast === 'connected' ? t('dashboard.connected') : status?.whisper_fast}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{t('dashboard.whisperSmart')}</span>
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status?.whisper_smart || '')}`}>
+                  {status?.whisper_smart === 'connected' ? t('dashboard.connected') : status?.whisper_smart}
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
