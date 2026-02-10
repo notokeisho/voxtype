@@ -98,38 +98,37 @@ private struct ModelSelectionContentView: View {
     let localization: LocalizationManager
 
     var body: some View {
-        VStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color(red: 0.15, green: 0.15, blue: 0.17).opacity(0.95))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color(red: 0.95, green: 0.6, blue: 0.3), lineWidth: 1.5)
-                    )
+        ZStack {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color(red: 0.15, green: 0.15, blue: 0.17).opacity(0.95))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color(red: 0.95, green: 0.6, blue: 0.3), lineWidth: 1.5)
+                )
 
-                VStack(spacing: 12) {
-                    Text(localization.t("modelPopup.title"))
-                        .font(.headline)
-                        .foregroundColor(Color(red: 0.95, green: 0.6, blue: 0.3))
+            VStack(spacing: 10) {
+                Text(localization.t("modelPopup.title"))
+                    .font(.headline)
+                    .foregroundColor(Color(red: 0.95, green: 0.6, blue: 0.3))
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        ForEach(WhisperModel.allCases, id: \.self) { model in
-                            HStack(spacing: 8) {
-                                Text(state.selection == model ? "●" : "○")
-                                    .foregroundColor(Color(red: 0.95, green: 0.6, blue: 0.3))
-                                Text(model.displayName)
-                                    .foregroundColor(.white)
-                            }
-                            .font(.system(size: 14, weight: .medium))
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(WhisperModel.allCases, id: \.self) { model in
+                        HStack(spacing: 6) {
+                            Text(state.selection == model ? "●" : "○")
+                                .foregroundColor(Color(red: 0.95, green: 0.6, blue: 0.3))
+                            Text(model.displayName)
+                                .foregroundColor(.white)
                         }
+                        .font(.system(size: 13, weight: .medium))
                     }
-
-                    Text(localization.t("modelPopup.hint"))
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Color(red: 0.85, green: 0.85, blue: 0.9))
                 }
-                .padding(14)
+
+                Text(localization.t("modelPopup.hint"))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(Color(red: 0.85, green: 0.85, blue: 0.9))
             }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
