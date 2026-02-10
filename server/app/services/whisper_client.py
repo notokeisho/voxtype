@@ -29,28 +29,38 @@ class WhisperClient:
     """HTTP client for whisper.cpp server.
 
     This client communicates with a whisper.cpp server to transcribe
-    audio files to text.
+    audio files to text. Supports multiple models (fast/smart).
     """
 
-    def __init__(
-        self,
-        base_url: str | None = None,
-        timeout: float = 60.0,
-    ):
+    def __init__(self, timeout: float = 60.0):
         """Initialize WhisperClient.
 
         Args:
-            base_url: Base URL of the whisper server. Defaults to settings.
             timeout: Request timeout in seconds. Defaults to 60.
         """
-        self.base_url = base_url or settings.whisper_server_url
+        self.servers = {
+            "fast": settings.whisper_server_url_fast,
+            "smart": settings.whisper_server_url_smart,
+        }
         self.timeout = timeout
 
-    async def transcribe(self, audio_path: str) -> str:
+    def _get_base_url(self, model: str) -> str:
+        """Get the base URL for the specified model.
+
+        Args:
+            model: Model name ("fast" or "smart").
+
+        Returns:
+            The base URL for the model server.
+        """
+        return self.servers.get(model, self.servers["fast"])
+
+    async def transcribe(self, audio_path: str, model: str = "fast") -> str:
         """Transcribe an audio file to text.
 
         Args:
             audio_path: Path to the audio file to transcribe.
+            model: Model to use ("fast" or "smart"). Defaults to "fast".
 
         Returns:
             The transcribed text.
@@ -60,6 +70,7 @@ class WhisperClient:
             WhisperServerError: If the server returns an error response.
             WhisperTimeoutError: If the request times out.
         """
+        base_url = self._get_base_url(model)
         # Check if file exists
         path = Path(audio_path)
         if not path.exists():
@@ -71,7 +82,7 @@ class WhisperClient:
                 with open(audio_path, "rb") as f:
                     files = {"file": (path.name, f, "audio/wav")}
                     response = await client.post(
-                        f"{self.base_url}/inference",
+                        f"{base_url}/inference",
                         files=files,
                         data={"response_format": "json"},
                     )
@@ -91,15 +102,19 @@ class WhisperClient:
         except httpx.HTTPError as e:
             raise WhisperError(f"HTTP error: {e}") from e
 
-    async def health_check(self) -> bool:
+    async def health_check(self, model: str = "fast") -> bool:
         """Check if the whisper server is healthy.
+
+        Args:
+            model: Model to check ("fast" or "smart"). Defaults to "fast".
 
         Returns:
             True if the server is reachable, False otherwise.
         """
+        base_url = self._get_base_url(model)
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(f"{self.base_url}/health")
+                response = await client.get(f"{base_url}/health")
                 return response.status_code == 200
         except Exception:
             return False
