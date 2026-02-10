@@ -14,6 +14,7 @@ class AppSettings: ObservableObject {
         static let hotkeyKeyCode = "hotkeyKeyCode"
         static let launchAtLogin = "launchAtLogin"
         static let showInDock = "showInDock"
+        static let whisperModel = "whisperModel"
     }
 
     // MARK: - Default Values
@@ -61,6 +62,13 @@ class AppSettings: ObservableObject {
         }
     }
 
+    /// Selected Whisper model for transcription.
+    @Published var whisperModel: WhisperModel {
+        didSet {
+            UserDefaults.standard.set(whisperModel.rawValue, forKey: Keys.whisperModel)
+        }
+    }
+
     // MARK: - Computed Properties
 
     /// Human-readable hotkey string.
@@ -103,12 +111,14 @@ class AppSettings: ObservableObject {
         let storedKeyCode = UserDefaults.standard.integer(forKey: Keys.hotkeyKeyCode)
         let storedLaunchAtLogin = UserDefaults.standard.bool(forKey: Keys.launchAtLogin)
         let storedShowInDock = UserDefaults.standard.bool(forKey: Keys.showInDock)
+        let storedWhisperModel = UserDefaults.standard.string(forKey: Keys.whisperModel)
 
         self.serverURL = storedServerURL ?? Defaults.serverURL
         self.hotkeyModifiers = storedModifiers != 0 ? UInt(storedModifiers) : Defaults.hotkeyModifiers
         self.hotkeyKeyCode = storedKeyCode != 0 ? UInt16(storedKeyCode) : Defaults.hotkeyKeyCode
         self.launchAtLogin = storedLaunchAtLogin
         self.showInDock = storedShowInDock
+        self.whisperModel = storedWhisperModel.flatMap { WhisperModel(rawValue: $0) } ?? .fast
     }
 
     // MARK: - Methods
@@ -120,6 +130,7 @@ class AppSettings: ObservableObject {
         hotkeyKeyCode = Defaults.hotkeyKeyCode
         launchAtLogin = false
         showInDock = false
+        whisperModel = .fast
     }
 
     /// Convert key code to human-readable string.

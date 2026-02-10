@@ -273,6 +273,33 @@ struct GeneralSettingsView: View {
                 Text(localization.t("general.startup"))
             }
 
+            // Transcription model settings
+            Section {
+                Picker(localization.t("general.transcriptionModel"), selection: $settings.whisperModel) {
+                    ForEach(WhisperModel.allCases, id: \.self) { model in
+                        VStack(alignment: .leading) {
+                            Text(model.displayName)
+                        }
+                        .tag(model)
+                    }
+                }
+                .pickerStyle(.inline)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(WhisperModel.allCases, id: \.self) { model in
+                        HStack {
+                            Text(model.displayName)
+                                .fontWeight(.medium)
+                            Text("- \(model.description)")
+                                .foregroundColor(.secondary)
+                        }
+                        .font(.caption)
+                    }
+                }
+            } header: {
+                Text(localization.t("general.model"))
+            }
+
             // Reset settings
             Section {
                 Button(localization.t("general.resetToDefaults")) {

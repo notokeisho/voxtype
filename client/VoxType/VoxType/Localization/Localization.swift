@@ -101,6 +101,8 @@ class LocalizationManager: ObservableObject {
         "general.connectionFailed": "Failed: {message}",
         "general.startup": "Startup",
         "general.launchAtLogin": "Launch at Login",
+        "general.model": "Transcription Model",
+        "general.transcriptionModel": "Model",
         "general.resetToDefaults": "Reset to Defaults",
 
         // Hotkey tab
@@ -221,6 +223,8 @@ class LocalizationManager: ObservableObject {
         "general.connectionFailed": "失敗: {message}",
         "general.startup": "起動",
         "general.launchAtLogin": "ログイン時に起動",
+        "general.model": "文字起こしモデル",
+        "general.transcriptionModel": "モデル",
         "general.resetToDefaults": "デフォルトに戻す",
 
         // Hotkey tab
