@@ -28,6 +28,9 @@ class HotkeyManager: ObservableObject {
     /// Called when hotkey is released.
     var onHotkeyUp: (() -> Void)?
 
+    /// Called when model change hotkey is pressed.
+    var onModelHotkeyPressed: (() -> Void)?
+
     // MARK: - Private Properties
 
     /// The event tap for monitoring keyboard events.
@@ -148,8 +151,17 @@ class HotkeyManager: ObservableObject {
 
             // Check if this is our hotkey (synchronously, thread-safe)
             let isHotkey = manager.isMatchingHotkeySync(event: event)
+            let isModelHotkey = manager.isMatchingModelHotkeySync(event: event)
 
             // For keyDown, check if it matches our hotkey
+            if type == .keyDown && isModelHotkey {
+                DispatchQueue.main.async {
+                    manager.handleModelHotkey(event: event)
+                }
+                // Consume the event to prevent key from being typed
+                return nil
+            }
+
             if type == .keyDown && isHotkey {
                 DispatchQueue.main.async {
                     manager.handleEvent(type: type, event: event)
@@ -212,6 +224,44 @@ class HotkeyManager: ObservableObject {
         }
 
         return (currentModifiers & effectiveModifiers) == effectiveModifiers
+    }
+
+    /// Thread-safe model hotkey matching for use in CGEventTap callback.
+    /// Reads directly from UserDefaults which is thread-safe.
+    nonisolated private func isMatchingModelHotkeySync(event: CGEvent) -> Bool {
+        let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
+        let flags = event.flags
+
+        let configuredKeyCode = UInt16(UserDefaults.standard.integer(forKey: "modelHotkeyKeyCode"))
+        let configuredModifiers = UInt(UserDefaults.standard.integer(forKey: "modelHotkeyModifiers"))
+
+        let effectiveKeyCode = configuredKeyCode == 0 ? UInt16(46) : configuredKeyCode // M
+        let effectiveModifiers = configuredModifiers == 0 ? UInt(0x040000) : configuredModifiers // Control
+
+        guard keyCode == effectiveKeyCode else { return false }
+
+        var currentModifiers: UInt = 0
+        if flags.contains(.maskCommand) {
+            currentModifiers |= (1 << 20)
+        }
+        if flags.contains(.maskShift) {
+            currentModifiers |= (1 << 17)
+        }
+        if flags.contains(.maskControl) {
+            currentModifiers |= (1 << 18)
+        }
+        if flags.contains(.maskAlternate) {
+            currentModifiers |= (1 << 19)
+        }
+
+        return (currentModifiers & effectiveModifiers) == effectiveModifiers
+    }
+
+    private func handleModelHotkey(event: CGEvent) {
+        let isAutoRepeat = event.getIntegerValueField(.keyboardEventAutorepeat) != 0
+        guard !isAutoRepeat else { return }
+
+        onModelHotkeyPressed?()
     }
 
     private func handleEvent(type: CGEventType, event: CGEvent) {
