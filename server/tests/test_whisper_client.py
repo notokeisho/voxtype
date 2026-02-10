@@ -56,7 +56,24 @@ class TestWhisperClient:
     def test_client_initialization(self, whisper_client: WhisperClient):
         """Test that WhisperClient initializes correctly."""
         assert whisper_client is not None
-        assert whisper_client.base_url is not None
+        assert whisper_client.servers is not None
+        assert "fast" in whisper_client.servers
+        assert "smart" in whisper_client.servers
+
+    def test_get_base_url_fast(self, whisper_client: WhisperClient):
+        """Test _get_base_url returns fast server URL."""
+        url = whisper_client._get_base_url("fast")
+        assert url == whisper_client.servers["fast"]
+
+    def test_get_base_url_smart(self, whisper_client: WhisperClient):
+        """Test _get_base_url returns smart server URL."""
+        url = whisper_client._get_base_url("smart")
+        assert url == whisper_client.servers["smart"]
+
+    def test_get_base_url_invalid_defaults_to_fast(self, whisper_client: WhisperClient):
+        """Test _get_base_url with invalid model defaults to fast."""
+        url = whisper_client._get_base_url("invalid")
+        assert url == whisper_client.servers["fast"]
 
     @pytest.mark.asyncio
     async def test_transcribe_success(
@@ -103,6 +120,58 @@ class TestWhisperClient:
 
         assert isinstance(result, str)
         assert len(result) > 0
+
+    @pytest.mark.asyncio
+    async def test_transcribe_with_smart_model(
+        self, whisper_client: WhisperClient, test_audio_file: Path
+    ):
+        """Test transcription with smart model."""
+        from unittest.mock import MagicMock
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"text": "スマートモデルの結果"}
+
+        with patch(
+            "app.services.whisper_client.httpx.AsyncClient"
+        ) as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.post.return_value = mock_response
+            mock_client_class.return_value.__aenter__.return_value = mock_client
+
+            result = await whisper_client.transcribe(str(test_audio_file), model="smart")
+
+            # Verify the correct URL was used
+            call_args = mock_client.post.call_args
+            assert whisper_client.servers["smart"] in call_args[0][0]
+
+        assert result == "スマートモデルの結果"
+
+    @pytest.mark.asyncio
+    async def test_transcribe_default_model_is_fast(
+        self, whisper_client: WhisperClient, test_audio_file: Path
+    ):
+        """Test that default model is fast."""
+        from unittest.mock import MagicMock
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"text": "デフォルトモデルの結果"}
+
+        with patch(
+            "app.services.whisper_client.httpx.AsyncClient"
+        ) as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.post.return_value = mock_response
+            mock_client_class.return_value.__aenter__.return_value = mock_client
+
+            result = await whisper_client.transcribe(str(test_audio_file))
+
+            # Verify the fast URL was used (default)
+            call_args = mock_client.post.call_args
+            assert whisper_client.servers["fast"] in call_args[0][0]
+
+        assert result == "デフォルトモデルの結果"
 
     @pytest.mark.asyncio
     async def test_transcribe_file_not_found(self, whisper_client: WhisperClient):
@@ -157,10 +226,13 @@ class TestWhisperClient:
 class TestWhisperClientConfiguration:
     """Tests for WhisperClient configuration."""
 
-    def test_custom_base_url(self):
-        """Test WhisperClient with custom base URL."""
-        client = WhisperClient(base_url="http://custom:9000")
-        assert client.base_url == "http://custom:9000"
+    def test_servers_from_settings(self):
+        """Test WhisperClient loads servers from settings."""
+        from app.config import settings
+
+        client = WhisperClient()
+        assert client.servers["fast"] == settings.whisper_server_url_fast
+        assert client.servers["smart"] == settings.whisper_server_url_smart
 
     def test_custom_timeout(self):
         """Test WhisperClient with custom timeout."""

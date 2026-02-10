@@ -293,6 +293,125 @@ class TestTranscribeEndpointFileHandling:
             cleanup_test_user(github_id)
 
 
+class TestTranscribeEndpointModelSelection:
+    """Tests for transcribe endpoint model selection."""
+
+    def test_transcribe_with_fast_model(self):
+        """Test transcription with fast model."""
+        github_id = "transcribe_model_test_1"
+        client = TestClient(app)
+
+        try:
+            user_id = setup_test_user(github_id)
+            token = create_jwt_token(user_id=user_id, github_id=github_id)
+            audio_data, filename = create_test_audio_file()
+
+            with patch(
+                "app.api.transcribe.whisper_client.transcribe",
+                new_callable=AsyncMock,
+                return_value="ファストモデル結果",
+            ) as mock_transcribe:
+                response = client.post(
+                    "/api/transcribe",
+                    files={"audio": (filename, audio_data, "audio/wav")},
+                    data={"model": "fast"},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+
+                # Verify fast model was used
+                mock_transcribe.assert_called_once()
+                call_kwargs = mock_transcribe.call_args[1]
+                assert call_kwargs.get("model") == "fast"
+
+            assert response.status_code == status.HTTP_200_OK
+            assert response.json()["text"] == "ファストモデル結果"
+        finally:
+            cleanup_test_user(github_id)
+
+    def test_transcribe_with_smart_model(self):
+        """Test transcription with smart model."""
+        github_id = "transcribe_model_test_2"
+        client = TestClient(app)
+
+        try:
+            user_id = setup_test_user(github_id)
+            token = create_jwt_token(user_id=user_id, github_id=github_id)
+            audio_data, filename = create_test_audio_file()
+
+            with patch(
+                "app.api.transcribe.whisper_client.transcribe",
+                new_callable=AsyncMock,
+                return_value="スマートモデル結果",
+            ) as mock_transcribe:
+                response = client.post(
+                    "/api/transcribe",
+                    files={"audio": (filename, audio_data, "audio/wav")},
+                    data={"model": "smart"},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+
+                # Verify smart model was used
+                mock_transcribe.assert_called_once()
+                call_kwargs = mock_transcribe.call_args[1]
+                assert call_kwargs.get("model") == "smart"
+
+            assert response.status_code == status.HTTP_200_OK
+            assert response.json()["text"] == "スマートモデル結果"
+        finally:
+            cleanup_test_user(github_id)
+
+    def test_transcribe_default_model_is_fast(self):
+        """Test that default model is fast when not specified."""
+        github_id = "transcribe_model_test_3"
+        client = TestClient(app)
+
+        try:
+            user_id = setup_test_user(github_id)
+            token = create_jwt_token(user_id=user_id, github_id=github_id)
+            audio_data, filename = create_test_audio_file()
+
+            with patch(
+                "app.api.transcribe.whisper_client.transcribe",
+                new_callable=AsyncMock,
+                return_value="デフォルト結果",
+            ) as mock_transcribe:
+                response = client.post(
+                    "/api/transcribe",
+                    files={"audio": (filename, audio_data, "audio/wav")},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+
+                # Verify fast model was used by default
+                mock_transcribe.assert_called_once()
+                call_kwargs = mock_transcribe.call_args[1]
+                assert call_kwargs.get("model") == "fast"
+
+            assert response.status_code == status.HTTP_200_OK
+        finally:
+            cleanup_test_user(github_id)
+
+    def test_transcribe_with_invalid_model_returns_422(self):
+        """Test that invalid model returns 422."""
+        github_id = "transcribe_model_test_4"
+        client = TestClient(app)
+
+        try:
+            user_id = setup_test_user(github_id)
+            token = create_jwt_token(user_id=user_id, github_id=github_id)
+            audio_data, filename = create_test_audio_file()
+
+            response = client.post(
+                "/api/transcribe",
+                files={"audio": (filename, audio_data, "audio/wav")},
+                data={"model": "invalid_model"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+            assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        finally:
+            cleanup_test_user(github_id)
+
+
 class TestTranscribeEndpointResponse:
     """Tests for transcribe endpoint response format."""
 
