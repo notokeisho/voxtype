@@ -24,7 +24,7 @@ async def check_database() -> str:
         return "disconnected"
 
 
-async def check_whisper_server() -> str:
+async def check_whisper_server(base_url: str) -> str:
     """Check whisper server connection status.
 
     Returns:
@@ -33,7 +33,7 @@ async def check_whisper_server() -> str:
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{settings.whisper_server_url}/health",
+                f"{base_url}/health",
                 timeout=5.0,
             )
             if response.status_code == 200:
@@ -55,7 +55,15 @@ async def get_status():
     This endpoint does not require authentication.
     """
     database_status = await check_database()
-    whisper_status = await check_whisper_server()
+    whisper_fast_status = await check_whisper_server(settings.whisper_server_url_fast)
+    whisper_smart_status = await check_whisper_server(settings.whisper_server_url_smart)
+
+    if whisper_fast_status == "connected" and whisper_smart_status == "connected":
+        whisper_overall = "connected"
+    elif whisper_fast_status == "disconnected" and whisper_smart_status == "disconnected":
+        whisper_overall = "disconnected"
+    else:
+        whisper_overall = "degraded"
 
     # Overall status is "ok" if database is connected
     # (whisper server may be optional for some operations)
@@ -64,5 +72,7 @@ async def get_status():
     return {
         "status": overall_status,
         "database": database_status,
-        "whisper_server": whisper_status,
+        "whisper_fast": whisper_fast_status,
+        "whisper_smart": whisper_smart_status,
+        "whisper_overall": whisper_overall,
     }
