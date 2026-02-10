@@ -16,8 +16,8 @@ final class ModelSelectionWindow: NSPanel {
     private let settings = AppSettings.shared
     private let localization = LocalizationManager.shared
     private let state = ModelSelectionState(selection: .fast)
-    private let windowWidth: CGFloat = 260
-    private let windowHeight: CGFloat = 150
+    private let windowWidth: CGFloat = 250
+    private let windowHeight: CGFloat = 140
 
     private var onClose: (() -> Void)?
 
