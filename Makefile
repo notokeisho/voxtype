@@ -2,7 +2,7 @@
 # VoxType - Local Development
 # ===========================================
 
-.PHONY: help db whisper backend up down clean migrate logs dmg client-build download-models \
+.PHONY: help db whisper whisper-fast whisper-smart whisper-stop backend up down clean migrate logs dmg client-build download-models \
 	prod-setup prod-up prod-down prod-ps prod-migrate prod-download-models prod-restart prod-build prod-rebuild
 
 # Load environment variables (optional, for local development)
@@ -44,14 +44,14 @@ db-stop: ## Stop PostgreSQL database
 whisper-build: ## Build whisper.cpp Docker image
 	docker build -t whisper-server ./whisper
 
-whisper: whisper-build ## Start whisper.cpp server
-	@if docker ps -a --format '{{.Names}}' | grep -q '^whisper-server$$'; then \
-		echo "Starting existing whisper-server container..."; \
-		docker start whisper-server; \
+whisper-fast: whisper-build ## Start whisper-fast server (small model, port 8080)
+	@if docker ps -a --format '{{.Names}}' | grep -q '^whisper-fast$$'; then \
+		echo "Starting existing whisper-fast container..."; \
+		docker start whisper-fast; \
 	else \
-		echo "Creating new whisper-server container..."; \
+		echo "Creating new whisper-fast container..."; \
 		docker run -d \
-			--name whisper-server \
+			--name whisper-fast \
 			-p 8080:8080 \
 			-v $(PWD)/whisper/models:/app/models:ro \
 			-e VOICE_LANGUAGE=$(or $(VOICE_LANGUAGE),ja) \
@@ -61,10 +61,32 @@ whisper: whisper-build ## Start whisper.cpp server
 	fi
 	@echo "Waiting for Whisper server to be ready..."
 	@sleep 5
-	@echo "Whisper server is running on port 8080"
+	@echo "Whisper-fast is running on port 8080"
 
-whisper-stop: ## Stop whisper.cpp server
-	docker stop whisper-server || true
+whisper-smart: whisper-build ## Start whisper-smart server (medium model, port 8081)
+	@if docker ps -a --format '{{.Names}}' | grep -q '^whisper-smart$$'; then \
+		echo "Starting existing whisper-smart container..."; \
+		docker start whisper-smart; \
+	else \
+		echo "Creating new whisper-smart container..."; \
+		docker run -d \
+			--name whisper-smart \
+			-p 8081:8080 \
+			-v $(PWD)/whisper/models:/app/models:ro \
+			-e VOICE_LANGUAGE=$(or $(VOICE_LANGUAGE),ja) \
+			-e WHISPER_MODEL=/app/models/ggml-medium.bin \
+			-e ENABLE_VAD=false \
+			whisper-server; \
+	fi
+	@echo "Waiting for Whisper server to be ready..."
+	@sleep 5
+	@echo "Whisper-smart is running on port 8081"
+
+whisper: whisper-fast whisper-smart ## Start both whisper servers (fast and smart)
+	@echo "Both Whisper servers are running (fast:8080, smart:8081)"
+
+whisper-stop: ## Stop all whisper servers
+	docker stop whisper-fast whisper-smart || true
 
 download-models: ## Download all Whisper models (skip existing)
 	@echo "=== Downloading Whisper models ==="
@@ -112,18 +134,19 @@ up: db whisper migrate ## Start all services (db, whisper, migrate)
 	@echo "==================================="
 	@echo "All services are ready!"
 	@echo "==================================="
-	@echo "PostgreSQL: localhost:5434"
-	@echo "Whisper:    localhost:8080"
+	@echo "PostgreSQL:    localhost:5434"
+	@echo "Whisper-fast:  localhost:8080"
+	@echo "Whisper-smart: localhost:8081"
 	@echo ""
 	@echo "Now run: make backend"
 	@echo "==================================="
 
 down: ## Stop all services
-	docker stop voice-postgres whisper-server || true
+	docker stop voice-postgres whisper-fast whisper-smart || true
 	@echo "All services stopped"
 
 clean: down ## Stop and remove all containers
-	docker rm voice-postgres whisper-server || true
+	docker rm voice-postgres whisper-fast whisper-smart || true
 	@echo "All containers removed"
 
 # ===========================================
@@ -133,16 +156,20 @@ clean: down ## Stop and remove all containers
 logs-db: ## Show PostgreSQL logs
 	docker logs -f voice-postgres
 
-logs-whisper: ## Show Whisper server logs
-	docker logs -f whisper-server
+logs-whisper-fast: ## Show Whisper-fast server logs
+	docker logs -f whisper-fast
+
+logs-whisper-smart: ## Show Whisper-smart server logs
+	docker logs -f whisper-smart
 
 status: ## Show status of all services
 	@echo "=== Docker Containers ==="
-	@docker ps --filter "name=voice-postgres" --filter "name=whisper-server" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+	@docker ps --filter "name=voice-postgres" --filter "name=whisper-fast" --filter "name=whisper-smart" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 	@echo ""
 	@echo "=== Health Checks ==="
-	@curl -s http://localhost:8080/health > /dev/null 2>&1 && echo "Whisper: OK" || echo "Whisper: Not running"
-	@curl -s http://localhost:8000/api/status > /dev/null 2>&1 && echo "Backend: OK" || echo "Backend: Not running"
+	@curl -s http://localhost:8080/health > /dev/null 2>&1 && echo "Whisper-fast:  OK" || echo "Whisper-fast:  Not running"
+	@curl -s http://localhost:8081/health > /dev/null 2>&1 && echo "Whisper-smart: OK" || echo "Whisper-smart: Not running"
+	@curl -s http://localhost:8000/api/status > /dev/null 2>&1 && echo "Backend:       OK" || echo "Backend:       Not running"
 
 test: ## Run tests
 	cd server && uv run pytest
