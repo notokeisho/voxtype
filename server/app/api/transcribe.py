@@ -8,8 +8,10 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 
 from app.auth.dependencies import get_current_user
+from app.config import settings
 from app.models.user import User
 from app.services.postprocess import apply_dictionary
+from app.services.audio_utils import compute_rms_wav
 from app.services.whisper_client import WhisperError, whisper_client
 
 router = APIRouter(prefix="/api", tags=["transcribe"])
@@ -63,6 +65,14 @@ async def transcribe_audio(
         # Save uploaded file to temp location
         content = await audio.read()
         temp_path.write_bytes(content)
+
+        if settings.rms_check_enabled:
+            rms_value = compute_rms_wav(str(temp_path))
+            if rms_value is not None and rms_value < settings.rms_silence_threshold:
+                return {
+                    "text": "",
+                    "raw_text": "",
+                }
 
         # Transcribe audio
         try:

@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
+import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy import text
@@ -113,6 +114,15 @@ def create_test_audio_file() -> tuple[bytes, str]:
     return bytes(wav_data), "test.wav"
 
 
+@pytest.fixture(autouse=True)
+def disable_rms_check():
+    """Disable RMS check for existing tests."""
+    original_enabled = settings.rms_check_enabled
+    settings.rms_check_enabled = False
+    yield
+    settings.rms_check_enabled = original_enabled
+
+
 class TestTranscribeEndpointAuthentication:
     """Tests for transcribe endpoint authentication."""
 
@@ -170,6 +180,36 @@ class TestTranscribeEndpointSuccess:
             assert response.status_code == status.HTTP_200_OK
             assert "text" in response.json()
             assert response.json()["text"] == "これはテストです"
+        finally:
+            cleanup_test_user(github_id)
+
+    def test_transcribe_silence_returns_empty(self):
+        """Test that silence skips transcription and returns empty."""
+        github_id = "transcribe_silence_test_1"
+        client = TestClient(app)
+
+        try:
+            user_id = setup_test_user(github_id)
+            token = create_jwt_token(user_id=user_id, github_id=github_id)
+            audio_data, filename = create_test_audio_file()
+
+            settings.rms_check_enabled = True
+            settings.rms_silence_threshold = 0.01
+
+            with (
+                patch("app.api.transcribe.compute_rms_wav", return_value=0.0),
+                patch("app.api.transcribe.whisper_client.transcribe") as mock_transcribe,
+            ):
+                response = client.post(
+                    "/api/transcribe",
+                    files={"audio": (filename, audio_data, "audio/wav")},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+
+            assert response.status_code == status.HTTP_200_OK
+            assert response.json()["text"] == ""
+            assert response.json()["raw_text"] == ""
+            mock_transcribe.assert_not_called()
         finally:
             cleanup_test_user(github_id)
 
