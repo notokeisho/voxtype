@@ -37,7 +37,7 @@ final class ModelSelectionWindow: NSPanel {
         isMovableByWindowBackground = false
         isReleasedWhenClosed = false
         level = .floating
-        collectionBehavior = [.canJoinAllSpaces, .stationary]
+        collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
 
         let view = ModelSelectionContentView(state: state, localization: localization)
         let hosting = NSHostingView(rootView: view)
