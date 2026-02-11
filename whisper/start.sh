@@ -21,7 +21,7 @@ WHISPER_THREADS=${WHISPER_THREADS:-8}
 # Initial prompt to encourage punctuation in Japanese output
 # Note: Use balanced punctuation (one 。 and one 、) to avoid bias
 # Do not include ? as it tends to appear during silence
-WHISPER_PROMPT=${WHISPER_PROMPT:-"今日は天気が良いですね、散歩に行きましょう。"}
+WHISPER_PROMPT=${WHISPER_PROMPT:-"。,"}
 
 exec /app/whisper-server \
     --model ${WHISPER_MODEL} \
