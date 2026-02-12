@@ -1,5 +1,8 @@
 """Application configuration."""
 
+import os
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
 
 
@@ -35,7 +38,14 @@ class Settings(BaseSettings):
     initial_admin_github_id: str | None = None
     initial_admin_github_username: str | None = None
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
+    _default_env = Path(__file__).resolve().parents[2] / ".env"
+    _env_file = Path(os.environ.get("ENV_FILE", str(_default_env)))
+
+    model_config = {
+        "env_file": str(_env_file),
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
 
 
 settings = Settings()
