@@ -130,7 +130,8 @@ def clean_punctuation(text: str) -> str:
     result = re.sub(r'([。？！])\s+', r'\1', result)
 
     # Normalize question mark for Japanese output
-    if settings.voice_language.lower() == "ja":
+    language = settings.voice_language.strip().lower()
+    if language.startswith("ja"):
         result = result.replace("?", "？")
 
     return result
