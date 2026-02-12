@@ -29,7 +29,8 @@ python -m pip install numpy silero-vad-lite torch
 python tools/vad_benchmark.py path/to/audio.wav
 ```
 
-フレーム長を変える場合は `--frame-ms` を指定する。
+フレーム長を変える場合は `--frame-ms` を指定する。  
+`silero-vad-lite` は 32ms 固定のため、`--frame-ms 32` のみ対応する。
 
 ```bash
 python tools/vad_benchmark.py path/to/audio.wav --frame-ms 32

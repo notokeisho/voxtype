@@ -40,15 +40,19 @@ def iter_frames(samples: np.ndarray, frame_samples: int) -> Iterable[np.ndarray]
 
 
 def bench_silero_vad_lite(samples: np.ndarray, frame_ms: int) -> BenchmarkResult:
-    from silero_vad_lite import VAD
+    from silero_vad_lite import SileroVAD
 
-    vad = VAD(sample_rate=16000)
-    frame_samples = int(16000 * frame_ms / 1000)
+    if frame_ms != 32:
+        raise ValueError("silero-vad-lite requires 32ms frames")
+
+    vad = SileroVAD(sample_rate=16000)
+    frame_samples = vad.window_size_samples()
     frames = 0
 
     start = time.perf_counter()
     for chunk in iter_frames(samples, frame_samples):
-        _ = vad(chunk)
+        chunk = np.ascontiguousarray(chunk, dtype=np.float32)
+        _ = vad.process(np.ctypeslib.as_ctypes(chunk))
         frames += 1
     total_ms = (time.perf_counter() - start) * 1000.0
     return BenchmarkResult("silero-vad-lite", total_ms, frames)
