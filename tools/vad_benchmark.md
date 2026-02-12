@@ -42,9 +42,15 @@ python tools/vad_benchmark.py path/to/audio.wav --frame-ms 32
 python tools/vad_benchmark.py path/to/audio.wav --skip-silero
 ```
 
+VAD の判定閾値を変えたい場合は `--speech-threshold` を指定する。
+
+```bash
+python tools/vad_benchmark.py path/to/audio.wav --speech-threshold 0.5
+```
+
 ## 出力例
 
 ```
-silero-vad-lite: 12.34 ms total (500 frames, 0.025 ms/frame)
-silero-vad: 98.76 ms total (500 frames, 0.198 ms/frame)
+silero-vad-lite: 12.34 ms total (500 frames, 0.025 ms/frame, speech 120 frames, 0.240 ratio)
+silero-vad: 98.76 ms total (500 frames, 0.198 ms/frame, speech 118 frames, 0.236 ratio)
 ```
