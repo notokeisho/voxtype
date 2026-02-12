@@ -37,6 +37,7 @@ def ensure_temp_dir():
 async def transcribe_audio(
     audio: UploadFile,
     model: WhisperModel = Form(default=WhisperModel.FAST),
+    vad_speech_threshold: float | None = Form(default=None),
     current_user: User = Depends(get_current_user),
 ):
     """Transcribe an audio file to text.
@@ -75,9 +76,12 @@ async def transcribe_audio(
                     "raw_text": "",
                 }
 
-        if settings.vad_enabled and settings.vad_speech_threshold > 0:
+        effective_vad_threshold = (
+            settings.vad_speech_threshold if vad_speech_threshold is None else vad_speech_threshold
+        )
+        if settings.vad_enabled and effective_vad_threshold > 0:
             vad_result = detect_speech_wav(
-                str(temp_path), settings.vad_speech_threshold
+                str(temp_path), effective_vad_threshold
             )
             if vad_result is False:
                 return {

@@ -88,7 +88,12 @@ class APIClient: ObservableObject {
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
         // Build multipart body
-        let httpBody = try createMultipartBody(audioURL: audioURL, model: model, boundary: boundary)
+        let httpBody = try createMultipartBody(
+            audioURL: audioURL,
+            model: model,
+            noiseFilterLevel: settings.noiseFilterLevel,
+            boundary: boundary
+        )
         request.httpBody = httpBody
 
         isLoading = true
@@ -171,7 +176,12 @@ class APIClient: ObservableObject {
 
     // MARK: - Private Methods
 
-    private func createMultipartBody(audioURL: URL, model: WhisperModel, boundary: String) throws -> Data {
+    private func createMultipartBody(
+        audioURL: URL,
+        model: WhisperModel,
+        noiseFilterLevel: Double,
+        boundary: String
+    ) throws -> Data {
         var body = Data()
 
         // Read audio file
@@ -189,6 +199,10 @@ class APIClient: ObservableObject {
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"model\"\r\n\r\n".data(using: .utf8)!)
         body.append("\(model.rawValue)\r\n".data(using: .utf8)!)
+
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"vad_speech_threshold\"\r\n\r\n".data(using: .utf8)!)
+        body.append("\(noiseFilterLevel)\r\n".data(using: .utf8)!)
 
         // End boundary
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
