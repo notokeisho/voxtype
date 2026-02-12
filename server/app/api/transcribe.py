@@ -4,6 +4,7 @@ import tempfile
 import uuid
 from enum import Enum
 from pathlib import Path
+import logging
 
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 
@@ -16,6 +17,7 @@ from app.services.vad_utils import detect_speech_wav
 from app.services.whisper_client import WhisperError, whisper_client
 
 router = APIRouter(prefix="/api", tags=["transcribe"])
+logger = logging.getLogger(__name__)
 
 
 class WhisperModel(str, Enum):
@@ -100,6 +102,10 @@ async def transcribe_audio(
 
         # Apply dictionary replacements
         processed_text = await apply_dictionary(raw_text, current_user.id)
+
+        if settings.debug:
+            # Temporary debug logging for whitespace inspection.
+            logger.info("transcribe raw_text=%r text=%r", raw_text, processed_text)
 
         return {
             "text": processed_text,
