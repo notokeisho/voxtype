@@ -7,6 +7,7 @@ It also removes Japanese filler words for cleaner output.
 
 import re
 
+from app.config import settings
 from app.database import async_session_factory
 from app.models.global_dictionary import get_global_entries
 from app.models.user_dictionary import get_user_entries
@@ -127,6 +128,10 @@ def clean_punctuation(text: str) -> str:
 
     # Remove spaces after Japanese punctuation
     result = re.sub(r'([。？！])\s+', r'\1', result)
+
+    # Normalize question mark for Japanese output
+    if settings.voice_language.lower() == "ja":
+        result = result.replace("?", "？")
 
     return result
 

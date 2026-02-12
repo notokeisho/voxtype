@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     rms_silence_threshold: float = 0.005
     vad_enabled: bool = True
     vad_speech_threshold: float = 0.3
+    voice_language: str = "ja"
 
     # JWT
     jwt_secret: str = "change-me-in-production"
