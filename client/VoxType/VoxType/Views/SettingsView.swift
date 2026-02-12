@@ -300,6 +300,20 @@ struct GeneralSettingsView: View {
                 Text(localization.t("general.model"))
             }
 
+            // Noise filter (VAD)
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(localization.t("general.noiseFilter"))
+                        Spacer()
+                        Text(noiseFilterDisplayValue)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Slider(value: $settings.noiseFilterLevel, in: 0.0...0.5, step: 0.05)
+                }
+            }
+
             // Reset settings
             Section {
                 Button(localization.t("general.resetToDefaults")) {
@@ -311,6 +325,13 @@ struct GeneralSettingsView: View {
         }
         .formStyle(.grouped)
         .padding()
+    }
+
+    private var noiseFilterDisplayValue: String {
+        if settings.noiseFilterLevel == 0 {
+            return localization.t("general.off")
+        }
+        return String(format: "%.2f", settings.noiseFilterLevel)
     }
 
     private var connectionStatusText: String {

@@ -103,6 +103,8 @@ class LocalizationManager: ObservableObject {
         "general.launchAtLogin": "Launch at Login",
         "general.model": "Transcription Model",
         "general.transcriptionModel": "Model",
+        "general.noiseFilter": "Noise Filter",
+        "general.off": "Off",
         "general.resetToDefaults": "Reset to Defaults",
 
         // Hotkey tab
@@ -231,6 +233,8 @@ class LocalizationManager: ObservableObject {
         "general.launchAtLogin": "ログイン時に起動",
         "general.model": "文字起こしモデル",
         "general.transcriptionModel": "モデル",
+        "general.noiseFilter": "雑音フィルター",
+        "general.off": "オフ",
         "general.resetToDefaults": "デフォルトに戻す",
 
         // Hotkey tab

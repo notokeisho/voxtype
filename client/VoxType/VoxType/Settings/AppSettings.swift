@@ -17,6 +17,7 @@ class AppSettings: ObservableObject {
         static let launchAtLogin = "launchAtLogin"
         static let showInDock = "showInDock"
         static let whisperModel = "whisperModel"
+        static let noiseFilterLevel = "noiseFilterLevel"
     }
 
     // MARK: - Default Values
@@ -27,6 +28,7 @@ class AppSettings: ObservableObject {
         static let hotkeyKeyCode: UInt16 = 47        // Period key (.)
         static let modelHotkeyModifiers: UInt = 0x040000  // Control only
         static let modelHotkeyKeyCode: UInt16 = 46        // M key
+        static let noiseFilterLevel: Double = 0.3
     }
 
     // MARK: - Published Properties
@@ -87,6 +89,13 @@ class AppSettings: ObservableObject {
         }
     }
 
+    /// Noise filter level for VAD (0.0 disables VAD).
+    @Published var noiseFilterLevel: Double {
+        didSet {
+            UserDefaults.standard.set(noiseFilterLevel, forKey: Keys.noiseFilterLevel)
+        }
+    }
+
     // MARK: - Computed Properties
 
     /// Human-readable hotkey string.
@@ -122,6 +131,7 @@ class AppSettings: ObservableObject {
         let storedLaunchAtLogin = UserDefaults.standard.bool(forKey: Keys.launchAtLogin)
         let storedShowInDock = UserDefaults.standard.bool(forKey: Keys.showInDock)
         let storedWhisperModel = UserDefaults.standard.string(forKey: Keys.whisperModel)
+        let storedNoiseFilterLevel = UserDefaults.standard.object(forKey: Keys.noiseFilterLevel) as? Double
 
         self.serverURL = storedServerURL ?? Defaults.serverURL
         self.hotkeyModifiers = storedModifiers != 0 ? UInt(storedModifiers) : Defaults.hotkeyModifiers
@@ -131,6 +141,7 @@ class AppSettings: ObservableObject {
         self.launchAtLogin = storedLaunchAtLogin
         self.showInDock = storedShowInDock
         self.whisperModel = storedWhisperModel.flatMap { WhisperModel(rawValue: $0) } ?? .fast
+        self.noiseFilterLevel = storedNoiseFilterLevel ?? Defaults.noiseFilterLevel
     }
 
     // MARK: - Methods
@@ -145,6 +156,7 @@ class AppSettings: ObservableObject {
         launchAtLogin = false
         showInDock = false
         whisperModel = .fast
+        noiseFilterLevel = Defaults.noiseFilterLevel
     }
 
     private func formatHotkeyDisplayString(modifiers: UInt, keyCode: UInt16) -> String {
