@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     whisper_server_url_smart: str = "http://localhost:8081"
     rms_check_enabled: bool = True
     rms_silence_threshold: float = 0.01
+    vad_enabled: bool = True
+    vad_speech_threshold: float = 0.3
 
     # JWT
     jwt_secret: str = "change-me-in-production"

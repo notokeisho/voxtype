@@ -12,6 +12,7 @@ from app.config import settings
 from app.models.user import User
 from app.services.postprocess import apply_dictionary
 from app.services.audio_utils import compute_rms_wav
+from app.services.vad_utils import detect_speech_wav
 from app.services.whisper_client import WhisperError, whisper_client
 
 router = APIRouter(prefix="/api", tags=["transcribe"])
@@ -69,6 +70,16 @@ async def transcribe_audio(
         if settings.rms_check_enabled:
             rms_value = compute_rms_wav(str(temp_path))
             if rms_value is not None and rms_value < settings.rms_silence_threshold:
+                return {
+                    "text": "",
+                    "raw_text": "",
+                }
+
+        if settings.vad_enabled and settings.vad_speech_threshold > 0:
+            vad_result = detect_speech_wav(
+                str(temp_path), settings.vad_speech_threshold
+            )
+            if vad_result is False:
                 return {
                     "text": "",
                     "raw_text": "",
