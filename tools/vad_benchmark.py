@@ -46,7 +46,7 @@ def bench_silero_vad_lite(samples: np.ndarray, frame_ms: int) -> BenchmarkResult
         raise ValueError("silero-vad-lite requires 32ms frames")
 
     vad = SileroVAD(sample_rate=16000)
-    frame_samples = vad.window_size_samples()
+    frame_samples = vad.window_size_samples
     frames = 0
 
     start = time.perf_counter()
