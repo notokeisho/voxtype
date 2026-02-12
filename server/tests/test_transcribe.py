@@ -255,6 +255,43 @@ class TestTranscribeEndpointSuccess:
         finally:
             cleanup_test_user(github_id)
 
+    def test_transcribe_vad_threshold_override_off(self):
+        """Test that request override disables VAD when threshold is zero."""
+        github_id = "transcribe_vad_test_2"
+        client = TestClient(app)
+
+        try:
+            user_id = setup_test_user(github_id)
+            token = create_jwt_token(user_id=user_id, github_id=github_id)
+            audio_data, filename = create_test_audio_file()
+
+            settings.rms_check_enabled = True
+            settings.rms_silence_threshold = 0.01
+            settings.vad_enabled = True
+            settings.vad_speech_threshold = 0.3
+
+            with (
+                patch("app.api.transcribe.compute_rms_wav", return_value=0.5),
+                patch("app.api.transcribe.detect_speech_wav", return_value=False) as mock_vad,
+                patch(
+                    "app.api.transcribe.whisper_client.transcribe",
+                    new_callable=AsyncMock,
+                    return_value="テスト",
+                ),
+            ):
+                response = client.post(
+                    "/api/transcribe",
+                    files={"audio": (filename, audio_data, "audio/wav")},
+                    data={"vad_speech_threshold": "0"},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+
+            assert response.status_code == status.HTTP_200_OK
+            assert response.json()["text"] == "テスト"
+            mock_vad.assert_not_called()
+        finally:
+            cleanup_test_user(github_id)
+
     def test_transcribe_applies_dictionary(self):
         """Test that transcribe applies dictionary replacements."""
         github_id = "transcribe_test_2"
