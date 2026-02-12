@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     whisper_server_url_fast: str = "http://localhost:8080"
     whisper_server_url_smart: str = "http://localhost:8081"
     rms_check_enabled: bool = True
-    rms_silence_threshold: float = 0.01
+    rms_silence_threshold: float = 0.005
     vad_enabled: bool = True
     vad_speech_threshold: float = 0.3
 
