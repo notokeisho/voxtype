@@ -125,6 +125,9 @@ def clean_punctuation(text: str) -> str:
     # Use [^\S\n]+ to match whitespace except newlines
     result = re.sub(r'[^\S\n]+', ' ', result).strip()
 
+    # Remove spaces after Japanese punctuation
+    result = re.sub(r'([。？！])\s+', r'\1', result)
+
     return result
 
 

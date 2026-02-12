@@ -105,7 +105,7 @@ async def transcribe_audio(
 
         if settings.debug:
             # Temporary debug logging for whitespace inspection.
-            logger.info("transcribe raw_text=%r text=%r", raw_text, processed_text)
+            print(f"transcribe raw_text={raw_text!r} text={processed_text!r}")
 
         return {
             "text": processed_text,
