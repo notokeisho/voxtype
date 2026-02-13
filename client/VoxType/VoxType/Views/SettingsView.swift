@@ -290,7 +290,7 @@ struct GeneralSettingsView: View {
                         HStack {
                             Text(model.displayName)
                                 .fontWeight(.medium)
-                            Text("- \(model.description)")
+                            Text("- \(modelDescription(for: model))")
                                 .foregroundColor(.secondary)
                         }
                         .font(.caption)
@@ -332,6 +332,15 @@ struct GeneralSettingsView: View {
             return localization.t("general.off")
         }
         return String(format: "%.2f", settings.noiseFilterLevel)
+    }
+
+    private func modelDescription(for model: WhisperModel) -> String {
+        switch model {
+        case .fast:
+            return localization.t("general.model.fastDescription")
+        case .smart:
+            return localization.t("general.model.smartDescription")
+        }
     }
 
     private var connectionStatusText: String {
