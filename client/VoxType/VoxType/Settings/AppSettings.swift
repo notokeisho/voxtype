@@ -1,6 +1,11 @@
 import Foundation
 import SwiftUI
 
+enum RecordingHotkeyMode: String, CaseIterable {
+    case keyboard
+    case mouseWheel
+}
+
 /// Application settings stored in UserDefaults.
 @MainActor
 class AppSettings: ObservableObject {
@@ -13,6 +18,7 @@ class AppSettings: ObservableObject {
         static let hotkeyModifiers = "hotkeyModifiers"
         static let hotkeyKeyCode = "hotkeyKeyCode"
         static let hotkeyEnabled = "hotkeyEnabled"
+        static let recordingHotkeyMode = "recordingHotkeyMode"
         static let modelHotkeyModifiers = "modelHotkeyModifiers"
         static let modelHotkeyKeyCode = "modelHotkeyKeyCode"
         static let modelHotkeyEnabled = "modelHotkeyEnabled"
@@ -29,6 +35,7 @@ class AppSettings: ObservableObject {
         static let hotkeyModifiers: UInt = 0x040000  // Control only
         static let hotkeyKeyCode: UInt16 = 47        // Period key (.)
         static let hotkeyEnabled = true
+        static let recordingHotkeyMode: RecordingHotkeyMode = .keyboard
         static let modelHotkeyModifiers: UInt = 0x040000  // Control only
         static let modelHotkeyKeyCode: UInt16 = 46        // M key
         static let modelHotkeyEnabled = true
@@ -62,6 +69,14 @@ class AppSettings: ObservableObject {
     @Published var hotkeyEnabled: Bool {
         didSet {
             UserDefaults.standard.set(hotkeyEnabled, forKey: Keys.hotkeyEnabled)
+            HotkeyManager.shared.refreshMonitoring()
+        }
+    }
+
+    /// Recording hotkey input mode.
+    @Published var recordingHotkeyMode: RecordingHotkeyMode {
+        didSet {
+            UserDefaults.standard.set(recordingHotkeyMode.rawValue, forKey: Keys.recordingHotkeyMode)
             HotkeyManager.shared.refreshMonitoring()
         }
     }
@@ -147,6 +162,7 @@ class AppSettings: ObservableObject {
         let storedModifiers = UserDefaults.standard.integer(forKey: Keys.hotkeyModifiers)
         let storedKeyCode = UserDefaults.standard.integer(forKey: Keys.hotkeyKeyCode)
         let storedHotkeyEnabled = UserDefaults.standard.object(forKey: Keys.hotkeyEnabled) as? Bool
+        let storedRecordingMode = UserDefaults.standard.string(forKey: Keys.recordingHotkeyMode)
         let storedModelModifiers = UserDefaults.standard.integer(forKey: Keys.modelHotkeyModifiers)
         let storedModelKeyCode = UserDefaults.standard.integer(forKey: Keys.modelHotkeyKeyCode)
         let storedModelHotkeyEnabled = UserDefaults.standard.object(forKey: Keys.modelHotkeyEnabled) as? Bool
@@ -159,6 +175,7 @@ class AppSettings: ObservableObject {
         self.hotkeyModifiers = storedModifiers != 0 ? UInt(storedModifiers) : Defaults.hotkeyModifiers
         self.hotkeyKeyCode = storedKeyCode != 0 ? UInt16(storedKeyCode) : Defaults.hotkeyKeyCode
         self.hotkeyEnabled = storedHotkeyEnabled ?? Defaults.hotkeyEnabled
+        self.recordingHotkeyMode = storedRecordingMode.flatMap { RecordingHotkeyMode(rawValue: $0) } ?? Defaults.recordingHotkeyMode
         self.modelHotkeyModifiers = storedModelModifiers != 0 ? UInt(storedModelModifiers) : Defaults.modelHotkeyModifiers
         self.modelHotkeyKeyCode = storedModelKeyCode != 0 ? UInt16(storedModelKeyCode) : Defaults.modelHotkeyKeyCode
         self.modelHotkeyEnabled = storedModelHotkeyEnabled ?? Defaults.modelHotkeyEnabled
@@ -176,6 +193,7 @@ class AppSettings: ObservableObject {
         hotkeyModifiers = Defaults.hotkeyModifiers
         hotkeyKeyCode = Defaults.hotkeyKeyCode
         hotkeyEnabled = Defaults.hotkeyEnabled
+        recordingHotkeyMode = Defaults.recordingHotkeyMode
         modelHotkeyModifiers = Defaults.modelHotkeyModifiers
         modelHotkeyKeyCode = Defaults.modelHotkeyKeyCode
         modelHotkeyEnabled = Defaults.modelHotkeyEnabled

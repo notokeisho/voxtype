@@ -31,6 +31,12 @@ class HotkeyManager: ObservableObject {
     /// Called when model change hotkey is pressed.
     var onModelHotkeyPressed: (() -> Void)?
 
+    /// Called when mouse hotkey long press starts.
+    var onMouseHotkeyDown: ((NSRunningApplication?) -> Void)?
+
+    /// Called when mouse hotkey long press ends.
+    var onMouseHotkeyUp: (() -> Void)?
+
     // MARK: - Private Properties
 
     /// The event tap for monitoring keyboard events.
@@ -38,6 +44,18 @@ class HotkeyManager: ObservableObject {
 
     /// Run loop source for the event tap.
     private var runLoopSource: CFRunLoopSource?
+
+    /// Timer for mouse long press detection.
+    private var mouseHoldTimer: Timer?
+
+    /// Whether mouse long press is active.
+    private var isMouseHoldActive = false
+
+    /// Whether mouse is currently pressed.
+    private var isMousePressed = false
+
+    /// Frontmost app captured on mouse press.
+    private var mouseHotkeyTargetApp: NSRunningApplication?
 
     /// Settings reference for hotkey configuration.
     private let settings = AppSettings.shared
@@ -63,7 +81,11 @@ class HotkeyManager: ObservableObject {
         }
 
         // Create event tap
-        let eventMask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue) | (1 << CGEventType.flagsChanged.rawValue)
+        let eventMask = (1 << CGEventType.keyDown.rawValue)
+            | (1 << CGEventType.keyUp.rawValue)
+            | (1 << CGEventType.flagsChanged.rawValue)
+            | (1 << CGEventType.otherMouseDown.rawValue)
+            | (1 << CGEventType.otherMouseUp.rawValue)
 
         // We need to use a static callback, so we'll use a different approach
         guard let tap = createEventTap(eventMask: CGEventMask(eventMask)) else {
@@ -161,6 +183,7 @@ class HotkeyManager: ObservableObject {
             // Check if this is our hotkey (synchronously, thread-safe)
             let isHotkey = manager.isMatchingHotkeySync(event: event)
             let isModelHotkey = manager.isMatchingModelHotkeySync(event: event)
+            let isMouseHotkey = manager.isMatchingMouseHotkeySync(event: event)
 
             // For keyDown, check if it matches our hotkey
             if type == .keyDown && isModelHotkey {
@@ -177,6 +200,21 @@ class HotkeyManager: ObservableObject {
                 }
                 // Consume the event to prevent key from being typed
                 return nil
+            }
+
+            if type == .otherMouseDown && isMouseHotkey {
+                DispatchQueue.main.async {
+                    manager.handleMouseDown(event: event)
+                }
+                return Unmanaged.passRetained(event)
+            }
+
+            if type == .otherMouseUp && isMouseHotkey {
+                let shouldConsume = manager.shouldConsumeMouseUp()
+                DispatchQueue.main.async {
+                    manager.handleMouseUp(event: event)
+                }
+                return shouldConsume ? nil : Unmanaged.passRetained(event)
             }
 
             // For keyUp and flagsChanged, always pass to handleEvent
@@ -205,6 +243,9 @@ class HotkeyManager: ObservableObject {
     nonisolated private func isMatchingHotkeySync(event: CGEvent) -> Bool {
         let isEnabled = UserDefaults.standard.object(forKey: "hotkeyEnabled") as? Bool ?? true
         guard isEnabled else { return false }
+
+        let mode = UserDefaults.standard.string(forKey: "recordingHotkeyMode") ?? "keyboard"
+        guard mode == "keyboard" else { return false }
 
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
@@ -272,11 +313,57 @@ class HotkeyManager: ObservableObject {
         return (currentModifiers & effectiveModifiers) == effectiveModifiers
     }
 
+    nonisolated private func isMatchingMouseHotkeySync(event: CGEvent) -> Bool {
+        let isEnabled = UserDefaults.standard.object(forKey: "hotkeyEnabled") as? Bool ?? true
+        guard isEnabled else { return false }
+
+        let mode = UserDefaults.standard.string(forKey: "recordingHotkeyMode") ?? "keyboard"
+        guard mode == "mouseWheel" else { return false }
+
+        let buttonNumber = event.getIntegerValueField(.mouseEventButtonNumber)
+        return buttonNumber == 2
+    }
+
     private func handleModelHotkey(event: CGEvent) {
         let isAutoRepeat = event.getIntegerValueField(.keyboardEventAutorepeat) != 0
         guard !isAutoRepeat else { return }
 
         onModelHotkeyPressed?()
+    }
+
+    private func handleMouseDown(event: CGEvent) {
+        guard !isMousePressed else { return }
+
+        isMousePressed = true
+        mouseHotkeyTargetApp = NSWorkspace.shared.frontmostApplication
+
+        mouseHoldTimer?.invalidate()
+        mouseHoldTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
+            guard let self else { return }
+            guard self.isMousePressed else { return }
+
+            self.isMouseHoldActive = true
+            self.onMouseHotkeyDown?(self.mouseHotkeyTargetApp)
+        }
+    }
+
+    private func handleMouseUp(event: CGEvent) {
+        guard isMousePressed else { return }
+
+        isMousePressed = false
+        mouseHoldTimer?.invalidate()
+        mouseHoldTimer = nil
+
+        if isMouseHoldActive {
+            isMouseHoldActive = false
+            onMouseHotkeyUp?()
+        }
+
+        mouseHotkeyTargetApp = nil
+    }
+
+    private func shouldConsumeMouseUp() -> Bool {
+        isMouseHoldActive
     }
 
     private func handleEvent(type: CGEventType, event: CGEvent) {
@@ -317,6 +404,7 @@ class HotkeyManager: ObservableObject {
 
     private func isMatchingHotkey(keyCode: UInt16, flags: CGEventFlags) -> Bool {
         guard settings.hotkeyEnabled else { return false }
+        guard settings.recordingHotkeyMode == .keyboard else { return false }
 
         // Get configured hotkey
         let configuredKeyCode = settings.hotkeyKeyCode
