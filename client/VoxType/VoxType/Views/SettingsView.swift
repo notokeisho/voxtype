@@ -531,7 +531,7 @@ struct HotkeySettingsView: View {
                                 .background(Color.secondary.opacity(0.1))
                                 .cornerRadius(8)
                             }
-                            }
+                        }
 
                             Toggle(localization.t("hotkey.mouseHoldEnabled"), isOn: $settings.isMouseWheelRecordingEnabled)
                                 .toggleStyle(.switch)
