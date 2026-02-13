@@ -81,6 +81,11 @@ class AppSettings: ObservableObject {
         }
     }
 
+    var isMouseWheelRecordingEnabled: Bool {
+        get { recordingHotkeyMode == .mouseWheel }
+        set { recordingHotkeyMode = newValue ? .mouseWheel : .keyboard }
+    }
+
     /// Model change hotkey modifier flags.
     @Published var modelHotkeyModifiers: UInt {
         didSet {
