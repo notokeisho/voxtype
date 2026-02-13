@@ -459,10 +459,10 @@ struct HotkeySettingsView: View {
                         .toggleStyle(.switch)
 
                     if settings.hotkeyEnabled {
-                    if settings.recordingHotkeyMode == .keyboard {
-                        HStack {
-                            Text(localization.t("hotkey.current"))
-                                .font(.headline)
+                        if settings.recordingHotkeyMode == .keyboard {
+                            HStack {
+                                Text(localization.t("hotkey.current"))
+                                    .font(.headline)
                                 Spacer()
                                 Text(settings.hotkeyDisplayString)
                                     .font(.system(size: 20, weight: .medium, design: .rounded))
@@ -531,21 +531,22 @@ struct HotkeySettingsView: View {
                                 .background(Color.secondary.opacity(0.1))
                                 .cornerRadius(8)
                             }
+                            }
+
+                            Toggle(localization.t("hotkey.mouseHoldEnabled"), isOn: $settings.isMouseWheelRecordingEnabled)
+                                .toggleStyle(.switch)
+
+                            Text(localization.t("hotkey.description"))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        } else {
+                            Toggle(localization.t("hotkey.mouseHoldEnabled"), isOn: $settings.isMouseWheelRecordingEnabled)
+                                .toggleStyle(.switch)
+
+                            Text(localization.t("hotkey.mouseHoldHint"))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
-
-                        Toggle(localization.t("hotkey.mouseHoldEnabled"), isOn: $settings.isMouseWheelRecordingEnabled)
-                            .toggleStyle(.switch)
-
-                        Text(localization.t("hotkey.description"))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    } else {
-                        Toggle(localization.t("hotkey.mouseHoldEnabled"), isOn: $settings.isMouseWheelRecordingEnabled)
-                            .toggleStyle(.switch)
-
-                        Text(localization.t("hotkey.mouseHoldHint"))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
                     }
                 }
             } header: {
