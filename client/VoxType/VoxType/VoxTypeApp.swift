@@ -114,6 +114,20 @@ class AppCoordinator: ObservableObject {
             self?.handleHotkeyUp()
         }
 
+        hotkeyManager.onMouseHotkeyDown = { [weak self] targetApp in
+            Task { @MainActor in
+                guard let self else { return }
+                if let targetApp {
+                    self.previousApp = targetApp
+                }
+                self.handleHotkeyDown()
+            }
+        }
+
+        hotkeyManager.onMouseHotkeyUp = { [weak self] in
+            self?.handleHotkeyUp()
+        }
+
         hotkeyManager.onModelHotkeyPressed = { [weak self] in
             self?.handleModelHotkeyPressed()
         }
