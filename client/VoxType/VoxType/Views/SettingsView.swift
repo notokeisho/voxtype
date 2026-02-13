@@ -458,79 +458,78 @@ struct HotkeySettingsView: View {
                     Toggle(localization.t("hotkey.recordingEnabled"), isOn: $settings.hotkeyEnabled)
                         .toggleStyle(.switch)
 
-                    HStack {
-                        Text(localization.t("hotkey.current"))
-                            .font(.headline)
-                        Spacer()
-                        Text(settings.hotkeyDisplayString)
-                            .font(.system(size: 20, weight: .medium, design: .rounded))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.accentColor.opacity(settings.hotkeyEnabled ? 0.15 : 0.08))
-                            .cornerRadius(8)
-                            .foregroundColor(settings.hotkeyEnabled ? .primary : .secondary)
-                    }
-
-                    if !isEditing {
-                        Button(localization.t("hotkey.change")) {
-                            loadCurrentSettings()
-                            isEditing = true
+                    if settings.hotkeyEnabled {
+                        HStack {
+                            Text(localization.t("hotkey.current"))
+                                .font(.headline)
+                            Spacer()
+                            Text(settings.hotkeyDisplayString)
+                                .font(.system(size: 20, weight: .medium, design: .rounded))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.accentColor.opacity(0.15))
+                                .cornerRadius(8)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(!settings.hotkeyEnabled)
-                    } else {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(localization.t("hotkey.selectModifiers"))
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
 
-                            HStack(spacing: 8) {
-                                ModifierToggle(label: "⌃", isOn: $useControl)
-                                ModifierToggle(label: "⌥", isOn: $useOption)
-                                ModifierToggle(label: "⇧", isOn: $useShift)
-                                ModifierToggle(label: "⌘", isOn: $useCommand)
-
-                                Text("+")
+                        if !isEditing {
+                            Button(localization.t("hotkey.change")) {
+                                loadCurrentSettings()
+                                isEditing = true
+                            }
+                            .buttonStyle(.borderedProminent)
+                        } else {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(localization.t("hotkey.selectModifiers"))
+                                    .font(.subheadline)
                                     .foregroundColor(.secondary)
 
-                                Picker("Key", selection: $selectedKeyCode) {
-                                    ForEach(availableKeys, id: \.1) { key in
-                                        Text(key.0).tag(key.1)
+                                HStack(spacing: 8) {
+                                    ModifierToggle(label: "⌃", isOn: $useControl)
+                                    ModifierToggle(label: "⌥", isOn: $useOption)
+                                    ModifierToggle(label: "⇧", isOn: $useShift)
+                                    ModifierToggle(label: "⌘", isOn: $useCommand)
+
+                                    Text("+")
+                                        .foregroundColor(.secondary)
+
+                                    Picker("Key", selection: $selectedKeyCode) {
+                                        ForEach(availableKeys, id: \.1) { key in
+                                            Text(key.0).tag(key.1)
+                                        }
                                     }
+                                    .pickerStyle(.menu)
+                                    .frame(width: 100)
                                 }
-                                .pickerStyle(.menu)
-                                .frame(width: 100)
-                            }
 
-                            if !hasValidModifiers {
-                                Text(localization.t("hotkey.modifierRequired"))
-                                    .font(.caption)
-                                    .foregroundColor(.red)
-                            }
-                            if isRecordingHotkeyDuplicate {
-                                Text(localization.t("hotkey.duplicateWarning"))
-                                    .font(.caption)
-                                    .foregroundColor(.red)
-                            }
-
-                            HStack {
-                                Button(localization.t("hotkey.cancel")) {
-                                    isEditing = false
+                                if !hasValidModifiers {
+                                    Text(localization.t("hotkey.modifierRequired"))
+                                        .font(.caption)
+                                        .foregroundColor(.red)
                                 }
-                                .buttonStyle(.bordered)
-
-                                Button(localization.t("hotkey.save")) {
-                                    saveHotkey()
-                                    isEditing = false
+                                if isRecordingHotkeyDuplicate {
+                                    Text(localization.t("hotkey.duplicateWarning"))
+                                        .font(.caption)
+                                        .foregroundColor(.red)
                                 }
-                                .buttonStyle(.borderedProminent)
-                                .disabled(!hasValidModifiers || isRecordingHotkeyDuplicate)
+
+                                HStack {
+                                    Button(localization.t("hotkey.cancel")) {
+                                        isEditing = false
+                                    }
+                                    .buttonStyle(.bordered)
+
+                                    Button(localization.t("hotkey.save")) {
+                                        saveHotkey()
+                                        isEditing = false
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .disabled(!hasValidModifiers || isRecordingHotkeyDuplicate)
+                                }
                             }
+                            .padding()
+                            .background(Color.secondary.opacity(0.1))
+                            .cornerRadius(8)
                         }
-                        .padding()
-                        .background(Color.secondary.opacity(0.1))
-                        .cornerRadius(8)
-                        .disabled(!settings.hotkeyEnabled)
                     }
 
                     Text(localization.t("hotkey.description"))
@@ -546,79 +545,78 @@ struct HotkeySettingsView: View {
                     Toggle(localization.t("hotkey.modelEnabled"), isOn: $settings.modelHotkeyEnabled)
                         .toggleStyle(.switch)
 
-                    HStack {
-                        Text(localization.t("hotkey.modelTitle"))
-                            .font(.headline)
-                        Spacer()
-                        Text(settings.modelHotkeyDisplayString)
-                            .font(.system(size: 20, weight: .medium, design: .rounded))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.accentColor.opacity(settings.modelHotkeyEnabled ? 0.15 : 0.08))
-                            .cornerRadius(8)
-                            .foregroundColor(settings.modelHotkeyEnabled ? .primary : .secondary)
-                    }
-
-                    if !isEditingModelHotkey {
-                        Button(localization.t("hotkey.modelChange")) {
-                            loadCurrentModelHotkeySettings()
-                            isEditingModelHotkey = true
+                    if settings.modelHotkeyEnabled {
+                        HStack {
+                            Text(localization.t("hotkey.modelTitle"))
+                                .font(.headline)
+                            Spacer()
+                            Text(settings.modelHotkeyDisplayString)
+                                .font(.system(size: 20, weight: .medium, design: .rounded))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.accentColor.opacity(0.15))
+                                .cornerRadius(8)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(!settings.modelHotkeyEnabled)
-                    } else {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(localization.t("hotkey.selectModifiers"))
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
 
-                            HStack(spacing: 8) {
-                                ModifierToggle(label: "⌃", isOn: $modelUseControl)
-                                ModifierToggle(label: "⌥", isOn: $modelUseOption)
-                                ModifierToggle(label: "⇧", isOn: $modelUseShift)
-                                ModifierToggle(label: "⌘", isOn: $modelUseCommand)
-
-                                Text("+")
+                        if !isEditingModelHotkey {
+                            Button(localization.t("hotkey.modelChange")) {
+                                loadCurrentModelHotkeySettings()
+                                isEditingModelHotkey = true
+                            }
+                            .buttonStyle(.borderedProminent)
+                        } else {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(localization.t("hotkey.selectModifiers"))
+                                    .font(.subheadline)
                                     .foregroundColor(.secondary)
 
-                                Picker("Key", selection: $modelSelectedKeyCode) {
-                                    ForEach(availableKeys, id: \.1) { key in
-                                        Text(key.0).tag(key.1)
+                                HStack(spacing: 8) {
+                                    ModifierToggle(label: "⌃", isOn: $modelUseControl)
+                                    ModifierToggle(label: "⌥", isOn: $modelUseOption)
+                                    ModifierToggle(label: "⇧", isOn: $modelUseShift)
+                                    ModifierToggle(label: "⌘", isOn: $modelUseCommand)
+
+                                    Text("+")
+                                        .foregroundColor(.secondary)
+
+                                    Picker("Key", selection: $modelSelectedKeyCode) {
+                                        ForEach(availableKeys, id: \.1) { key in
+                                            Text(key.0).tag(key.1)
+                                        }
                                     }
+                                    .pickerStyle(.menu)
+                                    .frame(width: 100)
                                 }
-                                .pickerStyle(.menu)
-                                .frame(width: 100)
-                            }
 
-                            if !hasValidModelModifiers {
-                                Text(localization.t("hotkey.modifierRequired"))
-                                    .font(.caption)
-                                    .foregroundColor(.red)
-                            }
-                            if isModelHotkeyDuplicate {
-                                Text(localization.t("hotkey.duplicateWarning"))
-                                    .font(.caption)
-                                    .foregroundColor(.red)
-                            }
-
-                            HStack {
-                                Button(localization.t("hotkey.cancel")) {
-                                    isEditingModelHotkey = false
+                                if !hasValidModelModifiers {
+                                    Text(localization.t("hotkey.modifierRequired"))
+                                        .font(.caption)
+                                        .foregroundColor(.red)
                                 }
-                                .buttonStyle(.bordered)
-
-                                Button(localization.t("hotkey.save")) {
-                                    saveModelHotkey()
-                                    isEditingModelHotkey = false
+                                if isModelHotkeyDuplicate {
+                                    Text(localization.t("hotkey.duplicateWarning"))
+                                        .font(.caption)
+                                        .foregroundColor(.red)
                                 }
-                                .buttonStyle(.borderedProminent)
-                                .disabled(!hasValidModelModifiers || isModelHotkeyDuplicate)
+
+                                HStack {
+                                    Button(localization.t("hotkey.cancel")) {
+                                        isEditingModelHotkey = false
+                                    }
+                                    .buttonStyle(.bordered)
+
+                                    Button(localization.t("hotkey.save")) {
+                                        saveModelHotkey()
+                                        isEditingModelHotkey = false
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .disabled(!hasValidModelModifiers || isModelHotkeyDuplicate)
+                                }
                             }
+                            .padding()
+                            .background(Color.secondary.opacity(0.1))
+                            .cornerRadius(8)
                         }
-                        .padding()
-                        .background(Color.secondary.opacity(0.1))
-                        .cornerRadius(8)
-                        .disabled(!settings.modelHotkeyEnabled)
                     }
 
                     Text(localization.t("hotkey.modelDescription"))
