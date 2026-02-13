@@ -455,6 +455,9 @@ struct HotkeySettingsView: View {
 
             Section {
                 VStack(alignment: .leading, spacing: 12) {
+                    Toggle(localization.t("hotkey.recordingEnabled"), isOn: $settings.hotkeyEnabled)
+                        .toggleStyle(.switch)
+
                     HStack {
                         Text(localization.t("hotkey.current"))
                             .font(.headline)
@@ -463,8 +466,9 @@ struct HotkeySettingsView: View {
                             .font(.system(size: 20, weight: .medium, design: .rounded))
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(Color.accentColor.opacity(0.15))
+                            .background(Color.accentColor.opacity(settings.hotkeyEnabled ? 0.15 : 0.08))
                             .cornerRadius(8)
+                            .foregroundColor(settings.hotkeyEnabled ? .primary : .secondary)
                     }
 
                     if !isEditing {
@@ -473,6 +477,7 @@ struct HotkeySettingsView: View {
                             isEditing = true
                         }
                         .buttonStyle(.borderedProminent)
+                        .disabled(!settings.hotkeyEnabled)
                     } else {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(localization.t("hotkey.selectModifiers"))
@@ -525,6 +530,7 @@ struct HotkeySettingsView: View {
                         .padding()
                         .background(Color.secondary.opacity(0.1))
                         .cornerRadius(8)
+                        .disabled(!settings.hotkeyEnabled)
                     }
 
                     Text(localization.t("hotkey.description"))
@@ -537,6 +543,9 @@ struct HotkeySettingsView: View {
 
             Section {
                 VStack(alignment: .leading, spacing: 12) {
+                    Toggle(localization.t("hotkey.modelEnabled"), isOn: $settings.modelHotkeyEnabled)
+                        .toggleStyle(.switch)
+
                     HStack {
                         Text(localization.t("hotkey.modelTitle"))
                             .font(.headline)
@@ -545,8 +554,9 @@ struct HotkeySettingsView: View {
                             .font(.system(size: 20, weight: .medium, design: .rounded))
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(Color.accentColor.opacity(0.15))
+                            .background(Color.accentColor.opacity(settings.modelHotkeyEnabled ? 0.15 : 0.08))
                             .cornerRadius(8)
+                            .foregroundColor(settings.modelHotkeyEnabled ? .primary : .secondary)
                     }
 
                     if !isEditingModelHotkey {
@@ -555,6 +565,7 @@ struct HotkeySettingsView: View {
                             isEditingModelHotkey = true
                         }
                         .buttonStyle(.borderedProminent)
+                        .disabled(!settings.modelHotkeyEnabled)
                     } else {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(localization.t("hotkey.selectModifiers"))
@@ -607,6 +618,7 @@ struct HotkeySettingsView: View {
                         .padding()
                         .background(Color.secondary.opacity(0.1))
                         .cornerRadius(8)
+                        .disabled(!settings.modelHotkeyEnabled)
                     }
 
                     Text(localization.t("hotkey.modelDescription"))
@@ -639,6 +651,16 @@ struct HotkeySettingsView: View {
         .formStyle(.grouped)
         .onAppear {
             hotkeyManager.checkAccessibilityPermission()
+        }
+        .onChange(of: settings.hotkeyEnabled) { _, newValue in
+            if !newValue {
+                isEditing = false
+            }
+        }
+        .onChange(of: settings.modelHotkeyEnabled) { _, newValue in
+            if !newValue {
+                isEditingModelHotkey = false
+            }
         }
         .padding()
     }
