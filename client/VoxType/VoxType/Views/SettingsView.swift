@@ -459,6 +459,8 @@ struct HotkeySettingsView: View {
                         .toggleStyle(.switch)
 
                     if settings.hotkeyEnabled {
+                        Divider()
+
                         if settings.recordingHotkeyMode == .keyboard {
                             HStack {
                                 Text(localization.t("hotkey.current"))
@@ -557,6 +559,8 @@ struct HotkeySettingsView: View {
                         .toggleStyle(.switch)
 
                     if settings.modelHotkeyEnabled {
+                        Divider()
+
                         HStack {
                             Text(localization.t("hotkey.modelTitle"))
                                 .font(.headline)
