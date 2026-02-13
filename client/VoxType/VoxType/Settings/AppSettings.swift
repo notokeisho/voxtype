@@ -12,8 +12,10 @@ class AppSettings: ObservableObject {
         static let serverURL = "serverURL"
         static let hotkeyModifiers = "hotkeyModifiers"
         static let hotkeyKeyCode = "hotkeyKeyCode"
+        static let hotkeyEnabled = "hotkeyEnabled"
         static let modelHotkeyModifiers = "modelHotkeyModifiers"
         static let modelHotkeyKeyCode = "modelHotkeyKeyCode"
+        static let modelHotkeyEnabled = "modelHotkeyEnabled"
         static let launchAtLogin = "launchAtLogin"
         static let showInDock = "showInDock"
         static let whisperModel = "whisperModel"
@@ -26,8 +28,10 @@ class AppSettings: ObservableObject {
         static let serverURL = "http://localhost:8000"
         static let hotkeyModifiers: UInt = 0x040000  // Control only
         static let hotkeyKeyCode: UInt16 = 47        // Period key (.)
+        static let hotkeyEnabled = true
         static let modelHotkeyModifiers: UInt = 0x040000  // Control only
         static let modelHotkeyKeyCode: UInt16 = 46        // M key
+        static let modelHotkeyEnabled = true
         static let noiseFilterLevel: Double = 0.3
     }
 
@@ -54,6 +58,13 @@ class AppSettings: ObservableObject {
         }
     }
 
+    /// Whether recording hotkey is enabled.
+    @Published var hotkeyEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(hotkeyEnabled, forKey: Keys.hotkeyEnabled)
+        }
+    }
+
     /// Model change hotkey modifier flags.
     @Published var modelHotkeyModifiers: UInt {
         didSet {
@@ -65,6 +76,13 @@ class AppSettings: ObservableObject {
     @Published var modelHotkeyKeyCode: UInt16 {
         didSet {
             UserDefaults.standard.set(Int(modelHotkeyKeyCode), forKey: Keys.modelHotkeyKeyCode)
+        }
+    }
+
+    /// Whether model change hotkey is enabled.
+    @Published var modelHotkeyEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(modelHotkeyEnabled, forKey: Keys.modelHotkeyEnabled)
         }
     }
 
@@ -126,8 +144,10 @@ class AppSettings: ObservableObject {
         let storedServerURL = UserDefaults.standard.string(forKey: Keys.serverURL)
         let storedModifiers = UserDefaults.standard.integer(forKey: Keys.hotkeyModifiers)
         let storedKeyCode = UserDefaults.standard.integer(forKey: Keys.hotkeyKeyCode)
+        let storedHotkeyEnabled = UserDefaults.standard.object(forKey: Keys.hotkeyEnabled) as? Bool
         let storedModelModifiers = UserDefaults.standard.integer(forKey: Keys.modelHotkeyModifiers)
         let storedModelKeyCode = UserDefaults.standard.integer(forKey: Keys.modelHotkeyKeyCode)
+        let storedModelHotkeyEnabled = UserDefaults.standard.object(forKey: Keys.modelHotkeyEnabled) as? Bool
         let storedLaunchAtLogin = UserDefaults.standard.bool(forKey: Keys.launchAtLogin)
         let storedShowInDock = UserDefaults.standard.bool(forKey: Keys.showInDock)
         let storedWhisperModel = UserDefaults.standard.string(forKey: Keys.whisperModel)
@@ -136,8 +156,10 @@ class AppSettings: ObservableObject {
         self.serverURL = storedServerURL ?? Defaults.serverURL
         self.hotkeyModifiers = storedModifiers != 0 ? UInt(storedModifiers) : Defaults.hotkeyModifiers
         self.hotkeyKeyCode = storedKeyCode != 0 ? UInt16(storedKeyCode) : Defaults.hotkeyKeyCode
+        self.hotkeyEnabled = storedHotkeyEnabled ?? Defaults.hotkeyEnabled
         self.modelHotkeyModifiers = storedModelModifiers != 0 ? UInt(storedModelModifiers) : Defaults.modelHotkeyModifiers
         self.modelHotkeyKeyCode = storedModelKeyCode != 0 ? UInt16(storedModelKeyCode) : Defaults.modelHotkeyKeyCode
+        self.modelHotkeyEnabled = storedModelHotkeyEnabled ?? Defaults.modelHotkeyEnabled
         self.launchAtLogin = storedLaunchAtLogin
         self.showInDock = storedShowInDock
         self.whisperModel = storedWhisperModel.flatMap { WhisperModel(rawValue: $0) } ?? .fast
@@ -151,8 +173,10 @@ class AppSettings: ObservableObject {
         serverURL = Defaults.serverURL
         hotkeyModifiers = Defaults.hotkeyModifiers
         hotkeyKeyCode = Defaults.hotkeyKeyCode
+        hotkeyEnabled = Defaults.hotkeyEnabled
         modelHotkeyModifiers = Defaults.modelHotkeyModifiers
         modelHotkeyKeyCode = Defaults.modelHotkeyKeyCode
+        modelHotkeyEnabled = Defaults.modelHotkeyEnabled
         launchAtLogin = false
         showInDock = false
         whisperModel = .fast
