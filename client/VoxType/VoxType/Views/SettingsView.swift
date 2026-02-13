@@ -459,76 +459,97 @@ struct HotkeySettingsView: View {
                         .toggleStyle(.switch)
 
                     if settings.hotkeyEnabled {
-                        HStack {
-                            Text(localization.t("hotkey.current"))
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(localization.t("hotkey.recordingInputTitle"))
                                 .font(.headline)
-                            Spacer()
-                            Text(settings.hotkeyDisplayString)
-                                .font(.system(size: 20, weight: .medium, design: .rounded))
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color.accentColor.opacity(0.15))
-                                .cornerRadius(8)
+
+                            Picker("Recording Input", selection: $settings.recordingHotkeyMode) {
+                                Text(localization.t("hotkey.recordingInputKeyboard"))
+                                    .tag(RecordingHotkeyMode.keyboard)
+                                Text(localization.t("hotkey.recordingInputMouse"))
+                                    .tag(RecordingHotkeyMode.mouseWheel)
+                            }
+                            .pickerStyle(.segmented)
+
+                            if settings.recordingHotkeyMode == .mouseWheel {
+                                Text(localization.t("hotkey.mouseHoldHint"))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                         }
 
-                        if !isEditing {
-                            Button(localization.t("hotkey.change")) {
-                                loadCurrentSettings()
-                                isEditing = true
+                        if settings.recordingHotkeyMode == .keyboard {
+                            HStack {
+                                Text(localization.t("hotkey.current"))
+                                    .font(.headline)
+                                Spacer()
+                                Text(settings.hotkeyDisplayString)
+                                    .font(.system(size: 20, weight: .medium, design: .rounded))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color.accentColor.opacity(0.15))
+                                    .cornerRadius(8)
                             }
-                            .buttonStyle(.borderedProminent)
-                        } else {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text(localization.t("hotkey.selectModifiers"))
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
 
-                                HStack(spacing: 8) {
-                                    ModifierToggle(label: "⌃", isOn: $useControl)
-                                    ModifierToggle(label: "⌥", isOn: $useOption)
-                                    ModifierToggle(label: "⇧", isOn: $useShift)
-                                    ModifierToggle(label: "⌘", isOn: $useCommand)
-
-                                    Text("+")
+                            if !isEditing {
+                                Button(localization.t("hotkey.change")) {
+                                    loadCurrentSettings()
+                                    isEditing = true
+                                }
+                                .buttonStyle(.borderedProminent)
+                            } else {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text(localization.t("hotkey.selectModifiers"))
+                                        .font(.subheadline)
                                         .foregroundColor(.secondary)
 
-                                    Picker("Key", selection: $selectedKeyCode) {
-                                        ForEach(availableKeys, id: \.1) { key in
-                                            Text(key.0).tag(key.1)
+                                    HStack(spacing: 8) {
+                                        ModifierToggle(label: "⌃", isOn: $useControl)
+                                        ModifierToggle(label: "⌥", isOn: $useOption)
+                                        ModifierToggle(label: "⇧", isOn: $useShift)
+                                        ModifierToggle(label: "⌘", isOn: $useCommand)
+
+                                        Text("+")
+                                            .foregroundColor(.secondary)
+
+                                        Picker("Key", selection: $selectedKeyCode) {
+                                            ForEach(availableKeys, id: \.1) { key in
+                                                Text(key.0).tag(key.1)
+                                            }
                                         }
+                                        .pickerStyle(.menu)
+                                        .frame(width: 100)
                                     }
-                                    .pickerStyle(.menu)
-                                    .frame(width: 100)
-                                }
 
-                                if !hasValidModifiers {
-                                    Text(localization.t("hotkey.modifierRequired"))
-                                        .font(.caption)
-                                        .foregroundColor(.red)
-                                }
-                                if isRecordingHotkeyDuplicate {
-                                    Text(localization.t("hotkey.duplicateWarning"))
-                                        .font(.caption)
-                                        .foregroundColor(.red)
-                                }
-
-                                HStack {
-                                    Button(localization.t("hotkey.cancel")) {
-                                        isEditing = false
+                                    if !hasValidModifiers {
+                                        Text(localization.t("hotkey.modifierRequired"))
+                                            .font(.caption)
+                                            .foregroundColor(.red)
                                     }
-                                    .buttonStyle(.bordered)
-
-                                    Button(localization.t("hotkey.save")) {
-                                        saveHotkey()
-                                        isEditing = false
+                                    if isRecordingHotkeyDuplicate {
+                                        Text(localization.t("hotkey.duplicateWarning"))
+                                            .font(.caption)
+                                            .foregroundColor(.red)
                                     }
-                                    .buttonStyle(.borderedProminent)
-                                    .disabled(!hasValidModifiers || isRecordingHotkeyDuplicate)
+
+                                    HStack {
+                                        Button(localization.t("hotkey.cancel")) {
+                                            isEditing = false
+                                        }
+                                        .buttonStyle(.bordered)
+
+                                        Button(localization.t("hotkey.save")) {
+                                            saveHotkey()
+                                            isEditing = false
+                                        }
+                                        .buttonStyle(.borderedProminent)
+                                        .disabled(!hasValidModifiers || isRecordingHotkeyDuplicate)
+                                    }
                                 }
+                                .padding()
+                                .background(Color.secondary.opacity(0.1))
+                                .cornerRadius(8)
                             }
-                            .padding()
-                            .background(Color.secondary.opacity(0.1))
-                            .cornerRadius(8)
                         }
                     }
 
@@ -654,6 +675,9 @@ struct HotkeySettingsView: View {
             if !newValue {
                 isEditing = false
             }
+        }
+        .onChange(of: settings.recordingHotkeyMode) { _ in
+            isEditing = false
         }
         .onChange(of: settings.modelHotkeyEnabled) { newValue in
             if !newValue {
