@@ -459,29 +459,10 @@ struct HotkeySettingsView: View {
                         .toggleStyle(.switch)
 
                     if settings.hotkeyEnabled {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(localization.t("hotkey.recordingInputTitle"))
+                    if settings.recordingHotkeyMode == .keyboard {
+                        HStack {
+                            Text(localization.t("hotkey.current"))
                                 .font(.headline)
-
-                            Picker("Recording Input", selection: $settings.recordingHotkeyMode) {
-                                Text(localization.t("hotkey.recordingInputKeyboard"))
-                                    .tag(RecordingHotkeyMode.keyboard)
-                                Text(localization.t("hotkey.recordingInputMouse"))
-                                    .tag(RecordingHotkeyMode.mouseWheel)
-                            }
-                            .pickerStyle(.segmented)
-
-                            if settings.recordingHotkeyMode == .mouseWheel {
-                                Text(localization.t("hotkey.mouseHoldHint"))
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-
-                        if settings.recordingHotkeyMode == .keyboard {
-                            HStack {
-                                Text(localization.t("hotkey.current"))
-                                    .font(.headline)
                                 Spacer()
                                 Text(settings.hotkeyDisplayString)
                                     .font(.system(size: 20, weight: .medium, design: .rounded))
@@ -551,11 +532,21 @@ struct HotkeySettingsView: View {
                                 .cornerRadius(8)
                             }
                         }
-                    }
 
-                    Text(localization.t("hotkey.description"))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        Toggle(localization.t("hotkey.mouseHoldEnabled"), isOn: $settings.isMouseWheelRecordingEnabled)
+                            .toggleStyle(.switch)
+
+                        Text(localization.t("hotkey.description"))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Toggle(localization.t("hotkey.mouseHoldEnabled"), isOn: $settings.isMouseWheelRecordingEnabled)
+                            .toggleStyle(.switch)
+
+                        Text(localization.t("hotkey.mouseHoldHint"))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
             } header: {
                 Text(localization.t("hotkey.title"))
@@ -675,9 +666,6 @@ struct HotkeySettingsView: View {
             if !newValue {
                 isEditing = false
             }
-        }
-        .onChange(of: settings.recordingHotkeyMode) { _ in
-            isEditing = false
         }
         .onChange(of: settings.modelHotkeyEnabled) { newValue in
             if !newValue {
