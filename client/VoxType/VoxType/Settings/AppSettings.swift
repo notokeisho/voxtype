@@ -62,6 +62,7 @@ class AppSettings: ObservableObject {
     @Published var hotkeyEnabled: Bool {
         didSet {
             UserDefaults.standard.set(hotkeyEnabled, forKey: Keys.hotkeyEnabled)
+            HotkeyManager.shared.refreshMonitoring()
         }
     }
 
@@ -83,6 +84,7 @@ class AppSettings: ObservableObject {
     @Published var modelHotkeyEnabled: Bool {
         didSet {
             UserDefaults.standard.set(modelHotkeyEnabled, forKey: Keys.modelHotkeyEnabled)
+            HotkeyManager.shared.refreshMonitoring()
         }
     }
 

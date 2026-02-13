@@ -108,6 +108,15 @@ class HotkeyManager: ObservableObject {
         isHotkeyPressed = false
     }
 
+    /// Refresh monitoring based on current settings.
+    func refreshMonitoring() {
+        if settings.hotkeyEnabled || settings.modelHotkeyEnabled {
+            _ = startMonitoring()
+        } else {
+            stopMonitoring()
+        }
+    }
+
     /// Check if accessibility permission is granted.
     @discardableResult
     func checkAccessibilityPermission() -> Bool {
@@ -194,6 +203,9 @@ class HotkeyManager: ObservableObject {
     /// Thread-safe hotkey matching for use in CGEventTap callback.
     /// Reads directly from UserDefaults which is thread-safe.
     nonisolated private func isMatchingHotkeySync(event: CGEvent) -> Bool {
+        let isEnabled = UserDefaults.standard.object(forKey: "hotkeyEnabled") as? Bool ?? true
+        guard isEnabled else { return false }
+
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
 
@@ -229,6 +241,9 @@ class HotkeyManager: ObservableObject {
     /// Thread-safe model hotkey matching for use in CGEventTap callback.
     /// Reads directly from UserDefaults which is thread-safe.
     nonisolated private func isMatchingModelHotkeySync(event: CGEvent) -> Bool {
+        let isEnabled = UserDefaults.standard.object(forKey: "modelHotkeyEnabled") as? Bool ?? true
+        guard isEnabled else { return false }
+
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
 
@@ -301,6 +316,8 @@ class HotkeyManager: ObservableObject {
     }
 
     private func isMatchingHotkey(keyCode: UInt16, flags: CGEventFlags) -> Bool {
+        guard settings.hotkeyEnabled else { return false }
+
         // Get configured hotkey
         let configuredKeyCode = settings.hotkeyKeyCode
         let configuredModifiers = settings.hotkeyModifiers
