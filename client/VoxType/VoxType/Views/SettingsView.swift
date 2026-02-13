@@ -652,12 +652,12 @@ struct HotkeySettingsView: View {
         .onAppear {
             hotkeyManager.checkAccessibilityPermission()
         }
-        .onChange(of: settings.hotkeyEnabled) { _, newValue in
+        .onChange(of: settings.hotkeyEnabled) { newValue in
             if !newValue {
                 isEditing = false
             }
         }
-        .onChange(of: settings.modelHotkeyEnabled) { _, newValue in
+        .onChange(of: settings.modelHotkeyEnabled) { newValue in
             if !newValue {
                 isEditingModelHotkey = false
             }
