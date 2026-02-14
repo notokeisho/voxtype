@@ -71,3 +71,29 @@ async def get_pending_request_count(session: AsyncSession) -> int:
         )
     )
     return result.scalar() or 0
+
+
+async def get_pending_request_count_for_user(session: AsyncSession, user_id: int) -> int:
+    """Get count of pending dictionary requests for a user."""
+    result = await session.execute(
+        select(func.count()).select_from(GlobalDictionaryRequest).where(
+            GlobalDictionaryRequest.status == REQUEST_STATUS_PENDING,
+            GlobalDictionaryRequest.user_id == user_id,
+        )
+    )
+    return result.scalar() or 0
+
+
+async def get_request_count_for_user(
+    session: AsyncSession,
+    user_id: int,
+    status: str,
+) -> int:
+    """Get count of dictionary requests for a user by status."""
+    result = await session.execute(
+        select(func.count()).select_from(GlobalDictionaryRequest).where(
+            GlobalDictionaryRequest.status == status,
+            GlobalDictionaryRequest.user_id == user_id,
+        )
+    )
+    return result.scalar() or 0

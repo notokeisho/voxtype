@@ -9,8 +9,11 @@ from app.database import get_session
 from app.models.global_dictionary import GlobalDictionary
 from app.models.global_dictionary_request import (
     REQUEST_STATUS_PENDING,
+    REQUEST_STATUS_REJECTED,
     GlobalDictionaryRequest,
     add_request,
+    get_pending_request_count_for_user,
+    get_request_count_for_user,
 )
 from app.models.user import User
 from app.services.dictionary_normalize import normalize_dictionary_text
@@ -32,6 +35,7 @@ class DictionaryRequestResponse(BaseModel):
     pattern: str
     replacement: str
     status: str
+    remaining: int | None = None
 
 
 @router.post(
@@ -45,6 +49,20 @@ async def create_dictionary_request(
 ):
     """Create a dictionary request."""
     async with get_session() as session:
+        pending_count = await get_pending_request_count_for_user(session, current_user.id)
+        rejected_count = await get_request_count_for_user(
+            session,
+            current_user.id,
+            REQUEST_STATUS_REJECTED,
+        )
+
+        remaining = 200 - pending_count - rejected_count
+        if remaining <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Dictionary request limit reached",
+            )
+
         normalized_pattern = normalize_dictionary_text(body.pattern)
         normalized_replacement = normalize_dictionary_text(body.replacement)
 
@@ -86,4 +104,5 @@ async def create_dictionary_request(
         pattern=request.pattern,
         replacement=request.replacement,
         status=request.status,
+        remaining=remaining - 1,
     )
