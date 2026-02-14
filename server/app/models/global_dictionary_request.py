@@ -5,11 +5,12 @@ from datetime import datetime
 from sqlalchemy import ForeignKey, String, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
+
+from app.database import Base
+
 REQUEST_STATUS_PENDING = "pending"
 REQUEST_STATUS_APPROVED = "approved"
 REQUEST_STATUS_REJECTED = "rejected"
-
-from app.database import Base
 
 
 class GlobalDictionaryRequest(Base):
