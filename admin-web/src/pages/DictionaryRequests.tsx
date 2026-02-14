@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -38,6 +38,10 @@ export function DictionaryRequestsPage() {
   } | null>(null)
   const [processing, setProcessing] = useState(false)
   const [lastCount, setLastCount] = useState<number | null>(null)
+  const processingRef = useRef(processing)
+  const isRefreshingRef = useRef(isRefreshing)
+  const loadingRef = useRef(loading)
+  const lastCountRef = useRef(lastCount)
 
   const fetchRequests = async (notify = false, showLoading = true) => {
     try {
@@ -49,6 +53,7 @@ export function DictionaryRequestsPage() {
       const data = await getDictionaryRequests()
       setRequests(data.entries)
       setLastCount(data.count)
+      lastCountRef.current = data.count
       setError(null)
       if (notify) {
         window.dispatchEvent(
@@ -71,10 +76,26 @@ export function DictionaryRequestsPage() {
   }
 
   useEffect(() => {
+    processingRef.current = processing
+  }, [processing])
+
+  useEffect(() => {
+    isRefreshingRef.current = isRefreshing
+  }, [isRefreshing])
+
+  useEffect(() => {
+    loadingRef.current = loading
+  }, [loading])
+
+  useEffect(() => {
+    lastCountRef.current = lastCount
+  }, [lastCount])
+
+  useEffect(() => {
     fetchRequests()
 
     const refreshCount = async () => {
-      if (processing || isRefreshing || loading) {
+      if (processingRef.current || isRefreshingRef.current || loadingRef.current) {
         return
       }
       try {
@@ -84,9 +105,9 @@ export function DictionaryRequestsPage() {
             detail: { count: data.count },
           })
         )
-        if (lastCount !== null && data.count !== lastCount) {
+        if (lastCountRef.current !== null && data.count !== lastCountRef.current) {
           await fetchRequests(true, false)
-        } else if (lastCount === null) {
+        } else if (lastCountRef.current === null) {
           setLastCount(data.count)
         }
       } catch {
@@ -114,7 +135,7 @@ export function DictionaryRequestsPage() {
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [processing, isRefreshing, loading, lastCount])
+  }, [])
 
   const handleAction = async () => {
     if (!pendingAction) return
