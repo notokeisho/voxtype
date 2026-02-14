@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -29,6 +30,7 @@ import { useLanguage } from '@/lib/i18n'
 
 export function DictionaryPage() {
   const { t, tWithParams, language } = useLanguage()
+  const location = useLocation()
   const [entries, setEntries] = useState<DictionaryEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -52,8 +54,10 @@ export function DictionaryPage() {
   }
 
   useEffect(() => {
-    fetchDictionary()
-  }, [])
+    if (location.pathname === '/dictionary') {
+      fetchDictionary()
+    }
+  }, [location.pathname])
 
   const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
