@@ -32,6 +32,15 @@ class GlobalDictionaryRequestService: ObservableObject {
 
             isLoading = false
             return true
+        } catch let error as GlobalDictionaryRequestError {
+            if case .serverError(let message) = error,
+               message == "Dictionary request limit reached" {
+                errorMessage = LocalizationManager.shared.t("globalRequest.limitReached")
+            } else {
+                errorMessage = "Failed to submit request: \(error.localizedDescription)"
+            }
+            isLoading = false
+            return false
         } catch {
             errorMessage = "Failed to submit request: \(error.localizedDescription)"
             isLoading = false

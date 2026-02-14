@@ -164,6 +164,7 @@ class LocalizationManager: ObservableObject {
         "globalRequest.replacement": "Replacement",
         "globalRequest.submit": "Submit Request",
         "globalRequest.successNote": "The request will apply from the next recording.",
+        "globalRequest.limitReached": "Request limit reached. Please try again later.",
 
         // Language tab
         "language.title": "Language Settings",
@@ -309,6 +310,7 @@ class LocalizationManager: ObservableObject {
         "globalRequest.replacement": "置換後",
         "globalRequest.submit": "申請する",
         "globalRequest.successNote": "次の録音から反映されます。",
+        "globalRequest.limitReached": "申請の上限に達しました。しばらく待ってから再度申請してください。",
 
         // Language tab
         "language.title": "言語設定",
