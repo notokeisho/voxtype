@@ -79,10 +79,8 @@ class DictionaryService: ObservableObject {
                 body: bodyData
             )
 
-            let decoder = JSONDecoder()
-            let newEntry = try decoder.decode(DictionaryEntry.self, from: response)
-            entries.append(newEntry)
-            isLoading = false
+            _ = response
+            await fetchEntries(token: token)
             return true
         } catch {
             errorMessage = "Failed to add entry: \(error.localizedDescription)"
@@ -103,8 +101,7 @@ class DictionaryService: ObservableObject {
                 token: token
             )
 
-            entries.removeAll { $0.id == id }
-            isLoading = false
+            await fetchEntries(token: token)
             return true
         } catch {
             errorMessage = "Failed to delete entry: \(error.localizedDescription)"
