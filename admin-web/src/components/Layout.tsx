@@ -59,8 +59,20 @@ export function Layout({ children, user }: LayoutProps) {
 
     fetchCount()
 
+    const handleRequestsUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ count?: number }>
+      if (typeof customEvent.detail?.count === 'number') {
+        setRequestCount(customEvent.detail.count)
+        return
+      }
+      fetchCount()
+    }
+
+    window.addEventListener('dictionaryRequestsUpdated', handleRequestsUpdated)
+
     return () => {
       isMounted = false
+      window.removeEventListener('dictionaryRequestsUpdated', handleRequestsUpdated)
     }
   }, [user])
 

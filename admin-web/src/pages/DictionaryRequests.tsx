@@ -37,14 +37,23 @@ export function DictionaryRequestsPage() {
   } | null>(null)
   const [processing, setProcessing] = useState(false)
 
-  const fetchRequests = async () => {
+  const fetchRequests = async (notify = false) => {
     try {
       setLoading(true)
       const data = await getDictionaryRequests()
       setRequests(data.entries)
       setError(null)
+      if (notify) {
+        window.dispatchEvent(
+          new CustomEvent('dictionaryRequestsUpdated', {
+            detail: { count: data.count },
+          })
+        )
+      }
+      return data
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch requests')
+      return null
     } finally {
       setLoading(false)
     }
@@ -67,7 +76,7 @@ export function DictionaryRequestsPage() {
         await deleteDictionaryRequest(pendingAction.request.id)
       }
       setPendingAction(null)
-      await fetchRequests()
+      await fetchRequests(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process request')
     } finally {
