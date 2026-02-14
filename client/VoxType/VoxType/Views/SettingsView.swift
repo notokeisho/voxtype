@@ -1259,6 +1259,8 @@ struct GlobalDictionaryRequestView: View {
     @State private var pattern = ""
     @State private var replacement = ""
     @State private var successMessage: String?
+    @State private var isPatternFocused = false
+    @State private var isReplacementFocused = false
 
     var body: some View {
         Form {
@@ -1282,20 +1284,40 @@ struct GlobalDictionaryRequestView: View {
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(spacing: 8) {
-                            Text(localization.t("globalRequest.pattern"))
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text(localization.t("globalRequest.replacement"))
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(localization.t("globalRequest.pattern"))
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                IMETextField(
+                                    text: $pattern,
+                                    placeholder: localization.t("globalRequest.patternPlaceholder"),
+                                    onSubmit: {
+                                        isPatternFocused = false
+                                        isReplacementFocused = true
+                                    },
+                                    isFocused: $isPatternFocused
+                                )
+                                .frame(height: 22)
+                            }
 
-                        HStack(spacing: 8) {
-                            TextField(localization.t("globalRequest.patternPlaceholder"), text: $pattern)
                             Text("→")
                                 .foregroundColor(.secondary)
-                            TextField(localization.t("globalRequest.replacementPlaceholder"), text: $replacement)
+                                .padding(.top, 14)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(localization.t("globalRequest.replacement"))
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                IMETextField(
+                                    text: $replacement,
+                                    placeholder: localization.t("globalRequest.replacementPlaceholder"),
+                                    onSubmit: {
+                                        isReplacementFocused = false
+                                    },
+                                    isFocused: $isReplacementFocused
+                                )
+                                .frame(height: 22)
+                            }
                         }
 
                         Button(localization.t("globalRequest.submit")) {
@@ -1327,6 +1349,13 @@ struct GlobalDictionaryRequestView: View {
         }
         .formStyle(.grouped)
         .padding()
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                if authService.isAuthenticated {
+                    isPatternFocused = true
+                }
+            }
+        }
     }
 
     private func submitRequest() {
