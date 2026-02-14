@@ -18,6 +18,7 @@ from app.models.global_dictionary_request import (
     GlobalDictionaryRequest,
 )
 from app.models.user import User
+from app.services.dictionary_normalize import normalize_dictionary_text
 
 router = APIRouter(prefix="/admin/api", tags=["admin"])
 
@@ -33,6 +34,8 @@ class DictionaryRequestResponse(BaseModel):
     replacement: str
     status: str
     created_at: datetime
+    conflict_entry_id: int | None = None
+    conflict_replacement: str | None = None
 
 
 class DictionaryRequestListResponse(BaseModel):
@@ -50,9 +53,15 @@ async def list_dictionary_requests(
     async with async_session_factory() as session:
         entries = await get_pending_requests(session)
         count = await get_pending_request_count(session)
+        result = await session.execute(select(GlobalDictionary))
+        global_entries = result.scalars().all()
+
+        normalized_globals: dict[str, GlobalDictionary] = {}
+        for entry in global_entries:
+            normalized_globals[normalize_dictionary_text(entry.pattern)] = entry
 
     return DictionaryRequestListResponse(
-        entries=[DictionaryRequestResponse.model_validate(entry) for entry in entries],
+        entries=[_build_request_response(entry, normalized_globals) for entry in entries],
         count=count,
     )
 
@@ -84,12 +93,30 @@ async def approve_dictionary_request(
                 detail="Dictionary request is not pending",
             )
 
-        entry = GlobalDictionary(
-            pattern=request.pattern,
-            replacement=request.replacement,
-            created_by=admin.id,
-        )
-        session.add(entry)
+        result = await session.execute(select(GlobalDictionary))
+        global_entries = result.scalars().all()
+        normalized_pattern = normalize_dictionary_text(request.pattern)
+        normalized_replacement = normalize_dictionary_text(request.replacement)
+
+        conflict_entry = None
+        for entry in global_entries:
+            if normalize_dictionary_text(entry.pattern) == normalized_pattern:
+                conflict_entry = entry
+                break
+
+        if conflict_entry is not None:
+            if normalize_dictionary_text(conflict_entry.replacement) != normalized_replacement:
+                await session.delete(conflict_entry)
+            else:
+                conflict_entry = None
+
+        if conflict_entry is None:
+            entry = GlobalDictionary(
+                pattern=request.pattern,
+                replacement=request.replacement,
+                created_by=admin.id,
+            )
+            session.add(entry)
 
         request.status = REQUEST_STATUS_APPROVED
         request.reviewed_by = admin.id
@@ -99,6 +126,30 @@ async def approve_dictionary_request(
         await session.refresh(request)
 
         return DictionaryRequestResponse.model_validate(request)
+
+
+def _build_conflict_info(
+    request: GlobalDictionaryRequest,
+    normalized_globals: dict[str, GlobalDictionary],
+) -> dict[str, int | str | None]:
+    normalized_pattern = normalize_dictionary_text(request.pattern)
+    entry = normalized_globals.get(normalized_pattern)
+    if entry is None:
+        return {"conflict_entry_id": None, "conflict_replacement": None}
+
+    if normalize_dictionary_text(entry.replacement) == normalize_dictionary_text(request.replacement):
+        return {"conflict_entry_id": None, "conflict_replacement": None}
+
+    return {"conflict_entry_id": entry.id, "conflict_replacement": entry.replacement}
+
+
+def _build_request_response(
+    request: GlobalDictionaryRequest,
+    normalized_globals: dict[str, GlobalDictionary],
+) -> DictionaryRequestResponse:
+    data = DictionaryRequestResponse.model_validate(request).model_dump()
+    data.update(_build_conflict_info(request, normalized_globals))
+    return DictionaryRequestResponse(**data)
 
 
 @router.post(
