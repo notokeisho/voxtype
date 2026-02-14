@@ -61,6 +61,29 @@ export function DictionaryRequestsPage() {
 
   useEffect(() => {
     fetchRequests()
+
+    const intervalId = window.setInterval(() => {
+      fetchRequests(true)
+    }, 30000)
+
+    const handleFocus = () => {
+      fetchRequests(true)
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchRequests(true)
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   const handleAction = async () => {

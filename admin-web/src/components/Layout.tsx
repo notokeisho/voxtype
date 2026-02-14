@@ -59,6 +59,18 @@ export function Layout({ children, user }: LayoutProps) {
 
     fetchCount()
 
+    const intervalId = window.setInterval(fetchCount, 30000)
+
+    const handleFocus = () => {
+      fetchCount()
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchCount()
+      }
+    }
+
     const handleRequestsUpdated = (event: Event) => {
       const customEvent = event as CustomEvent<{ count?: number }>
       if (typeof customEvent.detail?.count === 'number') {
@@ -68,10 +80,15 @@ export function Layout({ children, user }: LayoutProps) {
       fetchCount()
     }
 
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('dictionaryRequestsUpdated', handleRequestsUpdated)
 
     return () => {
       isMounted = false
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('dictionaryRequestsUpdated', handleRequestsUpdated)
     }
   }, [user])
