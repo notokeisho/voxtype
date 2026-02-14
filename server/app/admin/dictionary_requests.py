@@ -136,3 +136,31 @@ async def reject_dictionary_request(
         await session.refresh(request)
 
         return DictionaryRequestResponse.model_validate(request)
+
+
+@router.delete("/dictionary-requests/{request_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_dictionary_request(
+    request_id: int,
+    _admin: User = Depends(get_current_admin_user),
+) -> None:
+    """Delete a pending dictionary request."""
+    async with async_session_factory() as session:
+        result = await session.execute(
+            select(GlobalDictionaryRequest).where(GlobalDictionaryRequest.id == request_id)
+        )
+        request = result.scalar_one_or_none()
+
+        if request is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Dictionary request not found",
+            )
+
+        if request.status != REQUEST_STATUS_PENDING:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Dictionary request is not pending",
+            )
+
+        await session.delete(request)
+        await session.commit()
