@@ -73,6 +73,15 @@ const translations = {
     'dictionary.noEntries': '辞書エントリがありません',
     'dictionary.deleteTitle': 'エントリの削除',
     'dictionary.deleteConfirm': '「{pattern}」→「{replacement}」を削除しますか？',
+    // Dictionary Requests
+    'dictionaryRequests.title': '辞書申請',
+    'dictionaryRequests.listTitle': '申請一覧',
+    'dictionaryRequests.entryCount': '{count} 件の申請があります',
+    'dictionaryRequests.pattern': '認識パターン',
+    'dictionaryRequests.replacement': '置換後',
+    'dictionaryRequests.requestedAt': '申請日時',
+    'dictionaryRequests.requestedBy': '申請者ID',
+    'dictionaryRequests.noEntries': '申請がありません',
 
     // Whitelist
     'whitelist.title': 'ホワイトリスト管理',
@@ -171,6 +180,15 @@ const translations = {
     'dictionary.noEntries': 'No dictionary entries',
     'dictionary.deleteTitle': 'Delete Entry',
     'dictionary.deleteConfirm': 'Delete "{pattern}" → "{replacement}"?',
+    // Dictionary Requests
+    'dictionaryRequests.title': 'Dictionary Requests',
+    'dictionaryRequests.listTitle': 'Request List',
+    'dictionaryRequests.entryCount': '{count} requests',
+    'dictionaryRequests.pattern': 'Recognition Pattern',
+    'dictionaryRequests.replacement': 'Replacement',
+    'dictionaryRequests.requestedAt': 'Requested At',
+    'dictionaryRequests.requestedBy': 'Requester ID',
+    'dictionaryRequests.noEntries': 'No requests',
 
     // Whitelist
     'whitelist.title': 'Whitelist Management',
