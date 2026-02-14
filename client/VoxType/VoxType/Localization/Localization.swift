@@ -158,6 +158,11 @@ class LocalizationManager: ObservableObject {
         "dictionary.dismiss": "Dismiss",
         "globalRequest.title": "Global Dictionary Request",
         "globalRequest.comingSoon": "This feature will be available soon.",
+        "globalRequest.loginRequired": "Login Required",
+        "globalRequest.loginDescription": "Please log in to submit a global dictionary request",
+        "globalRequest.pattern": "Pattern",
+        "globalRequest.replacement": "Replacement",
+        "globalRequest.submit": "Submit Request",
 
         // Language tab
         "language.title": "Language Settings",
@@ -297,6 +302,11 @@ class LocalizationManager: ObservableObject {
         "dictionary.dismiss": "閉じる",
         "globalRequest.title": "グローバル辞書申請",
         "globalRequest.comingSoon": "この機能は準備中です。",
+        "globalRequest.loginRequired": "ログインが必要です",
+        "globalRequest.loginDescription": "グローバル辞書の申請にはログインが必要です",
+        "globalRequest.pattern": "パターン",
+        "globalRequest.replacement": "置換後",
+        "globalRequest.submit": "申請する",
 
         // Language tab
         "language.title": "言語設定",

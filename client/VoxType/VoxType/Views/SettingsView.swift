@@ -1249,18 +1249,70 @@ struct LicenseRow: View {
 struct GlobalDictionaryRequestView: View {
     @EnvironmentObject var authService: AuthService
     @EnvironmentObject var localization: LocalizationManager
+    @StateObject private var requestService = GlobalDictionaryRequestService.shared
+    @State private var pattern = ""
+    @State private var replacement = ""
 
     var body: some View {
-        VStack(spacing: 12) {
-            Text(localization.t("globalRequest.title"))
-                .font(.headline)
+        Form {
+            if !authService.isAuthenticated {
+                VStack(spacing: 12) {
+                    Image(systemName: "person.badge.key")
+                        .font(.system(size: 40))
+                        .foregroundColor(.secondary)
 
-            Text(localization.t("globalRequest.comingSoon"))
-                .font(.caption)
-                .foregroundColor(.secondary)
+                    Text(localization.t("globalRequest.loginRequired"))
+                        .font(.headline)
+
+                    Text(localization.t("globalRequest.loginDescription"))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding()
+            } else {
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        TextField(localization.t("globalRequest.pattern"), text: $pattern)
+                        TextField(localization.t("globalRequest.replacement"), text: $replacement)
+
+                        Button(localization.t("globalRequest.submit")) {
+                            submitRequest()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(requestService.isLoading || pattern.isEmpty || replacement.isEmpty)
+
+                        if let errorMessage = requestService.errorMessage {
+                            Text(errorMessage)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                    }
+                } header: {
+                    Text(localization.t("globalRequest.title"))
+                }
+            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .formStyle(.grouped)
         .padding()
+    }
+
+    private func submitRequest() {
+        guard let token = authService.token else { return }
+
+        Task {
+            let success = await requestService.submitRequest(
+                pattern: pattern.trimmingCharacters(in: .whitespacesAndNewlines),
+                replacement: replacement.trimmingCharacters(in: .whitespacesAndNewlines),
+                token: token
+            )
+
+            if success {
+                pattern = ""
+                replacement = ""
+            }
+        }
     }
 }
 
