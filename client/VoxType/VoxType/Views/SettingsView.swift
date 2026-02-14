@@ -1281,14 +1281,32 @@ struct GlobalDictionaryRequestView: View {
             } else {
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
-                        TextField(localization.t("globalRequest.pattern"), text: $pattern)
-                        TextField(localization.t("globalRequest.replacement"), text: $replacement)
+                        HStack(spacing: 8) {
+                            Text(localization.t("globalRequest.pattern"))
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text(localization.t("globalRequest.replacement"))
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+
+                        HStack(spacing: 8) {
+                            TextField(localization.t("globalRequest.patternPlaceholder"), text: $pattern)
+                            Text("→")
+                                .foregroundColor(.secondary)
+                            TextField(localization.t("globalRequest.replacementPlaceholder"), text: $replacement)
+                        }
 
                         Button(localization.t("globalRequest.submit")) {
                             submitRequest()
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(requestService.isLoading || pattern.isEmpty || replacement.isEmpty)
+
+                        Text(localization.t("globalRequest.successNote"))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
 
                         if let successMessage {
                             Text(successMessage)
