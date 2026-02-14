@@ -313,6 +313,7 @@ class LocalizationManager: ObservableObject {
         "globalRequest.patternPlaceholder": "例: くろーど",
         "globalRequest.replacementPlaceholder": "例: Claude",
         "globalRequest.submit": "申請する",
+        "globalRequest.successMessage": "申請しました",
         "globalRequest.successNote": "次の録音から反映されます。",
         "globalRequest.limitReached": "申請の上限に達しました。しばらく待ってから再度申請してください。",
 

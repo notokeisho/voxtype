@@ -1261,6 +1261,7 @@ struct GlobalDictionaryRequestView: View {
     @State private var successMessage: String?
     @State private var isPatternFocused = false
     @State private var isReplacementFocused = false
+    @State private var successResetTask: Task<Void, Never>?
 
     var body: some View {
         Form {
@@ -1333,7 +1334,7 @@ struct GlobalDictionaryRequestView: View {
                         if let successMessage {
                             Text(successMessage)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.accentColor)
                         }
 
                         if let errorMessage = requestService.errorMessage {
@@ -1371,7 +1372,12 @@ struct GlobalDictionaryRequestView: View {
             if success {
                 pattern = ""
                 replacement = ""
-                successMessage = localization.t("globalRequest.successNote")
+                successMessage = localization.t("globalRequest.successMessage")
+                successResetTask?.cancel()
+                successResetTask = Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 2_000_000_000)
+                    successMessage = nil
+                }
                 requestService.errorMessage = nil
             } else {
                 successMessage = nil
