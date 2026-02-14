@@ -125,6 +125,7 @@ export function UsersPage() {
                 <TableHead>{t('users.role')}</TableHead>
                 <TableHead>{t('users.createdAt')}</TableHead>
                 <TableHead>{t('users.lastLogin')}</TableHead>
+                <TableHead>{t('users.requestRemaining')}</TableHead>
                 <TableHead>{t('users.actions')}</TableHead>
               </TableRow>
             </TableHeader>
@@ -161,6 +162,7 @@ export function UsersPage() {
                   </TableCell>
                   <TableCell>{formatDate(user.created_at)}</TableCell>
                   <TableCell>{formatDate(user.last_login_at)}</TableCell>
+                  <TableCell>{user.request_remaining}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button
@@ -186,7 +188,7 @@ export function UsersPage() {
               ))}
               {users.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-gray-500">
+                  <TableCell colSpan={7} className="text-center text-gray-500">
                     {t('users.noUsers')}
                   </TableCell>
                 </TableRow>

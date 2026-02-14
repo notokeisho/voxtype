@@ -9,9 +9,12 @@ from sqlalchemy import delete, select
 from app.auth.dependencies import get_current_admin_user
 from app.config import settings
 from app.database import async_session_factory
+from app.models.global_dictionary_request import get_pending_request_count_for_user
 from app.models.user import User
+from app.models.user_dictionary import get_user_rejected_entry_count
 
 router = APIRouter(prefix="/admin/api", tags=["admin"])
+REQUEST_LIMIT = 200
 
 
 class UserResponse(BaseModel):
@@ -26,6 +29,7 @@ class UserResponse(BaseModel):
     is_admin: bool
     created_at: datetime
     last_login_at: datetime | None
+    request_remaining: int
 
 
 class UpdateUserRequest(BaseModel):
@@ -45,7 +49,23 @@ async def list_users(
     async with async_session_factory() as session:
         result = await session.execute(select(User).order_by(User.created_at.desc()))
         users = result.scalars().all()
-        return [UserResponse.model_validate(u) for u in users]
+        responses: list[UserResponse] = []
+        for user in users:
+            pending_count = await get_pending_request_count_for_user(session, user.id)
+            rejected_count = await get_user_rejected_entry_count(session, user.id)
+            responses.append(
+                UserResponse(
+                    id=user.id,
+                    github_id=user.github_id,
+                    github_username=user.github_username,
+                    github_avatar=user.github_avatar,
+                    is_admin=user.is_admin,
+                    created_at=user.created_at,
+                    last_login_at=user.last_login_at,
+                    request_remaining=REQUEST_LIMIT - pending_count - rejected_count,
+                )
+            )
+        return responses
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)

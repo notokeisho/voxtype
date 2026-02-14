@@ -185,6 +185,7 @@ export interface User {
   is_admin: boolean
   created_at: string
   last_login_at: string | null
+  request_remaining: number
 }
 
 export interface WhitelistEntry {
