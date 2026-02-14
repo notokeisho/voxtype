@@ -13,6 +13,8 @@ from app.models.user_dictionary import (
     delete_user_entry,
     get_user_entries,
     get_user_entry_count,
+    get_user_manual_entry_count,
+    get_user_rejected_entry_count,
 )
 
 router = APIRouter(prefix="/api", tags=["dictionary"])
@@ -38,6 +40,8 @@ class DictionaryListResponse(BaseModel):
 
     entries: list[DictionaryEntryResponse]
     count: int
+    manual_count: int
+    rejected_count: int
     limit: int
 
 
@@ -53,6 +57,8 @@ async def get_dictionary(
     async with get_session() as session:
         entries = await get_user_entries(session, current_user.id)
         count = await get_user_entry_count(session, current_user.id)
+        manual_count = await get_user_manual_entry_count(session, current_user.id)
+        rejected_count = await get_user_rejected_entry_count(session, current_user.id)
 
     return DictionaryListResponse(
         entries=[
@@ -64,6 +70,8 @@ async def get_dictionary(
             for entry in entries
         ],
         count=count,
+        manual_count=manual_count,
+        rejected_count=rejected_count,
         limit=USER_DICTIONARY_LIMIT,
     )
 

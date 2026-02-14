@@ -869,13 +869,19 @@ struct DictionarySettingsView: View {
                     .scaleEffect(0.7)
             }
 
-            Text("\(service.entryCount)/\(service.maxEntries)")
-                .font(.caption)
-                .foregroundColor(service.canAddMore ? .secondary : .orange)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 2)
-                .background(Color.secondary.opacity(0.1))
-                .cornerRadius(4)
+            HStack(spacing: 0) {
+                Text("\(service.manualCount)/\(service.maxEntries)")
+                if service.rejectedCount > 0 {
+                    Text(" +\(service.rejectedCount)")
+                        .foregroundColor(.green)
+                }
+            }
+            .font(.caption)
+            .foregroundColor(service.canAddMore ? .secondary : .orange)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 2)
+            .background(Color.secondary.opacity(0.1))
+            .cornerRadius(4)
 
             if isAuthenticated {
                 Button {

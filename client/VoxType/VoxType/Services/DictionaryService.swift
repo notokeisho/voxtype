@@ -12,6 +12,12 @@ class DictionaryService: ObservableObject {
     /// Published loading state.
     @Published private(set) var isLoading = false
 
+    /// Published manual entry count.
+    @Published private(set) var manualCount: Int = 0
+
+    /// Published rejected entry count.
+    @Published private(set) var rejectedCount: Int = 0
+
     /// Published error message.
     @Published var errorMessage: String?
 
@@ -22,7 +28,7 @@ class DictionaryService: ObservableObject {
     var entryCount: Int { entries.count }
 
     /// Whether user can add more entries.
-    var canAddMore: Bool { entryCount < maxEntries }
+    var canAddMore: Bool { manualCount < maxEntries }
 
     private init() {}
 
@@ -43,6 +49,8 @@ class DictionaryService: ObservableObject {
             let decoder = JSONDecoder()
             let result = try decoder.decode(DictionaryListResponse.self, from: response)
             entries = result.entries
+            manualCount = result.manualCount
+            rejectedCount = result.rejectedCount
         } catch {
             errorMessage = "Failed to load dictionary: \(error.localizedDescription)"
         }
@@ -165,7 +173,17 @@ struct DictionaryEntry: Identifiable, Codable, Equatable {
 struct DictionaryListResponse: Codable {
     let entries: [DictionaryEntry]
     let count: Int
+    let manualCount: Int
+    let rejectedCount: Int
     let limit: Int
+
+    enum CodingKeys: String, CodingKey {
+        case entries
+        case count
+        case manualCount = "manual_count"
+        case rejectedCount = "rejected_count"
+        case limit
+    }
 }
 
 /// Request body for POST /api/dictionary.
