@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { removeToken, type User } from '@/lib/api'
+import { getDictionaryRequests, removeToken, type User } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { LanguageSwitcher, useLanguage } from '@/lib/i18n'
 import { LayoutDashboard, Users, UserCheck, BookOpen, Inbox, type LucideIcon } from 'lucide-react'
@@ -29,11 +29,39 @@ export function Layout({ children, user }: LayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { t } = useLanguage()
+  const [requestCount, setRequestCount] = useState<number | null>(null)
 
   const handleLogout = () => {
     removeToken()
     navigate('/login')
   }
+
+  useEffect(() => {
+    let isMounted = true
+    if (!user) {
+      setRequestCount(null)
+      return
+    }
+
+    const fetchCount = async () => {
+      try {
+        const data = await getDictionaryRequests()
+        if (isMounted) {
+          setRequestCount(data.count)
+        }
+      } catch {
+        if (isMounted) {
+          setRequestCount(null)
+        }
+      }
+    }
+
+    fetchCount()
+
+    return () => {
+      isMounted = false
+    }
+  }, [user])
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -85,7 +113,11 @@ export function Layout({ children, user }: LayoutProps) {
                   )}
                 >
                   <item.icon className="w-5 h-5" />
-                  <span>{t(item.labelKey)}</span>
+                  <span>
+                    {item.labelKey === 'nav.dictionaryRequests' && requestCount !== null
+                      ? `${t(item.labelKey)} (${requestCount})`
+                      : t(item.labelKey)}
+                  </span>
                 </Link>
               </li>
             ))}

@@ -131,6 +131,11 @@ export async function deleteGlobalDictionaryEntry(id: number): Promise<void> {
   await apiFetch(`/admin/api/dictionary/${id}`, { method: 'DELETE' })
 }
 
+// Dictionary Requests API (admin)
+export async function getDictionaryRequests(): Promise<DictionaryRequestList> {
+  return apiFetch<DictionaryRequestList>('/admin/api/dictionary-requests')
+}
+
 // Status API
 export async function getStatus(): Promise<StatusResponse> {
   return apiFetch<StatusResponse>('/api/status')
@@ -168,6 +173,22 @@ export interface DictionaryEntry {
   replacement: string
   created_at: string
   created_by: number | null
+}
+
+export interface DictionaryRequest {
+  id: number
+  user_id: number
+  pattern: string
+  replacement: string
+  status: string
+  created_at: string
+  conflict_entry_id?: number | null
+  conflict_replacement?: string | null
+}
+
+export interface DictionaryRequestList {
+  entries: DictionaryRequest[]
+  count: number
 }
 
 export interface StatusResponse {
