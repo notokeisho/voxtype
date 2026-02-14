@@ -122,7 +122,22 @@ export function DictionaryRequestsPage() {
               {requests.map((request) => (
                 <TableRow key={request.id}>
                   <TableCell className="font-medium">{request.pattern}</TableCell>
-                  <TableCell>{request.replacement}</TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div>{request.replacement}</div>
+                      {request.conflict_replacement && (
+                        <div className="text-xs text-amber-700">
+                          <div className="font-medium">{t('dictionaryRequests.conflictLabel')}</div>
+                          <div>
+                            {t('dictionaryRequests.conflictCurrent')}: {request.conflict_replacement}
+                          </div>
+                          <div>
+                            {t('dictionaryRequests.conflictProposed')}: {request.replacement}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{formatDate(request.created_at)}</TableCell>
                   <TableCell>{request.user_id}</TableCell>
                   <TableCell>

@@ -89,6 +89,9 @@ const translations = {
     'dictionaryRequests.rejectConfirm': 'この申請を却下しますか？',
     'dictionaryRequests.deleteConfirm': 'この申請を削除しますか？',
     'dictionaryRequests.processing': '処理中...',
+    'dictionaryRequests.conflictLabel': '競合',
+    'dictionaryRequests.conflictCurrent': '現在の置換',
+    'dictionaryRequests.conflictProposed': '申請の置換',
 
     // Whitelist
     'whitelist.title': 'ホワイトリスト管理',
@@ -203,6 +206,9 @@ const translations = {
     'dictionaryRequests.rejectConfirm': 'Reject this request?',
     'dictionaryRequests.deleteConfirm': 'Delete this request?',
     'dictionaryRequests.processing': 'Processing...',
+    'dictionaryRequests.conflictLabel': 'Conflict',
+    'dictionaryRequests.conflictCurrent': 'Current Replacement',
+    'dictionaryRequests.conflictProposed': 'Proposed Replacement',
 
     // Whitelist
     'whitelist.title': 'Whitelist Management',
