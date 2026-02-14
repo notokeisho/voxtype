@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, ForeignKey, String, func, select
+from sqlalchemy import Boolean, ForeignKey, String, UniqueConstraint, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -19,10 +19,17 @@ class DictionaryLimitExceeded(Exception):
     pass
 
 
+class DictionaryPatternDuplicate(Exception):
+    """Raised when a dictionary pattern already exists for the user."""
+
+    pass
+
+
 class UserDictionary(Base):
     """User-specific dictionary for text replacement."""
 
     __tablename__ = "user_dictionary"
+    __table_args__ = (UniqueConstraint("user_id", "pattern", name="uq_user_dictionary_user_id_pattern"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
@@ -63,6 +70,21 @@ async def get_user_entry_count(session: AsyncSession, user_id: int) -> int:
         select(func.count()).select_from(UserDictionary).where(UserDictionary.user_id == user_id)
     )
     return result.scalar() or 0
+
+
+async def get_user_entry_by_pattern(
+    session: AsyncSession,
+    user_id: int,
+    pattern: str,
+) -> UserDictionary | None:
+    """Get a user dictionary entry by pattern."""
+    result = await session.execute(
+        select(UserDictionary).where(
+            UserDictionary.user_id == user_id,
+            UserDictionary.pattern == pattern,
+        )
+    )
+    return result.scalar_one_or_none()
 
 
 async def get_user_manual_entry_count(session: AsyncSession, user_id: int) -> int:
@@ -107,7 +129,12 @@ async def add_user_entry(
 
     Raises:
         DictionaryLimitExceeded: If user has reached the maximum number of entries
+        DictionaryPatternDuplicate: If the pattern already exists for the user
     """
+    existing_entry = await get_user_entry_by_pattern(session, user_id, pattern)
+    if existing_entry:
+        raise DictionaryPatternDuplicate("Pattern already exists")
+
     if not is_rejected:
         count = await get_user_entry_count(session, user_id)
         if count >= USER_DICTIONARY_LIMIT:

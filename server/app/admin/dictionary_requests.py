@@ -18,7 +18,7 @@ from app.models.global_dictionary_request import (
     GlobalDictionaryRequest,
 )
 from app.models.user import User
-from app.models.user_dictionary import DictionaryLimitExceeded, add_user_entry
+from app.models.user_dictionary import DictionaryLimitExceeded, add_user_entry, get_user_entry_by_pattern
 from app.services.dictionary_normalize import normalize_dictionary_text
 
 router = APIRouter(prefix="/admin/api", tags=["admin"])
@@ -180,19 +180,25 @@ async def reject_dictionary_request(
                 detail="Dictionary request is not pending",
             )
 
-        try:
-            await add_user_entry(
-                session=session,
-                user_id=request.user_id,
-                pattern=request.pattern,
-                replacement=request.replacement,
-                is_rejected=True,
-            )
-        except DictionaryLimitExceeded as error:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(error),
-            ) from error
+        existing_entry = await get_user_entry_by_pattern(
+            session,
+            request.user_id,
+            request.pattern,
+        )
+        if existing_entry is None:
+            try:
+                await add_user_entry(
+                    session=session,
+                    user_id=request.user_id,
+                    pattern=request.pattern,
+                    replacement=request.replacement,
+                    is_rejected=True,
+                )
+            except DictionaryLimitExceeded as error:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=str(error),
+                ) from error
 
         request.status = REQUEST_STATUS_REJECTED
         request.reviewed_by = admin.id

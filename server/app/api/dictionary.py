@@ -9,6 +9,7 @@ from app.models.user import User
 from app.models.user_dictionary import (
     USER_DICTIONARY_LIMIT,
     DictionaryLimitExceeded,
+    DictionaryPatternDuplicate,
     add_user_entry,
     delete_user_entry,
     get_user_entries,
@@ -100,6 +101,11 @@ async def add_dictionary_entry(
                 body.pattern,
                 body.replacement,
             )
+        except DictionaryPatternDuplicate as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Dictionary pattern already exists",
+            ) from e
         except DictionaryLimitExceeded as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
