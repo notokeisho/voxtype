@@ -7,6 +7,7 @@ import { DashboardPage } from '@/pages/Dashboard'
 import { UsersPage } from '@/pages/Users'
 import { WhitelistPage } from '@/pages/Whitelist'
 import { DictionaryPage } from '@/pages/Dictionary'
+import { DictionaryRequestsPage } from '@/pages/DictionaryRequests'
 import { isAuthenticated, getMe, type User } from '@/lib/api'
 import { LanguageProvider } from '@/lib/i18n'
 
@@ -89,6 +90,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DictionaryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dictionary-requests"
+          element={
+            <ProtectedRoute>
+              <DictionaryRequestsPage />
             </ProtectedRoute>
           }
         />

@@ -10,6 +10,7 @@ const translations = {
     'nav.users': 'ユーザー管理',
     'nav.whitelist': 'ホワイトリスト',
     'nav.dictionary': 'グローバル辞書',
+    'nav.dictionaryRequests': '辞書申請',
     'nav.logout': 'ログアウト',
 
     // Dashboard
@@ -107,6 +108,7 @@ const translations = {
     'nav.users': 'User Management',
     'nav.whitelist': 'Whitelist',
     'nav.dictionary': 'Global Dictionary',
+    'nav.dictionaryRequests': 'Dictionary Requests',
     'nav.logout': 'Logout',
 
     // Dashboard
