@@ -1252,6 +1252,7 @@ struct GlobalDictionaryRequestView: View {
     @StateObject private var requestService = GlobalDictionaryRequestService.shared
     @State private var pattern = ""
     @State private var replacement = ""
+    @State private var successMessage: String?
 
     var body: some View {
         Form {
@@ -1283,6 +1284,12 @@ struct GlobalDictionaryRequestView: View {
                         .buttonStyle(.borderedProminent)
                         .disabled(requestService.isLoading || pattern.isEmpty || replacement.isEmpty)
 
+                        if let successMessage {
+                            Text(successMessage)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
                         if let errorMessage = requestService.errorMessage {
                             Text(errorMessage)
                                 .font(.caption)
@@ -1311,6 +1318,10 @@ struct GlobalDictionaryRequestView: View {
             if success {
                 pattern = ""
                 replacement = ""
+                successMessage = localization.t("globalRequest.successNote")
+                requestService.errorMessage = nil
+            } else {
+                successMessage = nil
             }
         }
     }

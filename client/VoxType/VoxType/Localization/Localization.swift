@@ -163,6 +163,7 @@ class LocalizationManager: ObservableObject {
         "globalRequest.pattern": "Pattern",
         "globalRequest.replacement": "Replacement",
         "globalRequest.submit": "Submit Request",
+        "globalRequest.successNote": "The request will apply from the next recording.",
 
         // Language tab
         "language.title": "Language Settings",
@@ -307,6 +308,7 @@ class LocalizationManager: ObservableObject {
         "globalRequest.pattern": "パターン",
         "globalRequest.replacement": "置換後",
         "globalRequest.submit": "申請する",
+        "globalRequest.successNote": "次の録音から反映されます。",
 
         // Language tab
         "language.title": "言語設定",
