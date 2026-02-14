@@ -62,17 +62,32 @@ export function DictionaryRequestsPage() {
   useEffect(() => {
     fetchRequests()
 
-    const intervalId = window.setInterval(() => {
-      fetchRequests(true)
+    const intervalId = window.setInterval(async () => {
+      const data = await getDictionaryRequests()
+      window.dispatchEvent(
+        new CustomEvent('dictionaryRequestsUpdated', {
+          detail: { count: data.count },
+        })
+      )
     }, 30000)
 
-    const handleFocus = () => {
-      fetchRequests(true)
+    const handleFocus = async () => {
+      const data = await getDictionaryRequests()
+      window.dispatchEvent(
+        new CustomEvent('dictionaryRequestsUpdated', {
+          detail: { count: data.count },
+        })
+      )
     }
 
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (!document.hidden) {
-        fetchRequests(true)
+        const data = await getDictionaryRequests()
+        window.dispatchEvent(
+          new CustomEvent('dictionaryRequestsUpdated', {
+            detail: { count: data.count },
+          })
+        )
       }
     }
 
