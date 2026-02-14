@@ -37,6 +37,13 @@ struct SettingsView: View {
                     Label(localization.t("settings.dictionary"), systemImage: "text.book.closed")
                 }
 
+            GlobalDictionaryRequestView()
+                .environmentObject(authService)
+                .environmentObject(localization)
+                .tabItem {
+                    Label(localization.t("settings.globalDictionaryRequest"), systemImage: "tray.and.arrow.up")
+                }
+
             LanguageSettingsView()
                 .environmentObject(localization)
                 .tabItem {
@@ -1234,6 +1241,26 @@ struct LicenseRow: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Global Dictionary Request Tab
+
+struct GlobalDictionaryRequestView: View {
+    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var localization: LocalizationManager
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Text(localization.t("globalRequest.title"))
+                .font(.headline)
+
+            Text(localization.t("globalRequest.comingSoon"))
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 }
 

@@ -71,6 +71,7 @@ class LocalizationManager: ObservableObject {
         "settings.general": "General",
         "settings.hotkey": "Hotkey",
         "settings.dictionary": "Dictionary",
+        "settings.globalDictionaryRequest": "Global Dictionary Request",
         "settings.language": "Language",
         "settings.about": "About",
 
@@ -155,6 +156,8 @@ class LocalizationManager: ObservableObject {
         "dictionary.delete": "Delete",
         "dictionary.limitReached": "Dictionary limit reached (100 entries)",
         "dictionary.dismiss": "Dismiss",
+        "globalRequest.title": "Global Dictionary Request",
+        "globalRequest.comingSoon": "This feature will be available soon.",
 
         // Language tab
         "language.title": "Language Settings",
@@ -207,6 +210,7 @@ class LocalizationManager: ObservableObject {
         "settings.general": "一般",
         "settings.hotkey": "ホットキー",
         "settings.dictionary": "辞書",
+        "settings.globalDictionaryRequest": "グローバル辞書申請",
         "settings.language": "言語",
         "settings.about": "このアプリについて",
 
@@ -291,6 +295,8 @@ class LocalizationManager: ObservableObject {
         "dictionary.delete": "削除",
         "dictionary.limitReached": "辞書の上限に達しました（100エントリ）",
         "dictionary.dismiss": "閉じる",
+        "globalRequest.title": "グローバル辞書申請",
+        "globalRequest.comingSoon": "この機能は準備中です。",
 
         // Language tab
         "language.title": "言語設定",
