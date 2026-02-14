@@ -71,7 +71,7 @@ class LocalizationManager: ObservableObject {
         "settings.general": "General",
         "settings.hotkey": "Hotkey",
         "settings.dictionary": "Dictionary",
-        "settings.globalDictionaryRequest": "Global Dictionary Request",
+        "settings.globalDictionaryRequest": "Report",
         "settings.language": "Language",
         "settings.about": "About",
 
@@ -217,7 +217,7 @@ class LocalizationManager: ObservableObject {
         "settings.general": "一般",
         "settings.hotkey": "ホットキー",
         "settings.dictionary": "辞書",
-        "settings.globalDictionaryRequest": "グローバル辞書申請",
+        "settings.globalDictionaryRequest": "報告",
         "settings.language": "言語",
         "settings.about": "このアプリについて",
 
