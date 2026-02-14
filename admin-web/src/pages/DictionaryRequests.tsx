@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Table,
   TableBody,
@@ -8,7 +17,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { getDictionaryRequests, type DictionaryRequest } from '@/lib/api'
+import {
+  approveDictionaryRequest,
+  deleteDictionaryRequest,
+  getDictionaryRequests,
+  rejectDictionaryRequest,
+  type DictionaryRequest,
+} from '@/lib/api'
 import { useLanguage } from '@/lib/i18n'
 
 export function DictionaryRequestsPage() {
@@ -16,6 +31,11 @@ export function DictionaryRequestsPage() {
   const [requests, setRequests] = useState<DictionaryRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [pendingAction, setPendingAction] = useState<{
+    type: 'approve' | 'reject' | 'delete'
+    request: DictionaryRequest
+  } | null>(null)
+  const [processing, setProcessing] = useState(false)
 
   const fetchRequests = async () => {
     try {
@@ -33,6 +53,27 @@ export function DictionaryRequestsPage() {
   useEffect(() => {
     fetchRequests()
   }, [])
+
+  const handleAction = async () => {
+    if (!pendingAction) return
+
+    try {
+      setProcessing(true)
+      if (pendingAction.type === 'approve') {
+        await approveDictionaryRequest(pendingAction.request.id)
+      } else if (pendingAction.type === 'reject') {
+        await rejectDictionaryRequest(pendingAction.request.id)
+      } else {
+        await deleteDictionaryRequest(pendingAction.request.id)
+      }
+      setPendingAction(null)
+      await fetchRequests()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process request')
+    } finally {
+      setProcessing(false)
+    }
+  }
 
   const formatDate = (dateString: string) => {
     const utcDate = dateString.endsWith('Z') ? dateString : dateString + 'Z'
@@ -74,6 +115,7 @@ export function DictionaryRequestsPage() {
                 <TableHead>{t('dictionaryRequests.replacement')}</TableHead>
                 <TableHead>{t('dictionaryRequests.requestedAt')}</TableHead>
                 <TableHead>{t('dictionaryRequests.requestedBy')}</TableHead>
+                <TableHead>{t('dictionary.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -83,11 +125,38 @@ export function DictionaryRequestsPage() {
                   <TableCell>{request.replacement}</TableCell>
                   <TableCell>{formatDate(request.created_at)}</TableCell>
                   <TableCell>{request.user_id}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => setPendingAction({ type: 'approve', request })}
+                        disabled={processing}
+                      >
+                        {t('dictionaryRequests.approve')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setPendingAction({ type: 'reject', request })}
+                        disabled={processing}
+                      >
+                        {t('dictionaryRequests.reject')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => setPendingAction({ type: 'delete', request })}
+                        disabled={processing}
+                      >
+                        {t('dictionaryRequests.delete')}
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
               {requests.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-gray-500">
+                  <TableCell colSpan={5} className="text-center text-gray-500">
                     {t('dictionaryRequests.noEntries')}
                   </TableCell>
                 </TableRow>
@@ -96,6 +165,27 @@ export function DictionaryRequestsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!pendingAction} onOpenChange={() => setPendingAction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('common.confirm')}</DialogTitle>
+            <DialogDescription>
+              {pendingAction?.type === 'approve' && t('dictionaryRequests.approveConfirm')}
+              {pendingAction?.type === 'reject' && t('dictionaryRequests.rejectConfirm')}
+              {pendingAction?.type === 'delete' && t('dictionaryRequests.deleteConfirm')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingAction(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleAction} disabled={processing}>
+              {processing ? t('dictionaryRequests.processing') : t('common.confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

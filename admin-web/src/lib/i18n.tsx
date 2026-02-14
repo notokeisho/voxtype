@@ -82,6 +82,13 @@ const translations = {
     'dictionaryRequests.requestedAt': '申請日時',
     'dictionaryRequests.requestedBy': '申請者ID',
     'dictionaryRequests.noEntries': '申請がありません',
+    'dictionaryRequests.approve': '承認',
+    'dictionaryRequests.reject': '却下',
+    'dictionaryRequests.delete': '削除',
+    'dictionaryRequests.approveConfirm': 'この申請を承認しますか？',
+    'dictionaryRequests.rejectConfirm': 'この申請を却下しますか？',
+    'dictionaryRequests.deleteConfirm': 'この申請を削除しますか？',
+    'dictionaryRequests.processing': '処理中...',
 
     // Whitelist
     'whitelist.title': 'ホワイトリスト管理',
@@ -189,6 +196,13 @@ const translations = {
     'dictionaryRequests.requestedAt': 'Requested At',
     'dictionaryRequests.requestedBy': 'Requester ID',
     'dictionaryRequests.noEntries': 'No requests',
+    'dictionaryRequests.approve': 'Approve',
+    'dictionaryRequests.reject': 'Reject',
+    'dictionaryRequests.delete': 'Delete',
+    'dictionaryRequests.approveConfirm': 'Approve this request?',
+    'dictionaryRequests.rejectConfirm': 'Reject this request?',
+    'dictionaryRequests.deleteConfirm': 'Delete this request?',
+    'dictionaryRequests.processing': 'Processing...',
 
     // Whitelist
     'whitelist.title': 'Whitelist Management',

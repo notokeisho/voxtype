@@ -136,6 +136,22 @@ export async function getDictionaryRequests(): Promise<DictionaryRequestList> {
   return apiFetch<DictionaryRequestList>('/admin/api/dictionary-requests')
 }
 
+export async function approveDictionaryRequest(requestId: number): Promise<DictionaryRequest> {
+  return apiFetch<DictionaryRequest>(`/admin/api/dictionary-requests/${requestId}/approve`, {
+    method: 'POST',
+  })
+}
+
+export async function rejectDictionaryRequest(requestId: number): Promise<DictionaryRequest> {
+  return apiFetch<DictionaryRequest>(`/admin/api/dictionary-requests/${requestId}/reject`, {
+    method: 'POST',
+  })
+}
+
+export async function deleteDictionaryRequest(requestId: number): Promise<void> {
+  await apiFetch(`/admin/api/dictionary-requests/${requestId}`, { method: 'DELETE' })
+}
+
 // Status API
 export async function getStatus(): Promise<StatusResponse> {
   return apiFetch<StatusResponse>('/api/status')
