@@ -171,7 +171,9 @@ export function DictionaryRequestsPage() {
                     </div>
                   </TableCell>
                   <TableCell>{formatDate(request.created_at)}</TableCell>
-                  <TableCell>{request.user_id}</TableCell>
+                  <TableCell>
+                    {request.user_name || request.user_github_id || request.user_id}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button

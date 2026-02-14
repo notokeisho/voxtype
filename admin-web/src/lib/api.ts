@@ -213,6 +213,8 @@ export interface DictionaryEntry {
 export interface DictionaryRequest {
   id: number
   user_id: number
+  user_name?: string | null
+  user_github_id?: string | null
   pattern: string
   replacement: string
   status: string

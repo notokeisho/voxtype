@@ -31,6 +31,8 @@ class DictionaryRequestResponse(BaseModel):
 
     id: int
     user_id: int
+    user_name: str | None = None
+    user_github_id: str | None = None
     pattern: str
     replacement: str
     status: str
@@ -56,13 +58,21 @@ async def list_dictionary_requests(
         count = await get_pending_request_count(session)
         result = await session.execute(select(GlobalDictionary))
         global_entries = result.scalars().all()
+        user_ids = {entry.user_id for entry in entries}
+        user_map: dict[int, User] = {}
+        if user_ids:
+            users_result = await session.execute(select(User).where(User.id.in_(user_ids)))
+            user_map = {user.id: user for user in users_result.scalars().all()}
 
         normalized_globals: dict[str, GlobalDictionary] = {}
         for entry in global_entries:
             normalized_globals[normalize_dictionary_text(entry.pattern)] = entry
 
     return DictionaryRequestListResponse(
-        entries=[_build_request_response(entry, normalized_globals) for entry in entries],
+        entries=[
+            _build_request_response(entry, normalized_globals, user_map.get(entry.user_id))
+            for entry in entries
+        ],
         count=count,
     )
 
@@ -147,9 +157,13 @@ def _build_conflict_info(
 def _build_request_response(
     request: GlobalDictionaryRequest,
     normalized_globals: dict[str, GlobalDictionary],
+    user: User | None,
 ) -> DictionaryRequestResponse:
     data = DictionaryRequestResponse.model_validate(request).model_dump()
     data.update(_build_conflict_info(request, normalized_globals))
+    if user:
+        data["user_name"] = user.github_username
+        data["user_github_id"] = user.github_id
     return DictionaryRequestResponse(**data)
 
 
