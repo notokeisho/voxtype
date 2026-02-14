@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, String, func
+from sqlalchemy import ForeignKey, String, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 REQUEST_STATUS_PENDING = "pending"
@@ -50,3 +50,23 @@ async def add_request(
     await session.commit()
     await session.refresh(request)
     return request
+
+
+async def get_pending_requests(session: AsyncSession) -> list[GlobalDictionaryRequest]:
+    """Get pending dictionary requests."""
+    result = await session.execute(
+        select(GlobalDictionaryRequest)
+        .where(GlobalDictionaryRequest.status == REQUEST_STATUS_PENDING)
+        .order_by(GlobalDictionaryRequest.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
+async def get_pending_request_count(session: AsyncSession) -> int:
+    """Get count of pending dictionary requests."""
+    result = await session.execute(
+        select(func.count()).select_from(GlobalDictionaryRequest).where(
+            GlobalDictionaryRequest.status == REQUEST_STATUS_PENDING
+        )
+    )
+    return result.scalar() or 0

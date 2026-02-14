@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.admin.dictionary import router as admin_dictionary_router
+from app.admin.dictionary_requests import router as admin_dictionary_requests_router
 from app.admin.users import router as admin_users_router
 from app.admin.whitelist import router as admin_whitelist_router
 from app.api.dictionary import router as dictionary_router
@@ -68,6 +69,7 @@ app.include_router(dictionary_requests_router)
 app.include_router(admin_users_router)
 app.include_router(admin_whitelist_router)
 app.include_router(admin_dictionary_router)
+app.include_router(admin_dictionary_requests_router)
 
 
 @app.get("/")
