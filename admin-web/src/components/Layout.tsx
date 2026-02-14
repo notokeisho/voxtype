@@ -143,10 +143,13 @@ export function Layout({ children, user }: LayoutProps) {
                   )}
                 >
                   <item.icon className="w-5 h-5" />
-                  <span>
-                    {item.labelKey === 'nav.dictionaryRequests' && requestCount !== null
-                      ? `${t(item.labelKey)} (${requestCount})`
-                      : t(item.labelKey)}
+                  <span className="flex items-center gap-2">
+                    <span>{t(item.labelKey)}</span>
+                    {item.labelKey === 'nav.dictionaryRequests' && requestCount !== null && requestCount > 0 && (
+                      <span className="inline-flex min-w-[28px] items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-semibold text-white">
+                        {requestCount > 99 ? '99+' : requestCount}
+                      </span>
+                    )}
                   </span>
                 </Link>
               </li>
