@@ -1,10 +1,10 @@
 """Admin global dictionary management API endpoints."""
 
 from datetime import datetime
-import csv
 import io
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from openpyxl import Workbook
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import delete, select
 
@@ -119,32 +119,34 @@ async def delete_global_dictionary_entry(
 
 
 @router.get("/dictionary/export")
-async def export_global_dictionary_csv(
+async def export_global_dictionary_xlsx(
     _admin: User = Depends(get_current_admin_user),
 ) -> Response:
-    """Export global dictionary as CSV."""
+    """Export global dictionary as XLSX."""
     async with async_session_factory() as session:
         result = await session.execute(
             select(GlobalDictionary).order_by(GlobalDictionary.created_at.desc())
         )
         entries = result.scalars().all()
 
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["pattern", "replacement", "created_at", "created_by"])
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "global_dictionary"
+    sheet.append(["pattern", "replacement", "created_at", "created_by"])
     for entry in entries:
         created_at = entry.created_at.isoformat() if entry.created_at else ""
-        writer.writerow([entry.pattern, entry.replacement, created_at, entry.created_by])
+        sheet.append([entry.pattern, entry.replacement, created_at, entry.created_by])
 
-    csv_data = output.getvalue()
-    output.close()
+    output = io.BytesIO()
+    workbook.save(output)
+    output.seek(0)
 
-    filename = "global_dictionary.csv"
+    filename = "global_dictionary.xlsx"
     headers = {
         "Content-Disposition": f'attachment; filename="{filename}"'
     }
     return Response(
-        content=csv_data,
-        media_type="text/csv; charset=utf-8",
+        content=output.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers=headers,
     )

@@ -131,7 +131,7 @@ export async function deleteGlobalDictionaryEntry(id: number): Promise<void> {
   await apiFetch(`/admin/api/dictionary/${id}`, { method: 'DELETE' })
 }
 
-export async function downloadGlobalDictionaryCsv(): Promise<Blob> {
+export async function downloadGlobalDictionaryXlsx(): Promise<Blob> {
   const token = getToken()
   const response = await fetch(`${API_BASE_URL}/admin/api/dictionary/export`, {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,

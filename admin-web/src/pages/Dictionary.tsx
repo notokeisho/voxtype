@@ -24,7 +24,7 @@ import {
   getGlobalDictionary,
   addGlobalDictionaryEntry,
   deleteGlobalDictionaryEntry,
-  downloadGlobalDictionaryCsv,
+  downloadGlobalDictionaryXlsx,
   type DictionaryEntry,
 } from '@/lib/api'
 import { useLanguage } from '@/lib/i18n'
@@ -96,17 +96,17 @@ export function DictionaryPage() {
   const handleExport = async () => {
     try {
       setExporting(true)
-      const blob = await downloadGlobalDictionaryCsv()
+      const blob = await downloadGlobalDictionaryXlsx()
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = 'global_dictionary.csv'
+      link.download = 'global_dictionary.xlsx'
       document.body.appendChild(link)
       link.click()
       link.remove()
       window.URL.revokeObjectURL(url)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to export CSV')
+      setError(err instanceof Error ? err.message : 'Failed to export XLSX')
     } finally {
       setExporting(false)
     }
