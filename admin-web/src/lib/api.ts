@@ -131,6 +131,25 @@ export async function deleteGlobalDictionaryEntry(id: number): Promise<void> {
   await apiFetch(`/admin/api/dictionary/${id}`, { method: 'DELETE' })
 }
 
+export async function downloadGlobalDictionaryCsv(): Promise<Blob> {
+  const token = getToken()
+  const response = await fetch(`${API_BASE_URL}/admin/api/dictionary/export`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  })
+
+  if (response.status === 401) {
+    removeToken()
+    window.location.href = '/login'
+    throw new Error('Unauthorized')
+  }
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`)
+  }
+
+  return response.blob()
+}
+
 // Dictionary Requests API (admin)
 export async function getDictionaryRequests(): Promise<DictionaryRequestList> {
   return apiFetch<DictionaryRequestList>('/admin/api/dictionary-requests')

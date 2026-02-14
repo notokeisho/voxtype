@@ -1,8 +1,10 @@
 """Admin global dictionary management API endpoints."""
 
 from datetime import datetime
+import csv
+import io
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import delete, select
 
@@ -114,3 +116,35 @@ async def delete_global_dictionary_entry(
             delete(GlobalDictionary).where(GlobalDictionary.id == entry_id)
         )
         await session.commit()
+
+
+@router.get("/dictionary/export")
+async def export_global_dictionary_csv(
+    _admin: User = Depends(get_current_admin_user),
+) -> Response:
+    """Export global dictionary as CSV."""
+    async with async_session_factory() as session:
+        result = await session.execute(
+            select(GlobalDictionary).order_by(GlobalDictionary.created_at.desc())
+        )
+        entries = result.scalars().all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["pattern", "replacement", "created_at", "created_by"])
+    for entry in entries:
+        created_at = entry.created_at.isoformat() if entry.created_at else ""
+        writer.writerow([entry.pattern, entry.replacement, created_at, entry.created_by])
+
+    csv_data = output.getvalue()
+    output.close()
+
+    filename = "global_dictionary.csv"
+    headers = {
+        "Content-Disposition": f'attachment; filename="{filename}"'
+    }
+    return Response(
+        content=csv_data,
+        media_type="text/csv; charset=utf-8",
+        headers=headers,
+    )

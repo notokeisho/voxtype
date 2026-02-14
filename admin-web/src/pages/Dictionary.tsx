@@ -24,6 +24,7 @@ import {
   getGlobalDictionary,
   addGlobalDictionaryEntry,
   deleteGlobalDictionaryEntry,
+  downloadGlobalDictionaryCsv,
   type DictionaryEntry,
 } from '@/lib/api'
 import { useLanguage } from '@/lib/i18n'
@@ -37,6 +38,7 @@ export function DictionaryPage() {
   const [pattern, setPattern] = useState('')
   const [replacement, setReplacement] = useState('')
   const [adding, setAdding] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<DictionaryEntry | null>(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -88,6 +90,25 @@ export function DictionaryPage() {
       setError(err instanceof Error ? err.message : 'Failed to delete entry')
     } finally {
       setDeleting(false)
+    }
+  }
+
+  const handleExport = async () => {
+    try {
+      setExporting(true)
+      const blob = await downloadGlobalDictionaryCsv()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'global_dictionary.csv'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to export CSV')
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -168,11 +189,22 @@ export function DictionaryPage() {
 
       {/* Dictionary table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="space-y-2">
           <CardTitle>{t('dictionary.listTitle')}</CardTitle>
           <CardDescription>
             {tWithParams('dictionary.entryCount', { count: entries.length })}
           </CardDescription>
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              disabled={exporting}
+            >
+              {t('dictionary.export')}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
