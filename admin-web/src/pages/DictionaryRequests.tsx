@@ -30,18 +30,25 @@ export function DictionaryRequestsPage() {
   const { t, tWithParams, language } = useLanguage()
   const [requests, setRequests] = useState<DictionaryRequest[]>([])
   const [loading, setLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pendingAction, setPendingAction] = useState<{
     type: 'approve' | 'reject' | 'delete'
     request: DictionaryRequest
   } | null>(null)
   const [processing, setProcessing] = useState(false)
+  const [lastCount, setLastCount] = useState<number | null>(null)
 
-  const fetchRequests = async (notify = false) => {
+  const fetchRequests = async (notify = false, showLoading = true) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      } else {
+        setIsRefreshing(true)
+      }
       const data = await getDictionaryRequests()
       setRequests(data.entries)
+      setLastCount(data.count)
       setError(null)
       if (notify) {
         window.dispatchEvent(
@@ -55,39 +62,47 @@ export function DictionaryRequestsPage() {
       setError(err instanceof Error ? err.message : 'Failed to fetch requests')
       return null
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      } else {
+        setIsRefreshing(false)
+      }
     }
   }
 
   useEffect(() => {
     fetchRequests()
 
-    const intervalId = window.setInterval(async () => {
-      const data = await getDictionaryRequests()
-      window.dispatchEvent(
-        new CustomEvent('dictionaryRequestsUpdated', {
-          detail: { count: data.count },
-        })
-      )
-    }, 30000)
-
-    const handleFocus = async () => {
-      const data = await getDictionaryRequests()
-      window.dispatchEvent(
-        new CustomEvent('dictionaryRequestsUpdated', {
-          detail: { count: data.count },
-        })
-      )
-    }
-
-    const handleVisibilityChange = async () => {
-      if (!document.hidden) {
+    const refreshCount = async () => {
+      if (processing || isRefreshing || loading) {
+        return
+      }
+      try {
         const data = await getDictionaryRequests()
         window.dispatchEvent(
           new CustomEvent('dictionaryRequestsUpdated', {
             detail: { count: data.count },
           })
         )
+        if (lastCount !== null && data.count !== lastCount) {
+          await fetchRequests(true, false)
+        } else if (lastCount === null) {
+          setLastCount(data.count)
+        }
+      } catch {
+        // Ignore polling failures
+      }
+    }
+
+    const intervalId = window.setInterval(refreshCount, 30000)
+
+    const handleFocus = async () => {
+      await refreshCount()
+    }
+
+    const handleVisibilityChange = async () => {
+      if (!document.hidden) {
+        await refreshCount()
       }
     }
 
@@ -99,7 +114,7 @@ export function DictionaryRequestsPage() {
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [])
+  }, [processing, isRefreshing, loading, lastCount])
 
   const handleAction = async () => {
     if (!pendingAction) return
@@ -155,6 +170,11 @@ export function DictionaryRequestsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {isRefreshing && (
+            <div className="text-xs text-gray-500 mb-2">
+              {t('dictionaryRequests.processing')}
+            </div>
+          )}
           <Table>
             <TableHeader>
               <TableRow>
