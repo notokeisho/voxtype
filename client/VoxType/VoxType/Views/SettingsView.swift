@@ -56,7 +56,7 @@ struct SettingsView: View {
                     Label(localization.t("settings.about"), systemImage: "info.circle")
                 }
         }
-        .frame(width: 500, height: 375)
+        .frame(width: 512, height: 384)
     }
 }
 
