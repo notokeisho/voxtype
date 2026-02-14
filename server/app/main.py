@@ -10,6 +10,7 @@ from app.admin.dictionary import router as admin_dictionary_router
 from app.admin.users import router as admin_users_router
 from app.admin.whitelist import router as admin_whitelist_router
 from app.api.dictionary import router as dictionary_router
+from app.api.dictionary_requests import router as dictionary_requests_router
 from app.api.me import router as me_router
 from app.api.protected import router as api_router
 from app.api.status import router as status_router
@@ -61,6 +62,7 @@ app.include_router(me_router)
 app.include_router(status_router)
 app.include_router(transcribe_router)
 app.include_router(dictionary_router)
+app.include_router(dictionary_requests_router)
 
 # Admin routers
 app.include_router(admin_users_router)
