@@ -48,6 +48,8 @@ export function DictionaryPage() {
   const [deleteTarget, setDeleteTarget] = useState<DictionaryEntry | null>(null)
   const [deleting, setDeleting] = useState(false)
   const importInputRef = useRef<HTMLInputElement | null>(null)
+  const [backupEnabled, setBackupEnabled] = useState(false)
+  const [backupLastRun, setBackupLastRun] = useState<string | null>(null)
 
   const fetchDictionary = async () => {
     try {
@@ -273,6 +275,34 @@ export function DictionaryPage() {
           <CardDescription>
             {tWithParams('dictionary.entryCount', { count: entries.length })}
           </CardDescription>
+          <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+            <div>
+              <div className="text-sm font-semibold">{t('dictionary.backupTitle')}</div>
+              <div className="text-xs text-gray-600">
+                {backupLastRun
+                  ? tWithParams('dictionary.backupLastRun', { datetime: backupLastRun })
+                  : t('dictionary.backupNotRun')}
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={backupEnabled}
+              onClick={() => {
+                setBackupEnabled((prev) => !prev)
+                setBackupLastRun((prev) => prev)
+              }}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                backupEnabled ? 'bg-blue-600' : 'bg-gray-200'
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                  backupEnabled ? 'translate-x-5' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
           <div>
             <Button
               type="button"
