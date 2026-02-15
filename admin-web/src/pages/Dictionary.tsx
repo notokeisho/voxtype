@@ -58,6 +58,8 @@ export function DictionaryPage() {
   const [runningBackupNow, setRunningBackupNow] = useState(false)
   const [manualBackupResult, setManualBackupResult] = useState<BackupRunResult | null>(null)
   const [manualBackupDismissed, setManualBackupDismissed] = useState(false)
+  const [isBackupConfirmOpen, setIsBackupConfirmOpen] = useState(false)
+  const [isExportConfirmOpen, setIsExportConfirmOpen] = useState(false)
 
   const fetchDictionary = async () => {
     try {
@@ -166,7 +168,7 @@ export function DictionaryPage() {
     }
   }
 
-  const handleExport = async () => {
+  const executeExport = async () => {
     try {
       setExporting(true)
       const blob = await downloadGlobalDictionaryXlsx()
@@ -209,7 +211,7 @@ export function DictionaryPage() {
     }
   }
 
-  const handleRunBackupNow = async () => {
+  const executeRunBackupNow = async () => {
     try {
       setRunningBackupNow(true)
       const result = await runBackupNow()
@@ -362,7 +364,7 @@ export function DictionaryPage() {
               variant="outline"
               size="sm"
               disabled={runningBackupNow}
-              onClick={handleRunBackupNow}
+              onClick={() => setIsBackupConfirmOpen(true)}
             >
               {runningBackupNow ? t('dictionary.backupRunning') : t('dictionary.backupRunNow')}
             </Button>
@@ -404,7 +406,7 @@ export function DictionaryPage() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={handleExport}
+              onClick={() => setIsExportConfirmOpen(true)}
               disabled={exporting}
             >
               {t('dictionary.export')}
@@ -494,6 +496,52 @@ export function DictionaryPage() {
               disabled={deleting}
             >
               {deleting ? t('dictionary.deleting') : t('dictionary.delete')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isBackupConfirmOpen} onOpenChange={setIsBackupConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('dictionary.backupConfirmTitle')}</DialogTitle>
+            <DialogDescription>{t('dictionary.backupConfirmDescription')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBackupConfirmOpen(false)} disabled={runningBackupNow}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={async () => {
+                await executeRunBackupNow()
+                setIsBackupConfirmOpen(false)
+              }}
+              disabled={runningBackupNow}
+            >
+              {runningBackupNow ? t('dictionary.backupRunning') : t('dictionary.backupConfirmRun')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isExportConfirmOpen} onOpenChange={setIsExportConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('dictionary.exportConfirmTitle')}</DialogTitle>
+            <DialogDescription>{t('dictionary.exportConfirmDescription')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsExportConfirmOpen(false)} disabled={exporting}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={async () => {
+                await executeExport()
+                setIsExportConfirmOpen(false)
+              }}
+              disabled={exporting}
+            >
+              {exporting ? t('dictionary.exporting') : t('dictionary.exportConfirmRun')}
             </Button>
           </DialogFooter>
         </DialogContent>

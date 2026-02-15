@@ -8,13 +8,14 @@ const mockedApi = vi.hoisted(() => ({
   getGlobalDictionary: vi.fn(),
   getBackupSettings: vi.fn(),
   runBackupNow: vi.fn(),
+  downloadGlobalDictionaryXlsx: vi.fn(),
 }))
 
 vi.mock('@/lib/api', () => ({
   getGlobalDictionary: mockedApi.getGlobalDictionary,
   addGlobalDictionaryEntry: vi.fn(),
   deleteGlobalDictionaryEntry: vi.fn(),
-  downloadGlobalDictionaryXlsx: vi.fn(),
+  downloadGlobalDictionaryXlsx: mockedApi.downloadGlobalDictionaryXlsx,
   importGlobalDictionaryXlsx: vi.fn(),
   getBackupSettings: mockedApi.getBackupSettings,
   updateBackupSettings: vi.fn(),
@@ -34,6 +35,19 @@ describe('DictionaryPage manual backup UI', () => {
     vi.clearAllMocks()
     mockedApi.getGlobalDictionary.mockResolvedValue([])
     mockedApi.getBackupSettings.mockResolvedValue({ enabled: false, last_run_at: null })
+    mockedApi.downloadGlobalDictionaryXlsx.mockResolvedValue(new Blob(['test']))
+    if (!URL.createObjectURL) {
+      Object.defineProperty(URL, 'createObjectURL', {
+        value: vi.fn(() => 'blob:mock-url'),
+        writable: true,
+      })
+    }
+    if (!URL.revokeObjectURL) {
+      Object.defineProperty(URL, 'revokeObjectURL', {
+        value: vi.fn(),
+        writable: true,
+      })
+    }
   })
 
   it('shows manual backup run button', async () => {
@@ -63,10 +77,12 @@ describe('DictionaryPage manual backup UI', () => {
       </MemoryRouter>
     )
 
-    const button = await screen.findByRole('button', { name: 'dictionary.backupRunNow' })
-    fireEvent.click(button)
-    expect(button).toBeDisabled()
-    await waitFor(() => expect(button).not.toBeDisabled())
+    const openButton = await screen.findByRole('button', { name: 'dictionary.backupRunNow' })
+    fireEvent.click(openButton)
+    const confirmButton = await screen.findByRole('button', { name: 'dictionary.backupConfirmRun' })
+    fireEvent.click(confirmButton)
+    expect(confirmButton).toBeDisabled()
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'dictionary.backupConfirmRun' })).not.toBeInTheDocument())
   })
 
   it('shows error when manual backup run fails', async () => {
@@ -78,9 +94,64 @@ describe('DictionaryPage manual backup UI', () => {
       </MemoryRouter>
     )
 
-    const button = await screen.findByRole('button', { name: 'dictionary.backupRunNow' })
-    fireEvent.click(button)
+    const openButton = await screen.findByRole('button', { name: 'dictionary.backupRunNow' })
+    fireEvent.click(openButton)
+    const confirmButton = await screen.findByRole('button', { name: 'dictionary.backupConfirmRun' })
+    fireEvent.click(confirmButton)
 
     expect(await screen.findByText('manual backup failed')).toBeInTheDocument()
+  })
+
+  it('runs manual backup only after confirmation', async () => {
+    mockedApi.runBackupNow.mockResolvedValue({
+      created_file: 'global_dictionary_2026-02-16_12-30-45.xlsx',
+      created_at: '2026-02-16T12:30:45',
+      kept: 3,
+      deleted: 0,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/dictionary']}>
+        <DictionaryPage />
+      </MemoryRouter>
+    )
+
+    const openButton = await screen.findByRole('button', { name: 'dictionary.backupRunNow' })
+    fireEvent.click(openButton)
+    expect(mockedApi.runBackupNow).not.toHaveBeenCalled()
+
+    const confirmButton = await screen.findByRole('button', { name: 'dictionary.backupConfirmRun' })
+    fireEvent.click(confirmButton)
+
+    await waitFor(() => expect(mockedApi.runBackupNow).toHaveBeenCalledTimes(1))
+  })
+
+  it('runs export only after confirmation', async () => {
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url')
+    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    const appendSpy = vi.spyOn(document.body, 'appendChild')
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const removeSpy = vi.spyOn(HTMLElement.prototype, 'remove').mockImplementation(() => {})
+
+    render(
+      <MemoryRouter initialEntries={['/dictionary']}>
+        <DictionaryPage />
+      </MemoryRouter>
+    )
+
+    const openButton = await screen.findByRole('button', { name: 'dictionary.export' })
+    fireEvent.click(openButton)
+    expect(mockedApi.downloadGlobalDictionaryXlsx).not.toHaveBeenCalled()
+
+    const confirmButton = await screen.findByRole('button', { name: 'dictionary.exportConfirmRun' })
+    fireEvent.click(confirmButton)
+
+    await waitFor(() => expect(mockedApi.downloadGlobalDictionaryXlsx).toHaveBeenCalledTimes(1))
+
+    createObjectURLSpy.mockRestore()
+    revokeObjectURLSpy.mockRestore()
+    appendSpy.mockRestore()
+    clickSpy.mockRestore()
+    removeSpy.mockRestore()
   })
 })
