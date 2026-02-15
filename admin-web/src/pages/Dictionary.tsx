@@ -86,9 +86,10 @@ export function DictionaryPage() {
 
     try {
       setDeleting(true)
-      await deleteGlobalDictionaryEntry(deleteTarget.id)
+      const targetId = deleteTarget.id
+      await deleteGlobalDictionaryEntry(targetId)
       setDeleteTarget(null)
-      await fetchDictionary()
+      setEntries((prev) => prev.filter((entry) => entry.id !== targetId))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete entry')
     } finally {
