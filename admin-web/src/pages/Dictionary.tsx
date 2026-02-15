@@ -134,6 +134,8 @@ export function DictionaryPage() {
       setImportResult(result)
       setError(null)
       await fetchDictionary()
+      setIsImportOpen(false)
+      setSelectedFile(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('dictionary.importFailed'))
     } finally {
