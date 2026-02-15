@@ -68,6 +68,29 @@ export function DictionaryPage() {
     }
   }, [location.pathname])
 
+  useEffect(() => {
+    if (!isImportOpen) {
+      return
+    }
+
+    const handleWindowDragOver = (event: DragEvent) => {
+      event.preventDefault()
+      setIsDragging(true)
+    }
+
+    const handleWindowDrop = () => {
+      setIsDragging(false)
+    }
+
+    window.addEventListener('dragover', handleWindowDragOver)
+    window.addEventListener('drop', handleWindowDrop)
+
+    return () => {
+      window.removeEventListener('dragover', handleWindowDragOver)
+      window.removeEventListener('drop', handleWindowDrop)
+    }
+  }, [isImportOpen])
+
   const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!pattern.trim() || !replacement.trim()) return
