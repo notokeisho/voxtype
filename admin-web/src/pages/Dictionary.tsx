@@ -89,14 +89,20 @@ export function DictionaryPage() {
       setIsDragging(false)
     }
 
+    const handleWindowDragEnd = () => {
+      setIsDragging(false)
+    }
+
     window.addEventListener('dragover', handleWindowDragOver)
     window.addEventListener('drop', handleWindowDrop)
     window.addEventListener('dragleave', handleWindowDragLeave)
+    window.addEventListener('dragend', handleWindowDragEnd)
 
     return () => {
       window.removeEventListener('dragover', handleWindowDragOver)
       window.removeEventListener('drop', handleWindowDrop)
       window.removeEventListener('dragleave', handleWindowDragLeave)
+      window.removeEventListener('dragend', handleWindowDragEnd)
     }
   }, [isImportOpen])
 
