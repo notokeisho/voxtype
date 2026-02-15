@@ -78,8 +78,11 @@ export function DictionaryPage() {
       setIsDragging(true)
     }
 
-    const handleWindowDrop = () => {
+    const handleWindowDrop = (event: DragEvent) => {
+      event.preventDefault()
       setIsDragging(false)
+      const file = event.dataTransfer?.files?.[0] ?? null
+      handleFileSelect(file)
     }
 
     window.addEventListener('dragover', handleWindowDragOver)
@@ -373,7 +376,7 @@ export function DictionaryPage() {
         {isImportOpen && (
           <div
             className={`fixed inset-0 z-50 transition-colors ${
-              isDragging ? 'bg-blue-50/60 pointer-events-auto' : 'pointer-events-none'
+              isDragging ? 'bg-white/70 pointer-events-auto' : 'pointer-events-none'
             }`}
             onDragOver={(event) => {
               event.preventDefault()
