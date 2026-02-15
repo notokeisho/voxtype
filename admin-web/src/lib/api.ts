@@ -198,13 +198,8 @@ export async function updateBackupSettings(enabled: boolean): Promise<{
   )
 }
 
-export async function runBackupNow(): Promise<{
-  created_file: string
-  created_at: string
-  kept: number
-  deleted: number
-}> {
-  return apiFetch<{ created_file: string; created_at: string; kept: number; deleted: number }>(
+export async function runBackupNow(): Promise<BackupRunResult> {
+  return apiFetch<BackupRunResult>(
     '/admin/api/dictionary/backup/run',
     {
       method: 'POST',
@@ -289,6 +284,13 @@ export interface DictionaryRequest {
 export interface DictionaryRequestList {
   entries: DictionaryRequest[]
   count: number
+}
+
+export interface BackupRunResult {
+  created_file: string
+  created_at: string
+  kept: number
+  deleted: number
 }
 
 export interface StatusResponse {
