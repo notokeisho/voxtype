@@ -7,6 +7,7 @@ import { DictionaryPage } from '@/pages/Dictionary'
 const mockedApi = vi.hoisted(() => ({
   getGlobalDictionary: vi.fn(),
   getBackupSettings: vi.fn(),
+  getBackupFiles: vi.fn(),
   runBackupNow: vi.fn(),
   downloadGlobalDictionaryXlsx: vi.fn(),
 }))
@@ -18,6 +19,7 @@ vi.mock('@/lib/api', () => ({
   downloadGlobalDictionaryXlsx: mockedApi.downloadGlobalDictionaryXlsx,
   importGlobalDictionaryXlsx: vi.fn(),
   getBackupSettings: mockedApi.getBackupSettings,
+  getBackupFiles: mockedApi.getBackupFiles,
   updateBackupSettings: vi.fn(),
   runBackupNow: mockedApi.runBackupNow,
 }))
@@ -35,6 +37,15 @@ describe('DictionaryPage manual backup UI', () => {
     vi.clearAllMocks()
     mockedApi.getGlobalDictionary.mockResolvedValue([])
     mockedApi.getBackupSettings.mockResolvedValue({ enabled: false, last_run_at: null })
+    mockedApi.getBackupFiles.mockResolvedValue({
+      files: [
+        {
+          filename: 'global_dictionary_2026-02-16_03-00-00.xlsx',
+          created_at: '2026-02-16T03:00:00',
+          size_bytes: 1024,
+        },
+      ],
+    })
     mockedApi.downloadGlobalDictionaryXlsx.mockResolvedValue(new Blob(['test']))
     if (!URL.createObjectURL) {
       Object.defineProperty(URL, 'createObjectURL', {
@@ -153,5 +164,15 @@ describe('DictionaryPage manual backup UI', () => {
     appendSpy.mockRestore()
     clickSpy.mockRestore()
     removeSpy.mockRestore()
+  })
+
+  it('shows backup files list', async () => {
+    render(
+      <MemoryRouter initialEntries={['/dictionary']}>
+        <DictionaryPage />
+      </MemoryRouter>
+    )
+
+    expect(await screen.findByText('global_dictionary_2026-02-16_03-00-00.xlsx')).toBeInTheDocument()
   })
 })
