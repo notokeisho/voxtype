@@ -1,6 +1,7 @@
 """Tests for backup admin API endpoints."""
 
 from pathlib import Path
+import asyncio
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -265,3 +266,52 @@ class TestBackupRestoreApi:
         assert data["total"] == 1
         assert "restore_task3_replace_only" in patterns
         assert "restore_task3_should_be_removed" not in patterns
+
+    @pytest.mark.asyncio
+    async def test_restore_backup_rejects_invalid_filename(self, admin_token):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.post(
+                "/admin/api/dictionary/backup/restore",
+                headers={"Authorization": f"Bearer {admin_token}"},
+                json={"filename": "../secrets.txt", "mode": "merge"},
+            )
+
+        assert response.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_restore_backup_returns_conflict_when_locked(self, admin_token):
+        backup_dir = Path("./data/backups")
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        backup_file = backup_dir / "global_dictionary_2026-02-16_03-20-00.xlsx"
+
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "global_dictionary"
+        sheet.append(["pattern", "replacement", "created_at", "created_by"])
+        sheet.append(["restore_task4_conflict", "value", "", ""])
+        workbook.save(backup_file)
+
+        async def call_restore(client: AsyncClient):
+            return await client.post(
+                "/admin/api/dictionary/backup/restore",
+                headers={"Authorization": f"Bearer {admin_token}"},
+                json={"filename": backup_file.name, "mode": "merge"},
+            )
+
+        try:
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                first, second = await asyncio.gather(call_restore(client), call_restore(client))
+        finally:
+            backup_file.unlink(missing_ok=True)
+            async with async_session_factory() as session:
+                await session.execute(
+                    delete(GlobalDictionary).where(GlobalDictionary.pattern == "restore_task4_conflict")
+                )
+                await session.commit()
+
+        statuses = {first.status_code, second.status_code}
+        assert statuses == {200, 409}
