@@ -244,6 +244,7 @@ export function DictionaryRequestsPage() {
                         variant="outline"
                         onClick={() => setPendingAction({ type: 'reject', request })}
                         disabled={processing}
+                        className="bg-gray-200 text-gray-700 border-gray-200 hover:bg-gray-300 hover:border-gray-300"
                       >
                         {t('dictionaryRequests.reject')}
                       </Button>
@@ -295,6 +296,11 @@ export function DictionaryRequestsPage() {
               onClick={handleAction}
               disabled={processing}
               variant={pendingAction?.type === 'delete' ? 'destructive' : 'default'}
+              className={
+                pendingAction?.type === 'reject'
+                  ? 'bg-gray-200 text-gray-700 border-gray-200 hover:bg-gray-300 hover:border-gray-300'
+                  : undefined
+              }
             >
               {processing
                 ? t('dictionaryRequests.processing')
