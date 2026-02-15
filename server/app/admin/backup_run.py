@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from app.auth.dependencies import get_current_admin_user
 from app.database import async_session_factory
 from app.models.user import User
-from app.services.backup import create_global_dictionary_backup
+from app.services.backup import create_global_dictionary_backup, run_with_backup_lock
 
 router = APIRouter(prefix="/admin/api", tags=["admin"])
 
@@ -28,10 +28,13 @@ async def run_backup_endpoint(
 ) -> BackupRunResponse:
     """Run backup immediately."""
     async with async_session_factory() as session:
-        result = await create_global_dictionary_backup(session)
-        return BackupRunResponse(
-            created_file=result.created_file.name,
-            created_at=result.created_at,
-            kept=result.kept,
-            deleted=result.deleted,
-        )
+        async def _run() -> BackupRunResponse:
+            result = await create_global_dictionary_backup(session)
+            return BackupRunResponse(
+                created_file=result.created_file.name,
+                created_at=result.created_at,
+                kept=result.kept,
+                deleted=result.deleted,
+            )
+
+        return await run_with_backup_lock(_run)

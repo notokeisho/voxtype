@@ -96,7 +96,7 @@ def test_backup_creates_xlsx_with_entries(tmp_path: Path):
         run_async(_insert_entries(entries))
         result = run_async(_create_backup(tmp_path, date(2026, 2, 15)))
 
-        assert result.created_file.name == "global_dictionary_2026-02-15.xlsx"
+        assert result.created_file.name == "global_dictionary_2026-02-15_00-00-00.xlsx"
         assert result.created_file.exists()
 
         workbook = load_workbook(result.created_file)
@@ -127,16 +127,16 @@ def test_backup_keeps_latest_three(tmp_path: Path):
             date(2026, 2, 13),
         ]
         for existing_date in existing_dates:
-            filename = f"global_dictionary_{existing_date.isoformat()}.xlsx"
+            filename = f"global_dictionary_{existing_date.isoformat()}_00-00-00.xlsx"
             (tmp_path / filename).write_text("dummy", encoding="utf-8")
 
         result = run_async(_create_backup(tmp_path, date(2026, 2, 14)))
 
         remaining = sorted(path.name for path in tmp_path.glob("global_dictionary_*.xlsx"))
         assert remaining == [
-            "global_dictionary_2026-02-12.xlsx",
-            "global_dictionary_2026-02-13.xlsx",
-            "global_dictionary_2026-02-14.xlsx",
+            "global_dictionary_2026-02-12_00-00-00.xlsx",
+            "global_dictionary_2026-02-13_00-00-00.xlsx",
+            "global_dictionary_2026-02-14_00-00-00.xlsx",
         ]
         assert result.kept == 3
         assert result.deleted == 2

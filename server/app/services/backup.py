@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
-from typing import Callable
+from typing import Awaitable, Callable, TypeVar
 
 from openpyxl import Workbook
 
 from app.models.backup_settings import get_backup_settings
 from app.models.global_dictionary import get_global_entries
+
+T = TypeVar("T")
+_backup_lock = asyncio.Lock()
 
 
 @dataclass(slots=True)
@@ -21,6 +25,12 @@ class BackupResult:
     created_at: datetime
     kept: int
     deleted: int
+
+
+async def run_with_backup_lock(job: Callable[[], Awaitable[T]]) -> T:
+    """Run backup related job with process-local lock."""
+    async with _backup_lock:
+        return await job()
 
 
 async def run_backup_if_enabled(
@@ -34,28 +44,34 @@ async def run_backup_if_enabled(
     if not settings.enabled:
         return None
 
-    return await create_global_dictionary_backup(
-        session,
-        base_dir=base_dir,
-        current_date=current_date,
-        now_provider=now_provider,
-    )
+    async def _run() -> BackupResult:
+        return await create_global_dictionary_backup(
+            session,
+            base_dir=base_dir,
+            current_date=current_date,
+            now_provider=now_provider,
+        )
+
+    return await run_with_backup_lock(_run)
 
 
-def _parse_backup_date(filename: str) -> date | None:
+def _parse_backup_datetime(filename: str) -> datetime | None:
     prefix = "global_dictionary_"
     suffix = ".xlsx"
     if not filename.startswith(prefix) or not filename.endswith(suffix):
         return None
-    date_part = filename[len(prefix):-len(suffix)]
+    core_part = filename[len(prefix):-len(suffix)]
     try:
-        return date.fromisoformat(date_part)
+        return datetime.strptime(core_part, "%Y-%m-%d_%H-%M-%S")
     except ValueError:
-        return None
+        try:
+            return datetime.strptime(core_part, "%Y-%m-%d")
+        except ValueError:
+            return None
 
 
 def _list_backup_files(backup_dir: Path) -> list[Path]:
-    return [path for path in backup_dir.iterdir() if _parse_backup_date(path.name)]
+    return [path for path in backup_dir.iterdir() if _parse_backup_datetime(path.name)]
 
 
 async def create_global_dictionary_backup(
@@ -69,7 +85,7 @@ async def create_global_dictionary_backup(
     backup_dir.mkdir(parents=True, exist_ok=True)
 
     export_date = current_date or date.today()
-    filename = f"global_dictionary_{export_date.isoformat()}.xlsx"
+    filename = f"global_dictionary_{export_date.isoformat()}_{now_provider().strftime('%H-%M-%S')}.xlsx"
     backup_path = backup_dir / filename
 
     entries = await get_global_entries(session)
@@ -85,7 +101,10 @@ async def create_global_dictionary_backup(
     workbook.save(backup_path)
 
     backups = _list_backup_files(backup_dir)
-    backups.sort(key=lambda path: _parse_backup_date(path.name) or date.min, reverse=True)
+    backups.sort(
+        key=lambda path: _parse_backup_datetime(path.name) or datetime.min,
+        reverse=True,
+    )
     keep = backups[:3]
     to_delete = backups[3:]
 
