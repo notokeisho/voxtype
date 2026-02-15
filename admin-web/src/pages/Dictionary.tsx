@@ -355,15 +355,28 @@ export function DictionaryPage() {
               handleFileSelect(file)
             }}
           >
-            <div className="mb-4">{t('dictionary.importDropHint')}</div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => importInputRef.current?.click()}
-            >
-              {t('dictionary.importSelect')}
-            </Button>
+            {selectedFile ? (
+              <div className="flex flex-col items-center gap-2 text-gray-700">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-sm font-semibold text-gray-700">
+                  XLSX
+                </div>
+                <div className="text-sm font-medium">
+                  {tWithParams('dictionary.importFileName', { name: selectedFile.name })}
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4">{t('dictionary.importDropHint')}</div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => importInputRef.current?.click()}
+                >
+                  {t('dictionary.importSelect')}
+                </Button>
+              </>
+            )}
             <input
               ref={importInputRef}
               type="file"
@@ -371,11 +384,6 @@ export function DictionaryPage() {
               className="hidden"
               onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null)}
             />
-            {selectedFile && (
-              <div className="mt-3 text-xs text-gray-700">
-                {tWithParams('dictionary.importFileName', { name: selectedFile.name })}
-              </div>
-            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsImportOpen(false)}>
