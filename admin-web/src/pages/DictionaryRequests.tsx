@@ -285,8 +285,18 @@ export function DictionaryRequestsPage() {
             <Button variant="outline" onClick={() => setPendingAction(null)}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleAction} disabled={processing}>
-              {processing ? t('dictionaryRequests.processing') : t('common.confirm')}
+            <Button
+              onClick={handleAction}
+              disabled={processing}
+              variant={pendingAction?.type === 'delete' ? 'destructive' : 'default'}
+            >
+              {processing
+                ? t('dictionaryRequests.processing')
+                : pendingAction?.type === 'approve'
+                  ? t('dictionaryRequests.approve')
+                  : pendingAction?.type === 'reject'
+                    ? t('dictionaryRequests.reject')
+                    : t('dictionaryRequests.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>
