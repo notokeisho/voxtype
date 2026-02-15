@@ -5,9 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
+from typing import Callable
 
 from openpyxl import Workbook
 
+from app.models.backup_settings import get_backup_settings
 from app.models.global_dictionary import get_global_entries
 
 
@@ -41,6 +43,7 @@ async def create_global_dictionary_backup(
     session,
     base_dir: Path | None = None,
     current_date: date | None = None,
+    now_provider: Callable[[], datetime] = datetime.now,
 ) -> BackupResult:
     """Create a global dictionary backup and keep latest files only."""
     backup_dir = base_dir or Path("./data/backups")
@@ -72,9 +75,13 @@ async def create_global_dictionary_backup(
         path.unlink(missing_ok=True)
         deleted += 1
 
+    settings = await get_backup_settings(session)
+    settings.last_run_at = now_provider()
+    await session.commit()
+
     return BackupResult(
         created_file=backup_path,
-        created_at=datetime.now(),
+        created_at=settings.last_run_at,
         kept=len(keep),
         deleted=deleted,
     )

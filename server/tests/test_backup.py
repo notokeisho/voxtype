@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 from openpyxl import load_workbook
@@ -76,6 +76,7 @@ async def _create_backup(
             session,
             base_dir=backup_dir,
             current_date=target_date,
+            now_provider=lambda: datetime(2026, 2, 15, 0, 0, 0),
         )
 
     return await _with_session(_create)
