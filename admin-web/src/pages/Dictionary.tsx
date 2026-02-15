@@ -80,7 +80,7 @@ export function DictionaryPage() {
         setBackupEnabled(data.enabled)
         setBackupLastRun(data.last_run_at)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch backup settings')
+        setError(err instanceof Error ? err.message : t('dictionary.backupFetchFailed'))
       }
     }
 
@@ -319,7 +319,7 @@ export function DictionaryPage() {
                     setBackupLastRun(data.last_run_at)
                   })
                   .catch((err) => {
-                    setError(err instanceof Error ? err.message : 'Failed to update backup settings')
+                    setError(err instanceof Error ? err.message : t('dictionary.backupUpdateFailed'))
                     setBackupEnabled((prev) => !prev)
                   })
                   .finally(() => setBackupUpdating(false))
