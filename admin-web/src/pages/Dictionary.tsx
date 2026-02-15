@@ -33,6 +33,7 @@ import {
   restoreBackupFile,
   type BackupRunResult,
   type BackupFile,
+  type BackupRestoreResult,
   type DictionaryEntry,
 } from '@/lib/api'
 import { useLanguage } from '@/lib/i18n'
@@ -69,6 +70,7 @@ export function DictionaryPage() {
   const [restoreMode, setRestoreMode] = useState<'merge' | 'replace'>('merge')
   const [isRestoreReplaceFinalOpen, setIsRestoreReplaceFinalOpen] = useState(false)
   const [restoring, setRestoring] = useState(false)
+  const [restoreResult, setRestoreResult] = useState<BackupRestoreResult | null>(null)
 
   const fetchDictionary = async () => {
     try {
@@ -89,19 +91,19 @@ export function DictionaryPage() {
     }
   }, [location.pathname])
 
-  useEffect(() => {
-    const fetchBackupFiles = async () => {
-      try {
-        setBackupFilesLoading(true)
-        const data = await getBackupFiles()
-        setBackupFiles(data.files)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('dictionary.backupFilesFetchFailed'))
-      } finally {
-        setBackupFilesLoading(false)
-      }
+  const fetchBackupFiles = async () => {
+    try {
+      setBackupFilesLoading(true)
+      const data = await getBackupFiles()
+      setBackupFiles(data.files)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('dictionary.backupFilesFetchFailed'))
+    } finally {
+      setBackupFilesLoading(false)
     }
+  }
 
+  useEffect(() => {
     if (location.pathname === '/dictionary') {
       fetchBackupFiles()
     }
@@ -279,9 +281,10 @@ export function DictionaryPage() {
 
     try {
       setRestoring(true)
-      await restoreBackupFile(restoreTarget.filename, mode)
+      const result = await restoreBackupFile(restoreTarget.filename, mode)
+      setRestoreResult(result)
       setError(null)
-      await fetchDictionary()
+      await Promise.all([fetchDictionary(), fetchBackupFiles()])
       handleCloseRestoreDialogs()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('dictionary.restoreFailed'))
@@ -500,6 +503,42 @@ export function DictionaryPage() {
               </div>
             )}
           </div>
+          {restoreResult && (
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1 text-xs text-gray-700">
+                  <div className="font-medium text-gray-900">{t('dictionary.restoreSuccess')}</div>
+                  <div>
+                    {tWithParams('dictionary.restoreFile', {
+                      file: restoreResult.restored_file,
+                    })}
+                  </div>
+                  <div>
+                    {tWithParams('dictionary.restoreSummary', {
+                      mode: restoreResult.mode,
+                      total: restoreResult.total,
+                      added: restoreResult.added,
+                      skipped: restoreResult.skipped,
+                      failed: restoreResult.failed,
+                    })}
+                  </div>
+                  <div>
+                    {tWithParams('dictionary.restoreLastRun', {
+                      datetime: formatDate(restoreResult.restored_at),
+                    })}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="text-gray-500 hover:text-gray-700"
+                  aria-label={t('common.close')}
+                  onClick={() => setRestoreResult(null)}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <Button
               type="button"
