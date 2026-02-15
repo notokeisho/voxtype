@@ -27,6 +27,15 @@ class BackupResult:
     deleted: int
 
 
+@dataclass(slots=True)
+class BackupFileInfo:
+    """Backup file metadata for admin listing."""
+
+    filename: str
+    created_at: datetime
+    size_bytes: int
+
+
 async def run_with_backup_lock(job: Callable[[], Awaitable[T]]) -> T:
     """Run backup related job with process-local lock."""
     async with _backup_lock:
@@ -72,6 +81,29 @@ def _parse_backup_datetime(filename: str) -> datetime | None:
 
 def _list_backup_files(backup_dir: Path) -> list[Path]:
     return [path for path in backup_dir.iterdir() if _parse_backup_datetime(path.name)]
+
+
+def list_backup_files(base_dir: Path | None = None) -> list[BackupFileInfo]:
+    """List backup files sorted by datetime descending."""
+    backup_dir = base_dir or Path("./data/backups")
+    if not backup_dir.exists():
+        return []
+
+    files = []
+    for path in _list_backup_files(backup_dir):
+        parsed = _parse_backup_datetime(path.name)
+        if parsed is None:
+            continue
+        files.append(
+            BackupFileInfo(
+                filename=path.name,
+                created_at=parsed,
+                size_bytes=path.stat().st_size,
+            )
+        )
+
+    files.sort(key=lambda item: item.created_at, reverse=True)
+    return files
 
 
 async def create_global_dictionary_backup(
