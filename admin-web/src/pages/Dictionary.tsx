@@ -348,14 +348,8 @@ export function DictionaryPage() {
         }}
       >
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('dictionary.import')}</DialogTitle>
-            <DialogDescription>{t('dictionary.importDropHint')}</DialogDescription>
-          </DialogHeader>
           <div
-            className={`border border-dashed rounded-md p-6 text-center text-sm text-gray-600 transition-colors ${
-              isDragging ? 'border-blue-400 bg-blue-50' : ''
-            }`}
+            className="space-y-4"
             onDragOver={(event) => {
               event.preventDefault()
               setIsDragging(true)
@@ -368,47 +362,57 @@ export function DictionaryPage() {
               handleFileSelect(file)
             }}
           >
-            {selectedFile ? (
-              <div className="flex flex-col items-center gap-2 text-gray-700">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-sm font-semibold text-gray-700">
-                  XLSX
-                </div>
-                <div className="text-sm font-medium">
-                  {tWithParams('dictionary.importFileName', { name: selectedFile.name })}
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="mb-4">{t('dictionary.importDropHint')}</div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => importInputRef.current?.click()}
-                >
-                  {t('dictionary.importSelect')}
-                </Button>
-              </>
-            )}
-            <input
-              ref={importInputRef}
-              type="file"
-              accept=".xlsx"
-              className="hidden"
-              onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null)}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsImportOpen(false)}>
-              {t('common.cancel')}
-            </Button>
-            <Button
-              onClick={handleImport}
-              disabled={importing || !selectedFile}
+            <DialogHeader>
+              <DialogTitle>{t('dictionary.import')}</DialogTitle>
+              <DialogDescription>{t('dictionary.importDropHint')}</DialogDescription>
+            </DialogHeader>
+            <div
+              className={`border border-dashed rounded-md p-6 text-center text-sm text-gray-600 transition-colors ${
+                isDragging ? 'border-blue-400 bg-blue-50' : ''
+              }`}
             >
-              {importing ? t('dictionary.importing') : t('dictionary.importApply')}
-            </Button>
-          </DialogFooter>
+              {selectedFile ? (
+                <div className="flex flex-col items-center gap-2 text-gray-700">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-sm font-semibold text-gray-700">
+                    XLSX
+                  </div>
+                  <div className="text-sm font-medium">
+                    {tWithParams('dictionary.importFileName', { name: selectedFile.name })}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-4">{t('dictionary.importDropHint')}</div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => importInputRef.current?.click()}
+                  >
+                    {t('dictionary.importSelect')}
+                  </Button>
+                </>
+              )}
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".xlsx"
+                className="hidden"
+                onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null)}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsImportOpen(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button
+                onClick={handleImport}
+                disabled={importing || !selectedFile}
+              >
+                {importing ? t('dictionary.importing') : t('dictionary.importApply')}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
