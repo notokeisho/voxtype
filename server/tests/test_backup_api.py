@@ -4,11 +4,13 @@ from pathlib import Path
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from openpyxl import Workbook
 from sqlalchemy import delete, text
 
 from app.auth.jwt import create_jwt_token
 from app.database import async_session_factory
 from app.main import app
+from app.models.global_dictionary import GlobalDictionary
 from app.models.user import User
 from app.models.whitelist import Whitelist
 
@@ -143,3 +145,61 @@ class TestBackupFilesApi:
         assert "filename" in first_item
         assert "created_at" in first_item
         assert "size_bytes" in first_item
+
+
+class TestBackupRestoreApi:
+    """Tests for backup restore endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_restore_backup_merge_mode(self, admin_token):
+        backup_dir = Path("./data/backups")
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        backup_file = backup_dir / "global_dictionary_2026-02-16_03-00-00.xlsx"
+
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "global_dictionary"
+        sheet.append(["pattern", "replacement", "created_at", "created_by"])
+        sheet.append(["restore_task2_existing", "new_value", "", ""])
+        sheet.append(["restore_task2_added", "added_value", "", ""])
+        workbook.save(backup_file)
+
+        async with async_session_factory() as session:
+            session.add(
+                GlobalDictionary(
+                    pattern="restore_task2_existing",
+                    replacement="old_value",
+                    created_by=None,
+                )
+            )
+            await session.commit()
+
+        try:
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                response = await client.post(
+                    "/admin/api/dictionary/backup/restore",
+                    headers={"Authorization": f"Bearer {admin_token}"},
+                    json={"filename": backup_file.name, "mode": "merge"},
+                )
+        finally:
+            backup_file.unlink(missing_ok=True)
+            async with async_session_factory() as session:
+                await session.execute(
+                    delete(GlobalDictionary).where(
+                        GlobalDictionary.pattern.in_(
+                            ["restore_task2_existing", "restore_task2_added"]
+                        )
+                    )
+                )
+                await session.commit()
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["mode"] == "merge"
+        assert data["restored_file"] == backup_file.name
+        assert data["added"] == 1
+        assert data["skipped"] == 1
+        assert data["failed"] == 0
+        assert data["total"] == 2
