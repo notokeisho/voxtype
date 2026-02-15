@@ -17,6 +17,10 @@ T = TypeVar("T")
 _backup_lock = asyncio.Lock()
 
 
+class BackupLockConflictError(RuntimeError):
+    """Raised when backup lock is already held."""
+
+
 @dataclass(slots=True)
 class BackupResult:
     """Result of backup creation."""
@@ -38,6 +42,14 @@ class BackupFileInfo:
 
 async def run_with_backup_lock(job: Callable[[], Awaitable[T]]) -> T:
     """Run backup related job with process-local lock."""
+    async with _backup_lock:
+        return await job()
+
+
+async def run_with_backup_lock_or_conflict(job: Callable[[], Awaitable[T]]) -> T:
+    """Run backup job or raise conflict if another job is running."""
+    if _backup_lock.locked():
+        raise BackupLockConflictError("backup job already running")
     async with _backup_lock:
         return await job()
 
