@@ -261,6 +261,7 @@ export function DictionaryPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>#</TableHead>
                 <TableHead>{t('dictionary.pattern')}</TableHead>
                 <TableHead>{t('dictionary.replacement')}</TableHead>
                 <TableHead>{t('dictionary.createdAt')}</TableHead>
