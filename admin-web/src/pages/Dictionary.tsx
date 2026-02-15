@@ -402,9 +402,19 @@ export function DictionaryPage() {
               />
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsImportOpen(false)}>
-                {t('common.cancel')}
-              </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsImportOpen(false)
+                setSelectedFile(null)
+                setIsDragging(false)
+                if (importInputRef.current) {
+                  importInputRef.current.value = ''
+                }
+              }}
+            >
+              {t('common.cancel')}
+            </Button>
               <Button
                 onClick={handleImport}
                 disabled={importing || !selectedFile}
