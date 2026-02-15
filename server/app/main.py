@@ -1,5 +1,6 @@
 """FastAPI application entry point."""
 
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -21,6 +22,9 @@ from app.api.transcribe import router as transcribe_router
 from app.auth.routes import router as auth_router
 from app.bootstrap import ensure_initial_admin
 from app.config import settings
+from app.database import async_session_factory
+from app.services.backup import run_backup_if_enabled
+from app.services.backup_scheduler import start_backup_scheduler
 
 
 @asynccontextmanager
@@ -28,8 +32,28 @@ async def lifespan(app: FastAPI):
     """Application lifespan event handler."""
     # Startup
     await ensure_initial_admin()
-    yield
-    # Shutdown
+    stop_event = asyncio.Event()
+
+    async def run_backup_job() -> None:
+        async with async_session_factory() as session:
+            await run_backup_if_enabled(session)
+
+    scheduler_task = start_backup_scheduler(
+        stop_event=stop_event,
+        run_task=run_backup_job,
+        run_at_hour=3,
+    )
+
+    try:
+        yield
+    finally:
+        # Shutdown
+        stop_event.set()
+        try:
+            await asyncio.wait_for(scheduler_task, timeout=5)
+        except asyncio.TimeoutError:
+            scheduler_task.cancel()
+            await asyncio.gather(scheduler_task, return_exceptions=True)
 
 
 app = FastAPI(
