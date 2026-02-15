@@ -269,8 +269,9 @@ export function DictionaryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {entries.map((entry) => (
+              {entries.map((entry, index) => (
                 <TableRow key={entry.id}>
+                  <TableCell className="text-gray-500">{index + 1}</TableCell>
                   <TableCell className="font-medium">{entry.pattern}</TableCell>
                   <TableCell>{entry.replacement}</TableCell>
                   <TableCell>{formatDate(entry.created_at)}</TableCell>
