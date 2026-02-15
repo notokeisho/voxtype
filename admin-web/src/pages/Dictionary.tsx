@@ -28,6 +28,8 @@ import {
   importGlobalDictionaryXlsx,
   getBackupSettings,
   updateBackupSettings,
+  runBackupNow,
+  type BackupRunResult,
   type DictionaryEntry,
 } from '@/lib/api'
 import { useLanguage } from '@/lib/i18n'
@@ -53,6 +55,9 @@ export function DictionaryPage() {
   const [backupEnabled, setBackupEnabled] = useState(false)
   const [backupLastRun, setBackupLastRun] = useState<string | null>(null)
   const [backupUpdating, setBackupUpdating] = useState(false)
+  const [runningBackupNow, setRunningBackupNow] = useState(false)
+  const [manualBackupResult, setManualBackupResult] = useState<BackupRunResult | null>(null)
+  const [manualBackupDismissed, setManualBackupDismissed] = useState(false)
 
   const fetchDictionary = async () => {
     try {
@@ -204,6 +209,21 @@ export function DictionaryPage() {
     }
   }
 
+  const handleRunBackupNow = async () => {
+    try {
+      setRunningBackupNow(true)
+      const result = await runBackupNow()
+      setManualBackupResult(result)
+      setManualBackupDismissed(false)
+      setBackupLastRun(result.created_at)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('dictionary.backupRunFailed'))
+    } finally {
+      setRunningBackupNow(false)
+    }
+  }
+
   const handleFileSelect = (file: File | null) => {
     if (!file) return
     if (importInputRef.current) {
@@ -336,6 +356,49 @@ export function DictionaryPage() {
               />
             </button>
           </div>
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={runningBackupNow}
+              onClick={handleRunBackupNow}
+            >
+              {runningBackupNow ? t('dictionary.backupRunning') : t('dictionary.backupRunNow')}
+            </Button>
+          </div>
+          {manualBackupResult && !manualBackupDismissed && (
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1 text-xs text-gray-700">
+                  <div>
+                    {tWithParams('dictionary.backupManualLastRun', {
+                      datetime: formatDate(manualBackupResult.created_at),
+                    })}
+                  </div>
+                  <div>
+                    {tWithParams('dictionary.backupManualCreatedFile', {
+                      file: manualBackupResult.created_file,
+                    })}
+                  </div>
+                  <div>
+                    {tWithParams('dictionary.backupManualSummary', {
+                      kept: manualBackupResult.kept,
+                      deleted: manualBackupResult.deleted,
+                    })}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="text-gray-500 hover:text-gray-700"
+                  aria-label={t('common.close')}
+                  onClick={() => setManualBackupDismissed(true)}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
           <div>
             <Button
               type="button"
