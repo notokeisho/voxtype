@@ -23,6 +23,25 @@ class BackupResult:
     deleted: int
 
 
+async def run_backup_if_enabled(
+    session,
+    base_dir: Path | None = None,
+    current_date: date | None = None,
+    now_provider: Callable[[], datetime] = datetime.now,
+) -> BackupResult | None:
+    """Run backup only when enabled settings are true."""
+    settings = await get_backup_settings(session)
+    if not settings.enabled:
+        return None
+
+    return await create_global_dictionary_backup(
+        session,
+        base_dir=base_dir,
+        current_date=current_date,
+        now_provider=now_provider,
+    )
+
+
 def _parse_backup_date(filename: str) -> date | None:
     prefix = "global_dictionary_"
     suffix = ".xlsx"
