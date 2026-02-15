@@ -146,6 +146,9 @@ export function DictionaryPage() {
 
   const handleFileSelect = (file: File | null) => {
     if (!file) return
+    if (importInputRef.current) {
+      importInputRef.current.value = ''
+    }
     setSelectedFile(file)
   }
 
@@ -338,6 +341,9 @@ export function DictionaryPage() {
           if (!open) {
             setSelectedFile(null)
             setIsDragging(false)
+            if (importInputRef.current) {
+              importInputRef.current.value = ''
+            }
           }
         }}
       >
