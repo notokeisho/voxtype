@@ -347,6 +347,22 @@ export function DictionaryPage() {
           }
         }}
       >
+        {isImportOpen && (
+          <div
+            className="fixed inset-0 z-40"
+            onDragOver={(event) => {
+              event.preventDefault()
+              setIsDragging(true)
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(event) => {
+              event.preventDefault()
+              setIsDragging(false)
+              const file = event.dataTransfer.files?.[0] ?? null
+              handleFileSelect(file)
+            }}
+          />
+        )}
         <DialogContent>
           <div
             className="space-y-4"
