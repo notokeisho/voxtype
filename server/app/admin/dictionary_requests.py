@@ -19,7 +19,10 @@ from app.models.global_dictionary_request import (
 )
 from app.models.user import User
 from app.models.user_dictionary import DictionaryLimitExceeded, add_user_entry, get_user_entry_by_pattern
-from app.services.dictionary_normalize import normalize_dictionary_text
+from app.services.dictionary_normalize import (
+    normalize_dictionary_text,
+    normalize_dictionary_text_case_sensitive,
+)
 
 router = APIRouter(prefix="/admin/api", tags=["admin"])
 
@@ -107,7 +110,7 @@ async def approve_dictionary_request(
         result = await session.execute(select(GlobalDictionary))
         global_entries = result.scalars().all()
         normalized_pattern = normalize_dictionary_text(request.pattern)
-        normalized_replacement = normalize_dictionary_text(request.replacement)
+        normalized_replacement = normalize_dictionary_text_case_sensitive(request.replacement)
 
         conflict_entry = None
         for entry in global_entries:
@@ -116,7 +119,7 @@ async def approve_dictionary_request(
                 break
 
         if conflict_entry is not None:
-            if normalize_dictionary_text(conflict_entry.replacement) != normalized_replacement:
+            if normalize_dictionary_text_case_sensitive(conflict_entry.replacement) != normalized_replacement:
                 await session.delete(conflict_entry)
             else:
                 conflict_entry = None
@@ -148,7 +151,9 @@ def _build_conflict_info(
     if entry is None:
         return {"conflict_entry_id": None, "conflict_replacement": None}
 
-    if normalize_dictionary_text(entry.replacement) == normalize_dictionary_text(request.replacement):
+    if normalize_dictionary_text_case_sensitive(entry.replacement) == normalize_dictionary_text_case_sensitive(
+        request.replacement
+    ):
         return {"conflict_entry_id": None, "conflict_replacement": None}
 
     return {"conflict_entry_id": entry.id, "conflict_replacement": entry.replacement}

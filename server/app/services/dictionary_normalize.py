@@ -3,6 +3,14 @@
 import unicodedata
 
 
-def normalize_dictionary_text(text: str) -> str:
+def normalize_dictionary_text(text: str, *, casefold: bool = True) -> str:
     """Normalize dictionary text for comparison."""
-    return unicodedata.normalize("NFKC", text).casefold().strip()
+    normalized = unicodedata.normalize("NFKC", text).strip()
+    if casefold:
+        return normalized.casefold()
+    return normalized
+
+
+def normalize_dictionary_text_case_sensitive(text: str) -> str:
+    """Normalize dictionary text without case folding."""
+    return normalize_dictionary_text(text, casefold=False)

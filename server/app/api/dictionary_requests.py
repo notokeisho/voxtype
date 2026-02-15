@@ -16,7 +16,10 @@ from app.models.global_dictionary_request import (
     get_request_count_for_user,
 )
 from app.models.user import User
-from app.services.dictionary_normalize import normalize_dictionary_text
+from app.services.dictionary_normalize import (
+    normalize_dictionary_text,
+    normalize_dictionary_text_case_sensitive,
+)
 
 router = APIRouter(prefix="/api", tags=["dictionary-requests"])
 
@@ -64,13 +67,13 @@ async def create_dictionary_request(
             )
 
         normalized_pattern = normalize_dictionary_text(body.pattern)
-        normalized_replacement = normalize_dictionary_text(body.replacement)
+        normalized_replacement = normalize_dictionary_text_case_sensitive(body.replacement)
 
         result = await session.execute(select(GlobalDictionary))
         for entry in result.scalars().all():
             if (
                 normalize_dictionary_text(entry.pattern) == normalized_pattern
-                and normalize_dictionary_text(entry.replacement) == normalized_replacement
+                and normalize_dictionary_text_case_sensitive(entry.replacement) == normalized_replacement
             ):
                 return DictionaryRequestResponse(
                     id=0,
@@ -88,7 +91,7 @@ async def create_dictionary_request(
         for request in result.scalars().all():
             if (
                 normalize_dictionary_text(request.pattern) == normalized_pattern
-                and normalize_dictionary_text(request.replacement) == normalized_replacement
+                and normalize_dictionary_text_case_sensitive(request.replacement) == normalized_replacement
             ):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
