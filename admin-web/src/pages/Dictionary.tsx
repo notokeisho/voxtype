@@ -30,6 +30,7 @@ import {
   getBackupFiles,
   updateBackupSettings,
   runBackupNow,
+  restoreBackupFile,
   type BackupRunResult,
   type BackupFile,
   type DictionaryEntry,
@@ -64,6 +65,10 @@ export function DictionaryPage() {
   const [isExportConfirmOpen, setIsExportConfirmOpen] = useState(false)
   const [backupFiles, setBackupFiles] = useState<BackupFile[]>([])
   const [backupFilesLoading, setBackupFilesLoading] = useState(false)
+  const [restoreTarget, setRestoreTarget] = useState<BackupFile | null>(null)
+  const [restoreMode, setRestoreMode] = useState<'merge' | 'replace'>('merge')
+  const [isRestoreReplaceFinalOpen, setIsRestoreReplaceFinalOpen] = useState(false)
+  const [restoring, setRestoring] = useState(false)
 
   const fetchDictionary = async () => {
     try {
@@ -254,6 +259,35 @@ export function DictionaryPage() {
       importInputRef.current.value = ''
     }
     setSelectedFile(file)
+  }
+
+  const handleOpenRestore = (file: BackupFile) => {
+    setRestoreTarget(file)
+    setRestoreMode('merge')
+    setIsRestoreReplaceFinalOpen(false)
+  }
+
+  const handleCloseRestoreDialogs = () => {
+    if (restoring) return
+    setRestoreTarget(null)
+    setRestoreMode('merge')
+    setIsRestoreReplaceFinalOpen(false)
+  }
+
+  const executeRestore = async (mode: 'merge' | 'replace') => {
+    if (!restoreTarget) return
+
+    try {
+      setRestoring(true)
+      await restoreBackupFile(restoreTarget.filename, mode)
+      setError(null)
+      await fetchDictionary()
+      handleCloseRestoreDialogs()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('dictionary.restoreFailed'))
+    } finally {
+      setRestoring(false)
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -453,7 +487,12 @@ export function DictionaryPage() {
                         {formatDate(file.created_at)}
                       </div>
                     </div>
-                    <Button type="button" variant="outline" size="sm">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenRestore(file)}
+                    >
                       {t('dictionary.backupRestore')}
                     </Button>
                   </div>
@@ -591,6 +630,100 @@ export function DictionaryPage() {
               disabled={exporting}
             >
               {exporting ? t('dictionary.exporting') : t('dictionary.exportConfirmRun')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!restoreTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseRestoreDialogs()
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('dictionary.restoreConfirmTitle')}</DialogTitle>
+            <DialogDescription>
+              {restoreTarget
+                ? tWithParams('dictionary.restoreConfirmDescription', {
+                    filename: restoreTarget.filename,
+                  })
+                : t('dictionary.restoreConfirmDescriptionEmpty')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>{t('dictionary.restoreModeLabel')}</Label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="restore-mode"
+                  value="merge"
+                  checked={restoreMode === 'merge'}
+                  onChange={() => setRestoreMode('merge')}
+                  disabled={restoring}
+                />
+                <span>{t('dictionary.restoreModeMerge')}</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="restore-mode"
+                  value="replace"
+                  checked={restoreMode === 'replace'}
+                  onChange={() => setRestoreMode('replace')}
+                  disabled={restoring}
+                />
+                <span>{t('dictionary.restoreModeReplace')}</span>
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseRestoreDialogs} disabled={restoring}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={async () => {
+                if (restoreMode === 'replace') {
+                  setIsRestoreReplaceFinalOpen(true)
+                  return
+                }
+                await executeRestore('merge')
+              }}
+              disabled={restoring}
+            >
+              {restoring ? t('dictionary.restoreRunning') : t('dictionary.restoreConfirmRun')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isRestoreReplaceFinalOpen}
+        onOpenChange={(open) => {
+          if (!open && !restoring) {
+            setIsRestoreReplaceFinalOpen(false)
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('dictionary.restoreReplaceFinalTitle')}</DialogTitle>
+            <DialogDescription>{t('dictionary.restoreReplaceFinalConfirm')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsRestoreReplaceFinalOpen(false)}
+              disabled={restoring}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={() => executeRestore('replace')} disabled={restoring}>
+              {restoring ? t('dictionary.restoreRunning') : t('dictionary.restoreReplaceRun')}
             </Button>
           </DialogFooter>
         </DialogContent>

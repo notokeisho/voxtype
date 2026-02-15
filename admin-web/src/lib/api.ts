@@ -213,6 +213,19 @@ export async function getBackupFiles(): Promise<{ files: BackupFile[] }> {
   )
 }
 
+export async function restoreBackupFile(
+  filename: string,
+  mode: 'merge' | 'replace'
+): Promise<BackupRestoreResult> {
+  return apiFetch<BackupRestoreResult>(
+    '/admin/api/dictionary/backup/restore',
+    {
+      method: 'POST',
+      body: JSON.stringify({ filename, mode }),
+    }
+  )
+}
+
 // Dictionary Requests API (admin)
 export async function getDictionaryRequests(): Promise<DictionaryRequestList> {
   return apiFetch<DictionaryRequestList>('/admin/api/dictionary-requests')
@@ -303,6 +316,16 @@ export interface BackupFile {
   filename: string
   created_at: string
   size_bytes: number
+}
+
+export interface BackupRestoreResult {
+  restored_file: string
+  mode: 'merge' | 'replace'
+  total: number
+  added: number
+  skipped: number
+  failed: number
+  restored_at: string
 }
 
 export interface StatusResponse {
