@@ -45,3 +45,21 @@ async def run_backup_scheduler(
             break
 
         await run_task()
+
+
+def start_backup_scheduler(
+    stop_event: asyncio.Event,
+    run_task: Callable[[], Awaitable[None]],
+    run_at_hour: int = 3,
+    now_provider: Callable[[], datetime | Awaitable[datetime]] = datetime.now,
+    task_factory: Callable[[Awaitable[None]], asyncio.Task[None]] = asyncio.create_task,
+) -> asyncio.Task[None]:
+    """Start backup scheduler as a background task."""
+    return task_factory(
+        run_backup_scheduler(
+            stop_event=stop_event,
+            run_task=run_task,
+            run_at_hour=run_at_hour,
+            now_provider=now_provider,
+        )
+    )
