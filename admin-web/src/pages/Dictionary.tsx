@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -42,8 +42,11 @@ export function DictionaryPage() {
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<{ added: number; skipped: number; failed: number } | null>(null)
+  const [isImportOpen, setIsImportOpen] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DictionaryEntry | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const importInputRef = useRef<HTMLInputElement | null>(null)
 
   const fetchDictionary = async () => {
     try {
@@ -116,7 +119,8 @@ export function DictionaryPage() {
     }
   }
 
-  const handleImport = async (file: File | null) => {
+  const handleImport = async () => {
+    const file = selectedFile
     if (!file) return
     if (!file.name.toLowerCase().endsWith('.xlsx')) {
       setError(t('dictionary.importInvalid'))
@@ -135,6 +139,11 @@ export function DictionaryPage() {
     } finally {
       setImporting(false)
     }
+  }
+
+  const handleFileSelect = (file: File | null) => {
+    if (!file) return
+    setSelectedFile(file)
   }
 
   const formatDate = (dateString: string) => {
@@ -236,17 +245,10 @@ export function DictionaryPage() {
               variant="outline"
               size="sm"
               disabled={importing}
-              onClick={() => document.getElementById('dictionary-import')?.click()}
+              onClick={() => setIsImportOpen(true)}
             >
               {importing ? t('dictionary.importing') : t('dictionary.import')}
             </Button>
-            <input
-              id="dictionary-import"
-              type="file"
-              accept=".xlsx"
-              className="hidden"
-              onChange={(e) => handleImport(e.target.files?.[0] ?? null)}
-            />
             {importResult && (
               <span className="text-xs text-gray-600">
                 {tWithParams('dictionary.importResult', {
@@ -321,6 +323,67 @@ export function DictionaryPage() {
               disabled={deleting}
             >
               {deleting ? t('dictionary.deleting') : t('dictionary.delete')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isImportOpen}
+        onOpenChange={(open) => {
+          setIsImportOpen(open)
+          if (!open) {
+            setSelectedFile(null)
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('dictionary.import')}</DialogTitle>
+            <DialogDescription>{t('dictionary.importDropHint')}</DialogDescription>
+          </DialogHeader>
+          <div
+            className="border border-dashed rounded-md p-6 text-center text-sm text-gray-600"
+            onDragOver={(event) => {
+              event.preventDefault()
+            }}
+            onDrop={(event) => {
+              event.preventDefault()
+              const file = event.dataTransfer.files?.[0] ?? null
+              handleFileSelect(file)
+            }}
+          >
+            <div className="mb-4">{t('dictionary.importDropHint')}</div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => importInputRef.current?.click()}
+            >
+              {t('dictionary.importSelect')}
+            </Button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".xlsx"
+              className="hidden"
+              onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null)}
+            />
+            {selectedFile && (
+              <div className="mt-3 text-xs text-gray-700">
+                {tWithParams('dictionary.importFileName', { name: selectedFile.name })}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsImportOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={importing || !selectedFile}
+            >
+              {importing ? t('dictionary.importing') : t('dictionary.importApply')}
             </Button>
           </DialogFooter>
         </DialogContent>
