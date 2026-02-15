@@ -1,7 +1,7 @@
 """create backup_settings table
 
 Revision ID: 8b4a7f2c1d01
-Revises: 9a3f1d7d7e2c
+Revises: 4b2a1f9c6d7e
 Create Date: 2026-02-15 00:00:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "8b4a7f2c1d01"
-down_revision: Union[str, Sequence[str], None] = "9a3f1d7d7e2c"
+down_revision: Union[str, Sequence[str], None] = "4b2a1f9c6d7e"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
