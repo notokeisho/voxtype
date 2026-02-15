@@ -83,7 +83,7 @@ class DictionaryService: ObservableObject {
             await fetchEntries(token: token)
             return true
         } catch {
-            errorMessage = "Failed to add entry: \(error.localizedDescription)"
+            errorMessage = localizeError(error)
             isLoading = false
             return false
         }
@@ -104,7 +104,7 @@ class DictionaryService: ObservableObject {
             await fetchEntries(token: token)
             return true
         } catch {
-            errorMessage = "Failed to delete entry: \(error.localizedDescription)"
+            errorMessage = localizeError(error)
             isLoading = false
             return false
         }
@@ -154,6 +154,15 @@ class DictionaryService: ObservableObject {
         default:
             throw DictionaryError.serverError("Server returned status \(httpResponse.statusCode)")
         }
+    }
+
+    private func localizeError(_ error: Error) -> String {
+        if case DictionaryError.serverError(let message) = error {
+            if message == "Dictionary pattern already exists" {
+                return LocalizationManager.shared.t("dictionary.duplicatePattern")
+            }
+        }
+        return "Failed to process dictionary: \(error.localizedDescription)"
     }
 }
 
