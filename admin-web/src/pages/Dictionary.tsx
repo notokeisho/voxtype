@@ -25,6 +25,7 @@ import {
   addGlobalDictionaryEntry,
   deleteGlobalDictionaryEntry,
   downloadGlobalDictionaryXlsx,
+  importGlobalDictionaryXlsx,
   type DictionaryEntry,
 } from '@/lib/api'
 import { useLanguage } from '@/lib/i18n'
@@ -39,6 +40,8 @@ export function DictionaryPage() {
   const [replacement, setReplacement] = useState('')
   const [adding, setAdding] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<{ added: number; skipped: number; failed: number } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DictionaryEntry | null>(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -109,6 +112,27 @@ export function DictionaryPage() {
       setError(err instanceof Error ? err.message : 'Failed to export XLSX')
     } finally {
       setExporting(false)
+    }
+  }
+
+  const handleImport = async (file: File | null) => {
+    if (!file) return
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      setError(t('dictionary.importInvalid'))
+      return
+    }
+
+    try {
+      setImporting(true)
+      setImportResult(null)
+      const result = await importGlobalDictionaryXlsx(file)
+      setImportResult(result)
+      setError(null)
+      await fetchDictionary()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('dictionary.importFailed'))
+    } finally {
+      setImporting(false)
     }
   }
 
@@ -204,6 +228,33 @@ export function DictionaryPage() {
             >
               {t('dictionary.export')}
             </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={importing}
+              onClick={() => document.getElementById('dictionary-import')?.click()}
+            >
+              {importing ? t('dictionary.importing') : t('dictionary.import')}
+            </Button>
+            <input
+              id="dictionary-import"
+              type="file"
+              accept=".xlsx"
+              className="hidden"
+              onChange={(e) => handleImport(e.target.files?.[0] ?? null)}
+            />
+            {importResult && (
+              <span className="text-xs text-gray-600">
+                {tWithParams('dictionary.importResult', {
+                  added: importResult.added,
+                  skipped: importResult.skipped,
+                  failed: importResult.failed,
+                })}
+              </span>
+            )}
           </div>
         </CardHeader>
         <CardContent>

@@ -150,6 +150,35 @@ export async function downloadGlobalDictionaryXlsx(): Promise<Blob> {
   return response.blob()
 }
 
+export async function importGlobalDictionaryXlsx(file: File): Promise<{
+  added: number
+  skipped: number
+  failed: number
+}> {
+  const token = getToken()
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await fetch(`${API_BASE_URL}/admin/api/dictionary/import`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: formData,
+  })
+
+  if (response.status === 401) {
+    removeToken()
+    window.location.href = '/login'
+    throw new Error('Unauthorized')
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(errorText || `HTTP ${response.status}`)
+  }
+
+  return response.json()
+}
+
 // Dictionary Requests API (admin)
 export async function getDictionaryRequests(): Promise<DictionaryRequestList> {
   return apiFetch<DictionaryRequestList>('/admin/api/dictionary-requests')
