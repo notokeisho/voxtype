@@ -349,7 +349,9 @@ export function DictionaryPage() {
       >
         {isImportOpen && (
           <div
-            className={`fixed inset-0 z-30 transition-colors ${isDragging ? 'bg-blue-50/60' : ''}`}
+            className={`fixed inset-0 z-50 transition-colors ${
+              isDragging ? 'bg-blue-50/60 pointer-events-auto' : 'pointer-events-none'
+            }`}
             onDragOver={(event) => {
               event.preventDefault()
               setIsDragging(true)
