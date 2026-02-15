@@ -1,5 +1,7 @@
 """Tests for backup admin API endpoints."""
 
+from pathlib import Path
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import delete, text
@@ -100,3 +102,44 @@ class TestBackupRunApi:
         assert data["created_at"] is not None
         assert isinstance(data["kept"], int)
         assert isinstance(data["deleted"], int)
+
+
+class TestBackupFilesApi:
+    """Tests for backup files listing endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_list_backup_files_returns_sorted_files(self, admin_token):
+        backup_dir = Path("./data/backups")
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        target_files = [
+            backup_dir / "global_dictionary_2026-02-15_12-00-00.xlsx",
+            backup_dir / "global_dictionary_2026-02-14_12-00-00.xlsx",
+        ]
+        for file_path in target_files:
+            file_path.write_bytes(b"test")
+
+        try:
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                response = await client.get(
+                    "/admin/api/dictionary/backup/files",
+                    headers={"Authorization": f"Bearer {admin_token}"},
+                )
+        finally:
+            for file_path in target_files:
+                file_path.unlink(missing_ok=True)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "files" in data
+
+        listed_names = [item["filename"] for item in data["files"]]
+        assert target_files[0].name in listed_names
+        assert target_files[1].name in listed_names
+        assert listed_names.index(target_files[0].name) < listed_names.index(target_files[1].name)
+
+        first_item = data["files"][0]
+        assert "filename" in first_item
+        assert "created_at" in first_item
+        assert "size_bytes" in first_item
