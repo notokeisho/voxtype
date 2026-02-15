@@ -15,6 +15,11 @@ from app.models.whitelist import Whitelist
 async def admin_user():
     """Create an admin user."""
     async with async_session_factory() as session:
+        await session.execute(text("DELETE FROM backup_settings"))
+        await session.execute(delete(Whitelist).where(Whitelist.github_id == "backupadmin"))
+        await session.execute(delete(User).where(User.github_id == "backupadmin"))
+        await session.commit()
+
         user = User(
             github_id="backupadmin",
             github_avatar="https://example.com/admin.png",

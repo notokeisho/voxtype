@@ -6,6 +6,7 @@ import asyncio
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 from openpyxl import load_workbook
 from sqlalchemy import text
@@ -13,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.config import settings
 from app.models.global_dictionary import GlobalDictionary
+from app.services import backup as backup_service
 from app.services.backup import create_global_dictionary_backup
 
 
@@ -142,15 +144,32 @@ def test_backup_keeps_latest_three(tmp_path: Path):
         run_async(_cleanup_entries(prefix))
 
 
-def test_backup_handles_empty_dictionary(tmp_path: Path):
-    prefix = "backup_test_empty_"
-    try:
-        run_async(_cleanup_entries(prefix))
-        result = run_async(_create_backup(tmp_path, date(2026, 2, 15)))
+def test_backup_handles_empty_dictionary(tmp_path: Path, monkeypatch):
+    class FakeSession:
+        async def commit(self):
+            return None
 
-        workbook = load_workbook(result.created_file)
-        sheet = workbook.active
-        rows = list(sheet.iter_rows(values_only=True))
-        assert rows == [("pattern", "replacement", "created_at", "created_by")]
-    finally:
-        run_async(_cleanup_entries(prefix))
+    fake_settings = SimpleNamespace(last_run_at=None)
+
+    async def fake_get_entries(_session):
+        return []
+
+    async def fake_get_settings(_session):
+        return fake_settings
+
+    monkeypatch.setattr(backup_service, "get_global_entries", fake_get_entries)
+    monkeypatch.setattr(backup_service, "get_backup_settings", fake_get_settings)
+
+    result = run_async(
+        create_global_dictionary_backup(
+            FakeSession(),
+            base_dir=tmp_path,
+            current_date=date(2026, 2, 15),
+            now_provider=lambda: datetime(2026, 2, 15, 0, 0, 0),
+        )
+    )
+
+    workbook = load_workbook(result.created_file)
+    sheet = workbook.active
+    rows = list(sheet.iter_rows(values_only=True))
+    assert rows == [("pattern", "replacement", "created_at", "created_by")]
