@@ -27,9 +27,11 @@ import {
   downloadGlobalDictionaryXlsx,
   importGlobalDictionaryXlsx,
   getBackupSettings,
+  getBackupFiles,
   updateBackupSettings,
   runBackupNow,
   type BackupRunResult,
+  type BackupFile,
   type DictionaryEntry,
 } from '@/lib/api'
 import { useLanguage } from '@/lib/i18n'
@@ -60,6 +62,8 @@ export function DictionaryPage() {
   const [manualBackupDismissed, setManualBackupDismissed] = useState(false)
   const [isBackupConfirmOpen, setIsBackupConfirmOpen] = useState(false)
   const [isExportConfirmOpen, setIsExportConfirmOpen] = useState(false)
+  const [backupFiles, setBackupFiles] = useState<BackupFile[]>([])
+  const [backupFilesLoading, setBackupFilesLoading] = useState(false)
 
   const fetchDictionary = async () => {
     try {
@@ -77,6 +81,24 @@ export function DictionaryPage() {
   useEffect(() => {
     if (location.pathname === '/dictionary') {
       fetchDictionary()
+    }
+  }, [location.pathname])
+
+  useEffect(() => {
+    const fetchBackupFiles = async () => {
+      try {
+        setBackupFilesLoading(true)
+        const data = await getBackupFiles()
+        setBackupFiles(data.files)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t('dictionary.backupFilesFetchFailed'))
+      } finally {
+        setBackupFilesLoading(false)
+      }
+    }
+
+    if (location.pathname === '/dictionary') {
+      fetchBackupFiles()
     }
   }, [location.pathname])
 
@@ -411,6 +433,33 @@ export function DictionaryPage() {
             >
               {t('dictionary.export')}
             </Button>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+            <div className="text-sm font-semibold mb-2">{t('dictionary.backupFilesTitle')}</div>
+            {backupFilesLoading ? (
+              <div className="text-xs text-gray-600">{t('common.loading')}</div>
+            ) : backupFiles.length === 0 ? (
+              <div className="text-xs text-gray-600">{t('dictionary.backupFilesEmpty')}</div>
+            ) : (
+              <div className="space-y-2">
+                {backupFiles.map((file) => (
+                  <div
+                    key={file.filename}
+                    className="flex items-center justify-between gap-3 rounded border border-gray-200 bg-white px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-xs font-medium truncate">{file.filename}</div>
+                      <div className="text-xs text-gray-500">
+                        {formatDate(file.created_at)}
+                      </div>
+                    </div>
+                    <Button type="button" variant="outline" size="sm">
+                      {t('dictionary.backupRestore')}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Button

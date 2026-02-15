@@ -207,6 +207,12 @@ export async function runBackupNow(): Promise<BackupRunResult> {
   )
 }
 
+export async function getBackupFiles(): Promise<{ files: BackupFile[] }> {
+  return apiFetch<{ files: BackupFile[] }>(
+    '/admin/api/dictionary/backup/files'
+  )
+}
+
 // Dictionary Requests API (admin)
 export async function getDictionaryRequests(): Promise<DictionaryRequestList> {
   return apiFetch<DictionaryRequestList>('/admin/api/dictionary-requests')
@@ -291,6 +297,12 @@ export interface BackupRunResult {
   created_at: string
   kept: number
   deleted: number
+}
+
+export interface BackupFile {
+  filename: string
+  created_at: string
+  size_bytes: number
 }
 
 export interface StatusResponse {
