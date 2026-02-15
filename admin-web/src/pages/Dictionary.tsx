@@ -103,6 +103,7 @@ export function DictionaryPage() {
       window.removeEventListener('drop', handleWindowDrop)
       window.removeEventListener('dragleave', handleWindowDragLeave)
       window.removeEventListener('dragend', handleWindowDragEnd)
+      setIsDragging(false)
     }
   }, [isImportOpen])
 
