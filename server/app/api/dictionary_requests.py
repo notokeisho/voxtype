@@ -72,9 +72,12 @@ async def create_dictionary_request(
                 normalize_dictionary_text(entry.pattern) == normalized_pattern
                 and normalize_dictionary_text(entry.replacement) == normalized_replacement
             ):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Pattern already exists in global dictionary",
+                return DictionaryRequestResponse(
+                    id=0,
+                    pattern=body.pattern,
+                    replacement=body.replacement,
+                    status="skipped",
+                    remaining=remaining,
                 )
 
         result = await session.execute(
