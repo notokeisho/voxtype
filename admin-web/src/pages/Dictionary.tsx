@@ -26,6 +26,8 @@ import {
   deleteGlobalDictionaryEntry,
   downloadGlobalDictionaryXlsx,
   importGlobalDictionaryXlsx,
+  getBackupSettings,
+  updateBackupSettings,
   type DictionaryEntry,
 } from '@/lib/api'
 import { useLanguage } from '@/lib/i18n'
@@ -50,6 +52,7 @@ export function DictionaryPage() {
   const importInputRef = useRef<HTMLInputElement | null>(null)
   const [backupEnabled, setBackupEnabled] = useState(false)
   const [backupLastRun, setBackupLastRun] = useState<string | null>(null)
+  const [backupUpdating, setBackupUpdating] = useState(false)
 
   const fetchDictionary = async () => {
     try {
@@ -67,6 +70,22 @@ export function DictionaryPage() {
   useEffect(() => {
     if (location.pathname === '/dictionary') {
       fetchDictionary()
+    }
+  }, [location.pathname])
+
+  useEffect(() => {
+    const fetchBackupSettings = async () => {
+      try {
+        const data = await getBackupSettings()
+        setBackupEnabled(data.enabled)
+        setBackupLastRun(data.last_run_at)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch backup settings')
+      }
+    }
+
+    if (location.pathname === '/dictionary') {
+      fetchBackupSettings()
     }
   }, [location.pathname])
 
@@ -280,7 +299,9 @@ export function DictionaryPage() {
               <div className="text-sm font-semibold">{t('dictionary.backupTitle')}</div>
               <div className="text-xs text-gray-600">
                 {backupLastRun
-                  ? tWithParams('dictionary.backupLastRun', { datetime: backupLastRun })
+                  ? tWithParams('dictionary.backupLastRun', {
+                      datetime: formatDate(backupLastRun),
+                    })
                   : t('dictionary.backupNotRun')}
               </div>
             </div>
@@ -289,9 +310,21 @@ export function DictionaryPage() {
               role="switch"
               aria-checked={backupEnabled}
               onClick={() => {
-                setBackupEnabled((prev) => !prev)
-                setBackupLastRun((prev) => prev)
+                const nextValue = !backupEnabled
+                setBackupEnabled(nextValue)
+                setBackupUpdating(true)
+                updateBackupSettings(nextValue)
+                  .then((data) => {
+                    setBackupEnabled(data.enabled)
+                    setBackupLastRun(data.last_run_at)
+                  })
+                  .catch((err) => {
+                    setError(err instanceof Error ? err.message : 'Failed to update backup settings')
+                    setBackupEnabled((prev) => !prev)
+                  })
+                  .finally(() => setBackupUpdating(false))
               }}
+              disabled={backupUpdating}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 backupEnabled ? 'bg-blue-600' : 'bg-gray-200'
               }`}

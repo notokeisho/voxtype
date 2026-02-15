@@ -179,6 +179,39 @@ export async function importGlobalDictionaryXlsx(file: File): Promise<{
   return response.json()
 }
 
+export async function getBackupSettings(): Promise<{ enabled: boolean; last_run_at: string | null }> {
+  return apiFetch<{ enabled: boolean; last_run_at: string | null }>(
+    '/admin/api/dictionary/backup'
+  )
+}
+
+export async function updateBackupSettings(enabled: boolean): Promise<{
+  enabled: boolean
+  last_run_at: string | null
+}> {
+  return apiFetch<{ enabled: boolean; last_run_at: string | null }>(
+    '/admin/api/dictionary/backup',
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ enabled }),
+    }
+  )
+}
+
+export async function runBackupNow(): Promise<{
+  created_file: string
+  created_at: string
+  kept: number
+  deleted: number
+}> {
+  return apiFetch<{ created_file: string; created_at: string; kept: number; deleted: number }>(
+    '/admin/api/dictionary/backup/run',
+    {
+      method: 'POST',
+    }
+  )
+}
+
 // Dictionary Requests API (admin)
 export async function getDictionaryRequests(): Promise<DictionaryRequestList> {
   return apiFetch<DictionaryRequestList>('/admin/api/dictionary-requests')
