@@ -44,6 +44,7 @@ export function DictionaryPage() {
   const [importResult, setImportResult] = useState<{ added: number; skipped: number; failed: number } | null>(null)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<DictionaryEntry | null>(null)
   const [deleting, setDeleting] = useState(false)
   const importInputRef = useRef<HTMLInputElement | null>(null)
@@ -336,6 +337,7 @@ export function DictionaryPage() {
           setIsImportOpen(open)
           if (!open) {
             setSelectedFile(null)
+            setIsDragging(false)
           }
         }}
       >
@@ -345,12 +347,17 @@ export function DictionaryPage() {
             <DialogDescription>{t('dictionary.importDropHint')}</DialogDescription>
           </DialogHeader>
           <div
-            className="border border-dashed rounded-md p-6 text-center text-sm text-gray-600"
+            className={`border border-dashed rounded-md p-6 text-center text-sm text-gray-600 transition-colors ${
+              isDragging ? 'border-blue-400 bg-blue-50' : ''
+            }`}
             onDragOver={(event) => {
               event.preventDefault()
+              setIsDragging(true)
             }}
+            onDragLeave={() => setIsDragging(false)}
             onDrop={(event) => {
               event.preventDefault()
+              setIsDragging(false)
               const file = event.dataTransfer.files?.[0] ?? null
               handleFileSelect(file)
             }}
