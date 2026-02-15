@@ -256,6 +256,12 @@ export function DictionaryRequestsPage() {
                         {t('dictionaryRequests.delete')}
                       </Button>
                     </div>
+                    {request.conflict_replacement && (
+                      <div className="mt-2 space-y-1 text-xs text-gray-500">
+                        <div>{t('dictionaryRequests.approveHint')}</div>
+                        <div>{t('dictionaryRequests.rejectHint')}</div>
+                      </div>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

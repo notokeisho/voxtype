@@ -94,6 +94,8 @@ const translations = {
     'dictionaryRequests.conflictLabel': '競合',
     'dictionaryRequests.conflictCurrent': '現在の置換',
     'dictionaryRequests.conflictProposed': '申請の置換',
+    'dictionaryRequests.approveHint': '承認: 申請の置換を採用',
+    'dictionaryRequests.rejectHint': '却下: 現在の置換を維持',
 
     // Whitelist
     'whitelist.title': 'ホワイトリスト管理',
@@ -213,6 +215,8 @@ const translations = {
     'dictionaryRequests.conflictLabel': 'Conflict',
     'dictionaryRequests.conflictCurrent': 'Current Replacement',
     'dictionaryRequests.conflictProposed': 'Proposed Replacement',
+    'dictionaryRequests.approveHint': 'Approve: apply the proposed replacement',
+    'dictionaryRequests.rejectHint': 'Reject: keep the current replacement',
 
     // Whitelist
     'whitelist.title': 'Whitelist Management',
