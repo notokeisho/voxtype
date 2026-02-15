@@ -99,6 +99,9 @@ tmp/
 temp/
 *.tmp
 
+# Runtime backup artifacts
+server/data/
+
 plan/
 CLAUDE.md
 AGENTS.md
