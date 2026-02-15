@@ -3,8 +3,8 @@
 from datetime import datetime
 import io
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from openpyxl import Workbook
+from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile, status
+from openpyxl import Workbook, load_workbook
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import delete, select
 
@@ -33,6 +33,14 @@ class AddDictionaryEntryRequest(BaseModel):
 
     pattern: str
     replacement: str
+
+
+class ImportDictionaryResponse(BaseModel):
+    """Response for importing dictionary entries."""
+
+    added: int
+    skipped: int
+    failed: int
 
 
 @router.get("/dictionary", response_model=list[DictionaryEntryResponse])
@@ -150,3 +158,96 @@ async def export_global_dictionary_xlsx(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers=headers,
     )
+
+
+@router.post("/dictionary/import", response_model=ImportDictionaryResponse)
+async def import_global_dictionary_xlsx(
+    file: UploadFile,
+    _admin: User = Depends(get_current_admin_user),
+) -> ImportDictionaryResponse:
+    """Import global dictionary entries from XLSX."""
+    if file.filename is None or not file.filename.lower().endswith(".xlsx"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file format",
+        )
+
+    try:
+        content = await file.read()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to read XLSX file",
+        ) from exc
+
+    # Load workbook from bytes
+    try:
+        workbook = load_workbook(io.BytesIO(content))
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid XLSX file",
+        ) from exc
+
+    sheet = workbook.active
+    rows = list(sheet.iter_rows(values_only=True))
+    if not rows:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="XLSX file is empty",
+        )
+
+    header = [str(cell).strip() if cell is not None else "" for cell in rows[0]]
+    expected_header = ["pattern", "replacement", "created_at", "created_by"]
+    if header != expected_header:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid XLSX header",
+        )
+
+    added = 0
+    skipped = 0
+    failed = 0
+    processed = 0
+
+    async with async_session_factory() as session:
+        result = await session.execute(select(GlobalDictionary.pattern))
+        existing_patterns = {row[0] for row in result.all()}
+
+        for row in rows[1:]:
+            if row is None:
+                continue
+            pattern = str(row[0]).strip() if row[0] is not None else ""
+            replacement = str(row[1]).strip() if row[1] is not None else ""
+
+            if not pattern and not replacement:
+                continue
+
+            if not pattern or not replacement:
+                failed += 1
+                break
+
+            processed += 1
+            if processed > 10000:
+                failed += 1
+                break
+
+            if pattern in existing_patterns:
+                skipped += 1
+                continue
+
+            entry = GlobalDictionary(pattern=pattern, replacement=replacement, created_by=None)
+            session.add(entry)
+            existing_patterns.add(pattern)
+            added += 1
+
+        if failed > 0:
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid XLSX rows",
+            )
+
+        await session.commit()
+
+    return ImportDictionaryResponse(added=added, skipped=skipped, failed=failed)
