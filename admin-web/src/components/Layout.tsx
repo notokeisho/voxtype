@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { getDictionaryRequests, removeToken, type User } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { LanguageSwitcher, useLanguage } from '@/lib/i18n'
-import { LayoutDashboard, Users, UserCheck, BookOpen, Inbox, type LucideIcon } from 'lucide-react'
+import { LayoutDashboard, Users, UserCheck, BookOpen, Inbox, HardDrive, type LucideIcon } from 'lucide-react'
 import logo from '@/assets/logo.svg'
 
 interface LayoutProps {
@@ -14,7 +14,7 @@ interface LayoutProps {
 
 interface NavItem {
   path: string
-  labelKey: 'nav.dashboard' | 'nav.users' | 'nav.whitelist' | 'nav.dictionary' | 'nav.dictionaryRequests'
+  labelKey: 'nav.dashboard' | 'nav.users' | 'nav.whitelist' | 'nav.dictionary' | 'nav.dictionaryRequests' | 'nav.backup'
   icon: LucideIcon
 }
 
@@ -23,6 +23,7 @@ const navItemsConfig: NavItem[] = [
   { path: '/users', labelKey: 'nav.users', icon: Users },
   { path: '/whitelist', labelKey: 'nav.whitelist', icon: UserCheck },
   { path: '/dictionary', labelKey: 'nav.dictionary', icon: BookOpen },
+  { path: '/backup', labelKey: 'nav.backup', icon: HardDrive },
   { path: '/dictionary-requests', labelKey: 'nav.dictionaryRequests', icon: Inbox },
 ]
 

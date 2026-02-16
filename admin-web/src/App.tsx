@@ -8,6 +8,7 @@ import { UsersPage } from '@/pages/Users'
 import { WhitelistPage } from '@/pages/Whitelist'
 import { DictionaryPage } from '@/pages/Dictionary'
 import { DictionaryRequestsPage } from '@/pages/DictionaryRequests'
+import { BackupPage } from '@/pages/Backup'
 import { isAuthenticated, getMe, type User } from '@/lib/api'
 import { LanguageProvider } from '@/lib/i18n'
 
@@ -90,6 +91,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DictionaryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/backup"
+          element={
+            <ProtectedRoute>
+              <BackupPage />
             </ProtectedRoute>
           }
         />

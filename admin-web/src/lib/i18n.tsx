@@ -10,6 +10,7 @@ const translations = {
     'nav.users': 'ユーザー管理',
     'nav.whitelist': 'ホワイトリスト',
     'nav.dictionary': 'グローバル辞書',
+    'nav.backup': 'バックアップ',
     'nav.dictionaryRequests': '辞書申請',
     'nav.logout': 'ログアウト',
 
@@ -122,6 +123,7 @@ const translations = {
     'dictionary.noEntries': '辞書エントリがありません',
     'dictionary.deleteTitle': 'エントリの削除',
     'dictionary.deleteConfirm': '「{pattern}」→「{replacement}」を削除しますか？',
+    'backup.title': 'バックアップ',
     // Dictionary Requests
     'dictionaryRequests.title': '辞書申請',
     'dictionaryRequests.listTitle': '申請一覧',
@@ -178,6 +180,7 @@ const translations = {
     'nav.users': 'User Management',
     'nav.whitelist': 'Whitelist',
     'nav.dictionary': 'Global Dictionary',
+    'nav.backup': 'Backup',
     'nav.dictionaryRequests': 'Dictionary Requests',
     'nav.logout': 'Logout',
 
@@ -290,6 +293,7 @@ const translations = {
     'dictionary.noEntries': 'No dictionary entries',
     'dictionary.deleteTitle': 'Delete Entry',
     'dictionary.deleteConfirm': 'Delete "{pattern}" → "{replacement}"?',
+    'backup.title': 'Backup',
     // Dictionary Requests
     'dictionaryRequests.title': 'Dictionary Requests',
     'dictionaryRequests.listTitle': 'Request List',
