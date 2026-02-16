@@ -147,6 +147,65 @@ class TestBackupFilesApi:
         assert "created_at" in first_item
         assert "size_bytes" in first_item
 
+    @pytest.mark.asyncio
+    async def test_download_backup_file_success(self, admin_token):
+        backup_dir = Path("./data/backups")
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        backup_file = backup_dir / "global_dictionary_2026-02-16_04-00-00.xlsx"
+        backup_file.write_bytes(b"download-test")
+
+        try:
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                response = await client.get(
+                    f"/admin/api/dictionary/backup/files/{backup_file.name}/download",
+                    headers={"Authorization": f"Bearer {admin_token}"},
+                )
+        finally:
+            backup_file.unlink(missing_ok=True)
+
+        assert response.status_code == 200
+        assert response.content == b"download-test"
+        disposition = response.headers.get("content-disposition", "")
+        assert "attachment" in disposition
+        assert backup_file.name in disposition
+
+    @pytest.mark.asyncio
+    async def test_download_backup_file_rejects_invalid_filename(self, admin_token):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.get(
+                "/admin/api/dictionary/backup/files/../secret.txt/download",
+                headers={"Authorization": f"Bearer {admin_token}"},
+            )
+
+        assert response.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_download_backup_file_returns_not_found(self, admin_token):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.get(
+                "/admin/api/dictionary/backup/files/global_dictionary_2099-01-01_00-00-00.xlsx/download",
+                headers={"Authorization": f"Bearer {admin_token}"},
+            )
+
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_download_backup_file_requires_authentication(self):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.get(
+                "/admin/api/dictionary/backup/files/global_dictionary_2026-02-16_04-00-00.xlsx/download"
+            )
+
+        assert response.status_code == 401
+
 
 class TestBackupRestoreApi:
     """Tests for backup restore endpoint."""
