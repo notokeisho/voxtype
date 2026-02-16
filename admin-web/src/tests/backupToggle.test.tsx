@@ -20,8 +20,8 @@ vi.mock('@/lib/i18n', () => ({
   }),
 }))
 
-describe('DictionaryPage backup toggle', () => {
-  it('renders auto backup toggle placeholder for TDD', async () => {
+describe('DictionaryPage backup separation', () => {
+  it('does not render backup toggle in dictionary page', async () => {
     render(
       <MemoryRouter initialEntries={['/dictionary']}>
         <DictionaryPage />
@@ -29,7 +29,6 @@ describe('DictionaryPage backup toggle', () => {
     )
 
     expect(await screen.findByText('dictionary.title')).toBeInTheDocument()
-    const toggles = screen.queryAllByRole('switch')
-    expect(toggles.length).toBeGreaterThan(0)
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
   })
 })

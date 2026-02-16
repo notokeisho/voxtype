@@ -6,10 +6,6 @@ import { DictionaryPage } from '@/pages/Dictionary'
 
 const mockedApi = vi.hoisted(() => ({
   getGlobalDictionary: vi.fn(),
-  getBackupSettings: vi.fn(),
-  getBackupFiles: vi.fn(),
-  restoreBackupFile: vi.fn(),
-  runBackupNow: vi.fn(),
   downloadGlobalDictionaryXlsx: vi.fn(),
 }))
 
@@ -19,11 +15,6 @@ vi.mock('@/lib/api', () => ({
   deleteGlobalDictionaryEntry: vi.fn(),
   downloadGlobalDictionaryXlsx: mockedApi.downloadGlobalDictionaryXlsx,
   importGlobalDictionaryXlsx: vi.fn(),
-  getBackupSettings: mockedApi.getBackupSettings,
-  getBackupFiles: mockedApi.getBackupFiles,
-  restoreBackupFile: mockedApi.restoreBackupFile,
-  updateBackupSettings: vi.fn(),
-  runBackupNow: mockedApi.runBackupNow,
 }))
 
 vi.mock('@/lib/i18n', () => ({
@@ -34,30 +25,12 @@ vi.mock('@/lib/i18n', () => ({
   }),
 }))
 
-describe('DictionaryPage manual backup UI', () => {
+describe('DictionaryPage export UI', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockedApi.getGlobalDictionary.mockResolvedValue([])
-    mockedApi.getBackupSettings.mockResolvedValue({ enabled: false, last_run_at: null })
-    mockedApi.getBackupFiles.mockResolvedValue({
-      files: [
-        {
-          filename: 'global_dictionary_2026-02-16_03-00-00.xlsx',
-          created_at: '2026-02-16T03:00:00',
-          size_bytes: 1024,
-        },
-      ],
-    })
-    mockedApi.restoreBackupFile.mockResolvedValue({
-      restored_file: 'global_dictionary_2026-02-16_03-00-00.xlsx',
-      mode: 'merge',
-      total: 1,
-      added: 1,
-      skipped: 0,
-      failed: 0,
-      restored_at: '2026-02-16T03:10:00',
-    })
     mockedApi.downloadGlobalDictionaryXlsx.mockResolvedValue(new Blob(['test']))
+
     if (!URL.createObjectURL) {
       Object.defineProperty(URL, 'createObjectURL', {
         value: vi.fn(() => 'blob:mock-url'),
@@ -72,7 +45,7 @@ describe('DictionaryPage manual backup UI', () => {
     }
   })
 
-  it('shows manual backup run button', async () => {
+  it('shows dictionary export button', async () => {
     render(
       <MemoryRouter initialEntries={['/dictionary']}>
         <DictionaryPage />
@@ -80,72 +53,7 @@ describe('DictionaryPage manual backup UI', () => {
     )
 
     expect(await screen.findByText('dictionary.title')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'dictionary.backupRunNow' })).toBeInTheDocument()
-  })
-
-  it('disables manual backup run button while running', async () => {
-    mockedApi.runBackupNow.mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({
-        created_file: 'global_dictionary_2026-02-16_12-30-45.xlsx',
-        created_at: '2026-02-16T12:30:45',
-        kept: 3,
-        deleted: 0,
-      }), 50))
-    )
-
-    render(
-      <MemoryRouter initialEntries={['/dictionary']}>
-        <DictionaryPage />
-      </MemoryRouter>
-    )
-
-    const openButton = await screen.findByRole('button', { name: 'dictionary.backupRunNow' })
-    fireEvent.click(openButton)
-    const confirmButton = await screen.findByRole('button', { name: 'dictionary.backupConfirmRun' })
-    fireEvent.click(confirmButton)
-    expect(confirmButton).toBeDisabled()
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'dictionary.backupConfirmRun' })).not.toBeInTheDocument())
-  })
-
-  it('shows error when manual backup run fails', async () => {
-    mockedApi.runBackupNow.mockRejectedValue(new Error('manual backup failed'))
-
-    render(
-      <MemoryRouter initialEntries={['/dictionary']}>
-        <DictionaryPage />
-      </MemoryRouter>
-    )
-
-    const openButton = await screen.findByRole('button', { name: 'dictionary.backupRunNow' })
-    fireEvent.click(openButton)
-    const confirmButton = await screen.findByRole('button', { name: 'dictionary.backupConfirmRun' })
-    fireEvent.click(confirmButton)
-
-    expect(await screen.findByText('manual backup failed')).toBeInTheDocument()
-  })
-
-  it('runs manual backup only after confirmation', async () => {
-    mockedApi.runBackupNow.mockResolvedValue({
-      created_file: 'global_dictionary_2026-02-16_12-30-45.xlsx',
-      created_at: '2026-02-16T12:30:45',
-      kept: 3,
-      deleted: 0,
-    })
-
-    render(
-      <MemoryRouter initialEntries={['/dictionary']}>
-        <DictionaryPage />
-      </MemoryRouter>
-    )
-
-    const openButton = await screen.findByRole('button', { name: 'dictionary.backupRunNow' })
-    fireEvent.click(openButton)
-    expect(mockedApi.runBackupNow).not.toHaveBeenCalled()
-
-    const confirmButton = await screen.findByRole('button', { name: 'dictionary.backupConfirmRun' })
-    fireEvent.click(confirmButton)
-
-    await waitFor(() => expect(mockedApi.runBackupNow).toHaveBeenCalledTimes(1))
+    expect(screen.getByRole('button', { name: 'dictionary.export' })).toBeInTheDocument()
   })
 
   it('runs export only after confirmation', async () => {
@@ -175,91 +83,5 @@ describe('DictionaryPage manual backup UI', () => {
     appendSpy.mockRestore()
     clickSpy.mockRestore()
     removeSpy.mockRestore()
-  })
-
-  it('shows backup files list', async () => {
-    render(
-      <MemoryRouter initialEntries={['/dictionary']}>
-        <DictionaryPage />
-      </MemoryRouter>
-    )
-
-    expect(await screen.findByText('global_dictionary_2026-02-16_03-00-00.xlsx')).toBeInTheDocument()
-  })
-
-  it('opens restore dialog and can choose mode', async () => {
-    render(
-      <MemoryRouter initialEntries={['/dictionary']}>
-        <DictionaryPage />
-      </MemoryRouter>
-    )
-
-    const restoreButton = await screen.findByRole('button', { name: 'dictionary.backupRestore' })
-    fireEvent.click(restoreButton)
-
-    expect(await screen.findByText('dictionary.restoreConfirmTitle')).toBeInTheDocument()
-    expect(screen.getByRole('radio', { name: 'dictionary.restoreModeMerge' })).toBeInTheDocument()
-    expect(screen.getByRole('radio', { name: 'dictionary.restoreModeReplace' })).toBeInTheDocument()
-  })
-
-  it('requires second confirmation for replace mode', async () => {
-    render(
-      <MemoryRouter initialEntries={['/dictionary']}>
-        <DictionaryPage />
-      </MemoryRouter>
-    )
-
-    const restoreButton = await screen.findByRole('button', { name: 'dictionary.backupRestore' })
-    fireEvent.click(restoreButton)
-    fireEvent.click(screen.getByRole('radio', { name: 'dictionary.restoreModeReplace' }))
-
-    const runButton = screen.getByRole('button', { name: 'dictionary.restoreConfirmRun' })
-    fireEvent.click(runButton)
-    expect(mockedApi.restoreBackupFile).not.toHaveBeenCalled()
-
-    expect(await screen.findByText('dictionary.restoreReplaceFinalConfirm')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'dictionary.restoreReplaceRun' }))
-    await waitFor(() => expect(mockedApi.restoreBackupFile).toHaveBeenCalledTimes(1))
-  })
-
-  it('shows restore success result after merge restore', async () => {
-    mockedApi.restoreBackupFile.mockResolvedValueOnce({
-      restored_file: 'global_dictionary_2026-02-16_03-00-00.xlsx',
-      mode: 'merge',
-      total: 2,
-      added: 1,
-      skipped: 1,
-      failed: 0,
-      restored_at: '2026-02-16T03:20:00',
-    })
-
-    render(
-      <MemoryRouter initialEntries={['/dictionary']}>
-        <DictionaryPage />
-      </MemoryRouter>
-    )
-
-    const restoreButton = await screen.findByRole('button', { name: 'dictionary.backupRestore' })
-    fireEvent.click(restoreButton)
-    fireEvent.click(screen.getByRole('button', { name: 'dictionary.restoreConfirmRun' }))
-
-    expect(await screen.findByText('dictionary.restoreSuccess')).toBeInTheDocument()
-    expect(screen.getByText('global_dictionary_2026-02-16_03-00-00.xlsx')).toBeInTheDocument()
-  })
-
-  it('shows restore error when restore fails', async () => {
-    mockedApi.restoreBackupFile.mockRejectedValueOnce(new Error('restore failed'))
-
-    render(
-      <MemoryRouter initialEntries={['/dictionary']}>
-        <DictionaryPage />
-      </MemoryRouter>
-    )
-
-    const restoreButton = await screen.findByRole('button', { name: 'dictionary.backupRestore' })
-    fireEvent.click(restoreButton)
-    fireEvent.click(screen.getByRole('button', { name: 'dictionary.restoreConfirmRun' }))
-
-    expect(await screen.findByText('restore failed')).toBeInTheDocument()
   })
 })

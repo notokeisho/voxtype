@@ -29,6 +29,7 @@ describe('Layout navigation', () => {
             is_admin: true,
             created_at: '2026-01-01T00:00:00',
             last_login_at: null,
+            request_remaining: 200,
           }}
         >
           <div>content</div>
