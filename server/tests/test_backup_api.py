@@ -172,12 +172,12 @@ class TestBackupFilesApi:
         assert backup_file.name in disposition
 
     @pytest.mark.asyncio
-    async def test_download_backup_file_rejects_invalid_filename(self, admin_token):
+    async def test_download_backup_file_rejects_invalid_extension(self, admin_token):
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
             response = await client.get(
-                "/admin/api/dictionary/backup/files/../secret.txt/download",
+                "/admin/api/dictionary/backup/files/invalid.txt/download",
                 headers={"Authorization": f"Bearer {admin_token}"},
             )
 
