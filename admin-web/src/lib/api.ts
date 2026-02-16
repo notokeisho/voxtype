@@ -226,6 +226,29 @@ export async function restoreBackupFile(
   )
 }
 
+export async function downloadBackupFile(filename: string): Promise<Blob> {
+  const token = getToken()
+  const response = await fetch(
+    `${API_BASE_URL}/admin/api/dictionary/backup/files/${encodeURIComponent(filename)}/download`,
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    }
+  )
+
+  if (response.status === 401) {
+    removeToken()
+    window.location.href = '/login'
+    throw new Error('Unauthorized')
+  }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: `HTTP ${response.status}` }))
+    throw new Error(error.detail || `HTTP ${response.status}`)
+  }
+
+  return response.blob()
+}
+
 // Dictionary Requests API (admin)
 export async function getDictionaryRequests(): Promise<DictionaryRequestList> {
   return apiFetch<DictionaryRequestList>('/admin/api/dictionary-requests')

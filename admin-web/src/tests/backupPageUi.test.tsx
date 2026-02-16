@@ -10,6 +10,7 @@ const mockedApi = vi.hoisted(() => ({
   runBackupNow: vi.fn(),
   restoreBackupFile: vi.fn(),
   updateBackupSettings: vi.fn(),
+  downloadBackupFile: vi.fn(),
 }))
 
 vi.mock('@/lib/api', () => ({
@@ -18,6 +19,7 @@ vi.mock('@/lib/api', () => ({
   runBackupNow: mockedApi.runBackupNow,
   restoreBackupFile: mockedApi.restoreBackupFile,
   updateBackupSettings: mockedApi.updateBackupSettings,
+  downloadBackupFile: mockedApi.downloadBackupFile,
 }))
 
 vi.mock('@/lib/i18n', () => ({
@@ -57,6 +59,20 @@ describe('BackupPage UI', () => {
       restored_at: '2026-02-16T03:10:00',
     })
     mockedApi.updateBackupSettings.mockResolvedValue({ enabled: false, last_run_at: '2026-02-16T03:00:00' })
+    mockedApi.downloadBackupFile.mockResolvedValue(new Blob(['backup']))
+
+    if (!URL.createObjectURL) {
+      Object.defineProperty(URL, 'createObjectURL', {
+        value: vi.fn(() => 'blob:mock-url'),
+        writable: true,
+      })
+    }
+    if (!URL.revokeObjectURL) {
+      Object.defineProperty(URL, 'revokeObjectURL', {
+        value: vi.fn(),
+        writable: true,
+      })
+    }
   })
 
   it('shows backup controls and files list', async () => {
@@ -69,6 +85,7 @@ describe('BackupPage UI', () => {
     expect(await screen.findByText('backup.title')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'dictionary.backupRunNow' })).toBeInTheDocument()
     expect(screen.getByText('global_dictionary_2026-02-16_03-00-00.xlsx')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'backup.download' })).toBeInTheDocument()
   })
 
   it('requires second confirmation for replace mode', async () => {
@@ -87,5 +104,34 @@ describe('BackupPage UI', () => {
     fireEvent.click(screen.getByRole('button', { name: 'dictionary.restoreReplaceRun' }))
 
     await waitFor(() => expect(mockedApi.restoreBackupFile).toHaveBeenCalledTimes(1))
+  })
+
+  it('downloads backup file from list', async () => {
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url')
+    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    const appendSpy = vi.spyOn(document.body, 'appendChild')
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const removeSpy = vi.spyOn(HTMLElement.prototype, 'remove').mockImplementation(() => {})
+
+    render(
+      <MemoryRouter initialEntries={['/backup']}>
+        <BackupPage />
+      </MemoryRouter>
+    )
+
+    const downloadButton = await screen.findByRole('button', { name: 'backup.download' })
+    fireEvent.click(downloadButton)
+
+    await waitFor(() =>
+      expect(mockedApi.downloadBackupFile).toHaveBeenCalledWith(
+        'global_dictionary_2026-02-16_03-00-00.xlsx'
+      )
+    )
+
+    createObjectURLSpy.mockRestore()
+    revokeObjectURLSpy.mockRestore()
+    appendSpy.mockRestore()
+    clickSpy.mockRestore()
+    removeSpy.mockRestore()
   })
 })

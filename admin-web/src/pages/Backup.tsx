@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import {
+  downloadBackupFile,
   getBackupFiles,
   getBackupSettings,
   restoreBackupFile,
@@ -111,6 +112,23 @@ export function BackupPage() {
       setError(err instanceof Error ? err.message : t('dictionary.restoreFailed'))
     } finally {
       setRestoring(false)
+    }
+  }
+
+  const handleDownloadBackupFile = async (file: BackupFile) => {
+    try {
+      const blob = await downloadBackupFile(file.filename)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = file.filename
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('dictionary.backupFilesFetchFailed'))
     }
   }
 
@@ -232,14 +250,24 @@ export function BackupPage() {
                         {formatDate(file.created_at)}
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenRestore(file)}
-                    >
-                      {t('dictionary.backupRestore')}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadBackupFile(file)}
+                      >
+                        {t('backup.download')}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenRestore(file)}
+                      >
+                        {t('dictionary.backupRestore')}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
