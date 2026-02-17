@@ -128,6 +128,10 @@ class AppCoordinator: ObservableObject {
             self?.handleHotkeyUp()
         }
 
+        hotkeyManager.onRightShiftDoubleTapToggle = { [weak self] in
+            self?.handleRightShiftDoubleTapToggle()
+        }
+
         hotkeyManager.onModelHotkeyPressed = { [weak self] in
             self?.handleModelHotkeyPressed()
         }
@@ -215,6 +219,11 @@ class AppCoordinator: ObservableObject {
         ModelSelectionWindow.shared.show { [weak self] in
             self?.resumePreviousAppTracking()
         }
+    }
+
+    private func handleRightShiftDoubleTapToggle() {
+        // Kept as a dedicated callback hook for double-tap mode observability.
+        // Recording start/stop itself is handled by onHotkeyDown/onHotkeyUp.
     }
 
     // MARK: - Public Methods for UI

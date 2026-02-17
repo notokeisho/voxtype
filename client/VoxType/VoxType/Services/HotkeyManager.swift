@@ -37,6 +37,9 @@ class HotkeyManager: ObservableObject {
     /// Called when mouse hotkey long press ends.
     var onMouseHotkeyUp: (() -> Void)?
 
+    /// Called when right-shift double-tap is detected.
+    var onRightShiftDoubleTapToggle: (() -> Void)?
+
     // MARK: - Private Properties
 
     /// The event tap for monitoring keyboard events.
@@ -475,6 +478,7 @@ class HotkeyManager: ObservableObject {
             } else {
                 self.onHotkeyUp?()
             }
+            self.onRightShiftDoubleTapToggle?()
         }
 
         return true
