@@ -61,18 +61,18 @@ class HotkeyManager: ObservableObject {
     private var mouseHotkeyTargetApp: NSRunningApplication?
 
     /// Right-shift key code.
-    private static let rightShiftKeyCode: UInt16 = 60
+    nonisolated private static let rightShiftKeyCode: UInt16 = 60
 
     /// Double-tap state holder for right-shift mode.
-    private static let rightShiftTapStateLock = NSLock()
-    private static var lastRightShiftTapAt: TimeInterval?
+    nonisolated private static let rightShiftTapStateLock = NSLock()
+    nonisolated(unsafe) private static var lastRightShiftTapAt: TimeInterval?
 
     /// Snapshot mode used by active recording session.
     private var activeRecordingMode: RecordingHotkeyMode?
 
     /// Right-shift input-test state.
-    private static let rightShiftInputTestLock = NSLock()
-    private static var isRightShiftInputTestActive = false
+    nonisolated private static let rightShiftInputTestLock = NSLock()
+    nonisolated(unsafe) private static var isRightShiftInputTestActive = false
     private var rightShiftInputTestCompletion: ((Bool) -> Void)?
 
     /// Settings reference for hotkey configuration.
@@ -386,11 +386,13 @@ class HotkeyManager: ObservableObject {
         mouseHoldTimer?.invalidate()
         mouseHoldTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
             guard let self else { return }
-            guard self.isMousePressed else { return }
+            Task { @MainActor in
+                guard self.isMousePressed else { return }
 
-            self.isMouseHoldActive = true
-            self.activeRecordingMode = .mouseWheelHold
-            self.onMouseHotkeyDown?(self.mouseHotkeyTargetApp)
+                self.isMouseHoldActive = true
+                self.activeRecordingMode = .mouseWheelHold
+                self.onMouseHotkeyDown?(self.mouseHotkeyTargetApp)
+            }
         }
     }
 
