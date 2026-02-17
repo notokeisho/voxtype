@@ -477,7 +477,14 @@ struct HotkeySettingsView: View {
                     if settings.hotkeyEnabled {
                         Divider()
 
-                        if settings.recordingHotkeyMode == .keyboard {
+                        Picker(localization.t("hotkey.recordingMode"), selection: $settings.recordingHotkeyMode) {
+                            Text(localization.t("hotkey.mode.keyboardHold")).tag(RecordingHotkeyMode.keyboardHold)
+                            Text(localization.t("hotkey.mode.rightShiftDoubleTap")).tag(RecordingHotkeyMode.rightShiftDoubleTap)
+                            Text(localization.t("hotkey.mode.mouseWheelHold")).tag(RecordingHotkeyMode.mouseWheelHold)
+                        }
+                        .pickerStyle(.menu)
+
+                        if settings.recordingHotkeyMode == .keyboardHold {
                             HStack {
                                 Text(localization.t("hotkey.current"))
                                     .font(.headline)
@@ -547,22 +554,26 @@ struct HotkeySettingsView: View {
                                 }
                                 .padding()
                                 .background(Color.secondary.opacity(0.1))
-                                .cornerRadius(8)
+                                    .cornerRadius(8)
                             }
-                            Toggle(localization.t("hotkey.mouseHoldEnabled"), isOn: $settings.isMouseWheelRecordingEnabled)
-                                .toggleStyle(.switch)
 
                             Text(localization.t("hotkey.description"))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                        } else {
-                            Toggle(localization.t("hotkey.mouseHoldEnabled"), isOn: $settings.isMouseWheelRecordingEnabled)
-                                .toggleStyle(.switch)
-
+                        } else if settings.recordingHotkeyMode == .rightShiftDoubleTap {
+                            Text(localization.t("hotkey.rightShiftHint"))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        } else if settings.recordingHotkeyMode == .mouseWheelHold {
                             Text(localization.t("hotkey.mouseHoldHint"))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
+                        } else {
+                            Text(localization.t("hotkey.description"))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
+
                     }
                 }
             } header: {
