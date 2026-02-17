@@ -37,6 +37,9 @@ class HotkeyManager: ObservableObject {
     /// Called when mouse hotkey long press ends.
     var onMouseHotkeyUp: (() -> Void)?
 
+    /// Called when right-shift double-tap toggles recording state.
+    var onRightShiftDoubleTapToggle: (() -> Void)?
+
     // MARK: - Private Properties
 
     /// The event tap for monitoring keyboard events.
@@ -56,6 +59,15 @@ class HotkeyManager: ObservableObject {
 
     /// Frontmost app captured on mouse press.
     private var mouseHotkeyTargetApp: NSRunningApplication?
+
+    /// Right-shift key code.
+    private let rightShiftKeyCode: UInt16 = 60
+
+    /// Double-tap window for right-shift mode.
+    private let rightShiftDoubleTapWindowSeconds: TimeInterval = 0.4
+
+    /// Double-tap state holder for right-shift mode.
+    private var rightShiftDoubleTapToggle = RightShiftDoubleTapToggle(windowSeconds: 0.4)
 
     /// Settings reference for hotkey configuration.
     private let settings = AppSettings.shared
@@ -245,7 +257,7 @@ class HotkeyManager: ObservableObject {
         guard isEnabled else { return false }
 
         let mode = UserDefaults.standard.string(forKey: "recordingHotkeyMode") ?? "keyboard"
-        guard mode == "keyboard" else { return false }
+        guard mode == "keyboardHold" || mode == "keyboard" else { return false }
 
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
@@ -318,7 +330,7 @@ class HotkeyManager: ObservableObject {
         guard isEnabled else { return false }
 
         let mode = UserDefaults.standard.string(forKey: "recordingHotkeyMode") ?? "keyboard"
-        guard mode == "mouseWheel" else { return false }
+        guard mode == "mouseWheelHold" || mode == "mouseWheel" else { return false }
 
         let buttonNumber = event.getIntegerValueField(.mouseEventButtonNumber)
         return buttonNumber == 2
@@ -367,6 +379,11 @@ class HotkeyManager: ObservableObject {
     }
 
     private func handleEvent(type: CGEventType, event: CGEvent) {
+        if settings.recordingHotkeyMode == .rightShiftDoubleTap {
+            handleRightShiftDoubleTapEvent(type: type, event: event)
+            return
+        }
+
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
 
@@ -402,9 +419,41 @@ class HotkeyManager: ObservableObject {
         }
     }
 
+    private func handleRightShiftDoubleTapEvent(type: CGEventType, event: CGEvent) {
+        guard settings.hotkeyEnabled else { return }
+        guard type == .flagsChanged else { return }
+
+        let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
+        guard keyCode == rightShiftKeyCode else {
+            rightShiftDoubleTapToggle.resetSequence()
+            return
+        }
+
+        let isShiftPressed = event.flags.contains(.maskShift)
+        guard isShiftPressed else { return }
+
+        let isAutoRepeat = event.getIntegerValueField(.keyboardEventAutorepeat) != 0
+        let now = CFAbsoluteTimeGetCurrent()
+        let toggled = rightShiftDoubleTapToggle.registerTap(
+            at: now,
+            isRecording: isHotkeyPressed,
+            isAutoRepeat: isAutoRepeat
+        )
+
+        guard toggled else { return }
+
+        isHotkeyPressed.toggle()
+        if isHotkeyPressed {
+            onHotkeyDown?()
+        } else {
+            onHotkeyUp?()
+        }
+        onRightShiftDoubleTapToggle?()
+    }
+
     private func isMatchingHotkey(keyCode: UInt16, flags: CGEventFlags) -> Bool {
         guard settings.hotkeyEnabled else { return false }
-        guard settings.recordingHotkeyMode == .keyboard else { return false }
+        guard settings.recordingHotkeyMode == .keyboardHold else { return false }
 
         // Get configured hotkey
         let configuredKeyCode = settings.hotkeyKeyCode
