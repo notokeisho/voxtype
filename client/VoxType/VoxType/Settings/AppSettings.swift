@@ -185,7 +185,7 @@ class AppSettings: ObservableObject {
         self.hotkeyModifiers = storedModifiers != 0 ? UInt(storedModifiers) : Defaults.hotkeyModifiers
         self.hotkeyKeyCode = storedKeyCode != 0 ? UInt16(storedKeyCode) : Defaults.hotkeyKeyCode
         self.hotkeyEnabled = storedHotkeyEnabled ?? Defaults.hotkeyEnabled
-        self.recordingHotkeyMode = storedRecordingMode.flatMap { RecordingHotkeyMode(rawValue: $0) } ?? Defaults.recordingHotkeyMode
+        self.recordingHotkeyMode = Self.migrateRecordingHotkeyMode(storedRecordingMode) ?? Defaults.recordingHotkeyMode
         self.modelHotkeyModifiers = storedModelModifiers != 0 ? UInt(storedModelModifiers) : Defaults.modelHotkeyModifiers
         self.modelHotkeyKeyCode = storedModelKeyCode != 0 ? UInt16(storedModelKeyCode) : Defaults.modelHotkeyKeyCode
         self.modelHotkeyEnabled = storedModelHotkeyEnabled ?? Defaults.modelHotkeyEnabled
@@ -248,5 +248,24 @@ class AppSettings: ObservableObject {
             122: "F1", 123: "←", 124: "→", 125: "↓", 126: "↑"
         ]
         return keyMap[keyCode] ?? "Key\(keyCode)"
+    }
+}
+
+private extension AppSettings {
+    static func migrateRecordingHotkeyMode(_ storedValue: String?) -> RecordingHotkeyMode? {
+        guard let storedValue else { return nil }
+
+        if let mode = RecordingHotkeyMode(rawValue: storedValue) {
+            return mode
+        }
+
+        switch storedValue {
+        case "keyboard":
+            return .keyboardHold
+        case "mouseWheel":
+            return .mouseWheelHold
+        default:
+            return .keyboardHold
+        }
     }
 }
