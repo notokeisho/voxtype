@@ -70,6 +70,11 @@ class HotkeyManager: ObservableObject {
     /// Snapshot mode used by active recording session.
     private var activeRecordingMode: RecordingHotkeyMode?
 
+    /// Right-shift input-test state.
+    private static let rightShiftInputTestLock = NSLock()
+    private static var isRightShiftInputTestActive = false
+    private var rightShiftInputTestCompletion: ((Bool) -> Void)?
+
     /// Settings reference for hotkey configuration.
     private let settings = AppSettings.shared
 
@@ -153,6 +158,24 @@ class HotkeyManager: ObservableObject {
         }
     }
 
+    /// Run one-shot input test for right shift without starting recording.
+    func runRightShiftInputTest(timeout: TimeInterval = 3.0, completion: @escaping (Bool) -> Void) {
+        guard timeout > 0 else {
+            completion(false)
+            return
+        }
+
+        rightShiftInputTestCompletion = completion
+
+        Self.rightShiftInputTestLock.lock()
+        Self.isRightShiftInputTestActive = true
+        Self.rightShiftInputTestLock.unlock()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in
+            self?.finishRightShiftInputTest(success: false)
+        }
+    }
+
     /// Check if accessibility permission is granted.
     @discardableResult
     func checkAccessibilityPermission() -> Bool {
@@ -193,6 +216,10 @@ class HotkeyManager: ObservableObject {
         let callback: CGEventTapCallBack = { proxy, type, event, refcon in
             guard let refcon = refcon else { return Unmanaged.passRetained(event) }
             let manager = Unmanaged<HotkeyManager>.fromOpaque(refcon).takeUnretainedValue()
+
+            if manager.handleRightShiftInputTestSync(type: type, event: event) {
+                return Unmanaged.passRetained(event)
+            }
 
             if manager.isRightShiftDoubleTapModeSync() && type == .flagsChanged {
                 let shouldConsume = manager.handleRightShiftDoubleTapSync(event: event)
@@ -504,6 +531,36 @@ class HotkeyManager: ObservableObject {
         }
 
         return true
+    }
+
+    nonisolated private func handleRightShiftInputTestSync(type: CGEventType, event: CGEvent) -> Bool {
+        guard type == .flagsChanged else { return false }
+
+        Self.rightShiftInputTestLock.lock()
+        let isActive = Self.isRightShiftInputTestActive
+        Self.rightShiftInputTestLock.unlock()
+        guard isActive else { return false }
+
+        let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
+        let isShiftPressed = event.flags.contains(.maskShift)
+        guard keyCode == Self.rightShiftKeyCode, isShiftPressed else { return false }
+
+        DispatchQueue.main.async { [weak self] in
+            self?.finishRightShiftInputTest(success: true)
+        }
+        return true
+    }
+
+    private func finishRightShiftInputTest(success: Bool) {
+        Self.rightShiftInputTestLock.lock()
+        let wasActive = Self.isRightShiftInputTestActive
+        Self.isRightShiftInputTestActive = false
+        Self.rightShiftInputTestLock.unlock()
+        guard wasActive else { return }
+
+        let completion = rightShiftInputTestCompletion
+        rightShiftInputTestCompletion = nil
+        completion?(success)
     }
 
     private func checkModifiersMatch(flags: CGEventFlags, required: UInt? = nil) -> Bool {
