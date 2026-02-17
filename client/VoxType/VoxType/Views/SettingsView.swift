@@ -1,5 +1,47 @@
 import SwiftUI
 
+struct HotkeyUiVisibility {
+    let showModePicker: Bool
+    let showKeyboardEditor: Bool
+    let showRightShiftHint: Bool
+    let showMouseHoldHint: Bool
+
+    static func resolve(hotkeyEnabled: Bool, mode: RecordingHotkeyMode) -> HotkeyUiVisibility {
+        guard hotkeyEnabled else {
+            return HotkeyUiVisibility(
+                showModePicker: false,
+                showKeyboardEditor: false,
+                showRightShiftHint: false,
+                showMouseHoldHint: false
+            )
+        }
+
+        switch mode {
+        case .keyboardHold:
+            return HotkeyUiVisibility(
+                showModePicker: true,
+                showKeyboardEditor: true,
+                showRightShiftHint: false,
+                showMouseHoldHint: false
+            )
+        case .rightShiftDoubleTap:
+            return HotkeyUiVisibility(
+                showModePicker: true,
+                showKeyboardEditor: false,
+                showRightShiftHint: true,
+                showMouseHoldHint: false
+            )
+        case .mouseWheelHold:
+            return HotkeyUiVisibility(
+                showModePicker: true,
+                showKeyboardEditor: false,
+                showRightShiftHint: false,
+                showMouseHoldHint: true
+            )
+        }
+    }
+}
+
 /// Settings view for the application.
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
@@ -474,7 +516,12 @@ struct HotkeySettingsView: View {
                     Toggle(localization.t("hotkey.recordingEnabled"), isOn: $settings.hotkeyEnabled)
                         .toggleStyle(.switch)
 
-                    if settings.hotkeyEnabled {
+                    let visibility = HotkeyUiVisibility.resolve(
+                        hotkeyEnabled: settings.hotkeyEnabled,
+                        mode: settings.recordingHotkeyMode
+                    )
+
+                    if visibility.showModePicker {
                         Divider()
 
                         Picker(localization.t("hotkey.recordingMode"), selection: $settings.recordingHotkeyMode) {
@@ -484,7 +531,7 @@ struct HotkeySettingsView: View {
                         }
                         .pickerStyle(.menu)
 
-                        if settings.recordingHotkeyMode == .keyboardHold {
+                        if visibility.showKeyboardEditor {
                             HStack {
                                 Text(localization.t("hotkey.current"))
                                     .font(.headline)
@@ -560,11 +607,11 @@ struct HotkeySettingsView: View {
                             Text(localization.t("hotkey.description"))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                        } else if settings.recordingHotkeyMode == .rightShiftDoubleTap {
+                        } else if visibility.showRightShiftHint {
                             Text(localization.t("hotkey.rightShiftHint"))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                        } else if settings.recordingHotkeyMode == .mouseWheelHold {
+                        } else if visibility.showMouseHoldHint {
                             Text(localization.t("hotkey.mouseHoldHint"))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
