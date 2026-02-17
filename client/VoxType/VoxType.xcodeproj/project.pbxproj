@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		11C95B53FB379B153FD9F824 /* ModelSelectionWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6482D76EC02EADE67E028D /* ModelSelectionWindow.swift */; };
+		139AE1F011013AF78EFFB1FD /* RightShiftDoubleTapToggleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F2DE65EB78B07520A5DDFE /* RightShiftDoubleTapToggleTests.swift */; };
 		1AE0BF815E2BEA6A5934A242 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0D574F0A182B8C48AEA831 /* Localization.swift */; };
 		1F0DA61E5523298E8D4EEEC5 /* AudioVisualizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E99F2E3C3B8786BE7F66998A /* AudioVisualizerView.swift */; };
 		22080616ABF7E3C7F1D5AFA4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B0A975F477094249007DFD6B /* Assets.xcassets */; };
@@ -16,6 +17,9 @@
 		50651D36BBFBF4CB5D09C7D3 /* RecordingOverlayWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26D1DB6175AE6321CE8A80FE /* RecordingOverlayWindow.swift */; };
 		5A5754F1A8E9B838B9E75B04 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFC5D232DDE09D52CF7D5E4D /* APIClient.swift */; };
 		9BC11348C122CE390028B17C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C828D8BC3197F865E245631 /* SettingsView.swift */; };
+		9EBA35E0758E7309EC160706 /* DoubleTapWindowDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 750C4DEAAEA4AE1F68568FD6 /* DoubleTapWindowDetectorTests.swift */; };
+		A1A8549E5A7CB72D3D985A18 /* HotkeyUiVisibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34E8E64F2F70CC44B0C287FB /* HotkeyUiVisibilityTests.swift */; };
+		A31D82B3FDEFF0E296C5B294 /* RightShiftDoubleTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30AA185DE2BB97B15FC698B1 /* RightShiftDoubleTap.swift */; };
 		B1F7DE75C435E27CBE2D7E46 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3365FD8F07C12E040C289782 /* NotificationManager.swift */; };
 		B9B901E312947BA001AA851A /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 455D671918A8978F487BE5A3 /* AuthService.swift */; };
 		BA9C69312D42362DA4792749 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F09A8CE5B0C5B5909926A2 /* AppState.swift */; };
@@ -45,15 +49,19 @@
 		10C1F73F50F6814E20419DA4 /* VoxType.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoxType.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		118CE6501676196C95D1D77F /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		174515ACBA50E00885D23261 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		19F2DE65EB78B07520A5DDFE /* RightShiftDoubleTapToggleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RightShiftDoubleTapToggleTests.swift; sourceTree = "<group>"; };
 		1A6482D76EC02EADE67E028D /* ModelSelectionWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSelectionWindow.swift; sourceTree = "<group>"; };
 		2527D575966A30D09FC2EC7D /* IMETextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IMETextField.swift; sourceTree = "<group>"; };
 		26D1DB6175AE6321CE8A80FE /* RecordingOverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingOverlayWindow.swift; sourceTree = "<group>"; };
+		30AA185DE2BB97B15FC698B1 /* RightShiftDoubleTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RightShiftDoubleTap.swift; sourceTree = "<group>"; };
 		3365FD8F07C12E040C289782 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		34E8E64F2F70CC44B0C287FB /* HotkeyUiVisibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyUiVisibilityTests.swift; sourceTree = "<group>"; };
 		455D671918A8978F487BE5A3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		58EBA91AAE8FB4B261A74C6A /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
 		5C828D8BC3197F865E245631 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		66F09A8CE5B0C5B5909926A2 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		6A0D574F0A182B8C48AEA831 /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
+		750C4DEAAEA4AE1F68568FD6 /* DoubleTapWindowDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapWindowDetectorTests.swift; sourceTree = "<group>"; };
 		8EF6796F518391B6012D0D27 /* ClipboardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManager.swift; sourceTree = "<group>"; };
 		A100CA49AFE8AA792673C599 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		A776921F379AB0CEC10827DD /* DictionaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryService.swift; sourceTree = "<group>"; };
@@ -98,6 +106,7 @@
 				D42375CADA68C4F118493F2F /* HotkeyManager.swift */,
 				118CE6501676196C95D1D77F /* KeychainHelper.swift */,
 				3365FD8F07C12E040C289782 /* NotificationManager.swift */,
+				30AA185DE2BB97B15FC698B1 /* RightShiftDoubleTap.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -119,6 +128,9 @@
 			isa = PBXGroup;
 			children = (
 				58EBA91AAE8FB4B261A74C6A /* AppSettingsTests.swift */,
+				750C4DEAAEA4AE1F68568FD6 /* DoubleTapWindowDetectorTests.swift */,
+				34E8E64F2F70CC44B0C287FB /* HotkeyUiVisibilityTests.swift */,
+				19F2DE65EB78B07520A5DDFE /* RightShiftDoubleTapToggleTests.swift */,
 			);
 			path = VoxTypeTests;
 			sourceTree = "<group>";
@@ -265,6 +277,7 @@
 				11C95B53FB379B153FD9F824 /* ModelSelectionWindow.swift in Sources */,
 				B1F7DE75C435E27CBE2D7E46 /* NotificationManager.swift in Sources */,
 				50651D36BBFBF4CB5D09C7D3 /* RecordingOverlayWindow.swift in Sources */,
+				A31D82B3FDEFF0E296C5B294 /* RightShiftDoubleTap.swift in Sources */,
 				9BC11348C122CE390028B17C /* SettingsView.swift in Sources */,
 				4AEBB69FB7A4D00E3537FF17 /* VoxTypeApp.swift in Sources */,
 			);
@@ -275,6 +288,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				C8E30131C77AEEB97E8BD9EA /* AppSettingsTests.swift in Sources */,
+				9EBA35E0758E7309EC160706 /* DoubleTapWindowDetectorTests.swift in Sources */,
+				A1A8549E5A7CB72D3D985A18 /* HotkeyUiVisibilityTests.swift in Sources */,
+				139AE1F011013AF78EFFB1FD /* RightShiftDoubleTapToggleTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
