@@ -29,4 +29,25 @@ final class RightShiftDoubleTapToggleTests: XCTestCase {
         XCTAssertFalse(didStart)
         XCTAssertTrue(didStop)
     }
+
+    func testAutoRepeatIsIgnored() {
+        var toggle = RightShiftDoubleTapToggle(windowSeconds: 0.4)
+        var didStart = false
+        toggle.onStart = { didStart = true }
+
+        XCTAssertFalse(toggle.registerTap(at: 0.0, isRecording: false))
+        XCTAssertFalse(toggle.registerTap(at: 0.1, isRecording: false, isAutoRepeat: true))
+        XCTAssertFalse(didStart)
+    }
+
+    func testOtherKeyResetsTapSequence() {
+        var toggle = RightShiftDoubleTapToggle(windowSeconds: 0.4)
+        var didStart = false
+        toggle.onStart = { didStart = true }
+
+        XCTAssertFalse(toggle.registerTap(at: 1.0, isRecording: false))
+        toggle.resetSequence()
+        XCTAssertFalse(toggle.registerTap(at: 1.2, isRecording: false))
+        XCTAssertFalse(didStart)
+    }
 }
