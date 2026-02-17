@@ -67,6 +67,9 @@ class HotkeyManager: ObservableObject {
     private static let rightShiftTapStateLock = NSLock()
     private static var lastRightShiftTapAt: TimeInterval?
 
+    /// Snapshot mode used by active recording session.
+    private var activeRecordingMode: RecordingHotkeyMode?
+
     /// Settings reference for hotkey configuration.
     private let settings = AppSettings.shared
 
@@ -138,6 +141,7 @@ class HotkeyManager: ObservableObject {
         runLoopSource = nil
         isMonitoring = false
         isHotkeyPressed = false
+        activeRecordingMode = nil
     }
 
     /// Refresh monitoring based on current settings.
@@ -358,6 +362,7 @@ class HotkeyManager: ObservableObject {
             guard self.isMousePressed else { return }
 
             self.isMouseHoldActive = true
+            self.activeRecordingMode = .mouseWheelHold
             self.onMouseHotkeyDown?(self.mouseHotkeyTargetApp)
         }
     }
@@ -371,6 +376,7 @@ class HotkeyManager: ObservableObject {
 
         if isMouseHoldActive {
             isMouseHoldActive = false
+            activeRecordingMode = nil
             onMouseHotkeyUp?()
         }
 
@@ -382,6 +388,10 @@ class HotkeyManager: ObservableObject {
     }
 
     private func handleEvent(type: CGEventType, event: CGEvent) {
+        if effectiveRecordingMode() == .rightShiftDoubleTap {
+            return
+        }
+
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
 
@@ -394,12 +404,14 @@ class HotkeyManager: ObservableObject {
         case .keyDown:
             if !isHotkeyPressed {
                 isHotkeyPressed = true
+                activeRecordingMode = .keyboardHold
                 onHotkeyDown?()
             }
 
         case .keyUp:
             if isHotkeyPressed {
                 isHotkeyPressed = false
+                activeRecordingMode = nil
                 onHotkeyUp?()
             }
 
@@ -409,6 +421,7 @@ class HotkeyManager: ObservableObject {
             if isHotkeyPressed && !isModifierPressed {
                 // Modifiers were released
                 isHotkeyPressed = false
+                activeRecordingMode = nil
                 onHotkeyUp?()
             }
 
@@ -419,7 +432,7 @@ class HotkeyManager: ObservableObject {
 
     private func isMatchingHotkey(keyCode: UInt16, flags: CGEventFlags) -> Bool {
         guard settings.hotkeyEnabled else { return false }
-        guard settings.recordingHotkeyMode == .keyboardHold else { return false }
+        guard effectiveRecordingMode() == .keyboardHold else { return false }
 
         // Get configured hotkey
         let configuredKeyCode = settings.hotkeyKeyCode
@@ -430,6 +443,13 @@ class HotkeyManager: ObservableObject {
 
         // Check modifiers
         return checkModifiersMatch(flags: flags, required: configuredModifiers)
+    }
+
+    private func effectiveRecordingMode() -> RecordingHotkeyMode {
+        if isHotkeyPressed, let activeRecordingMode {
+            return activeRecordingMode
+        }
+        return settings.recordingHotkeyMode
     }
 
     nonisolated private func isRightShiftDoubleTapModeSync() -> Bool {
@@ -474,8 +494,10 @@ class HotkeyManager: ObservableObject {
             guard let self else { return }
             self.isHotkeyPressed.toggle()
             if self.isHotkeyPressed {
+                self.activeRecordingMode = .rightShiftDoubleTap
                 self.onHotkeyDown?()
             } else {
+                self.activeRecordingMode = nil
                 self.onHotkeyUp?()
             }
             self.onRightShiftDoubleTapToggle?()
