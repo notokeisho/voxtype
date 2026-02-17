@@ -2,8 +2,13 @@ import Foundation
 import SwiftUI
 
 enum RecordingHotkeyMode: String, CaseIterable {
-    case keyboard
-    case mouseWheel
+    case keyboardHold
+    case rightShiftDoubleTap
+    case mouseWheelHold
+
+    // Temporary aliases to keep incremental migration compile-safe.
+    static let keyboard = RecordingHotkeyMode.keyboardHold
+    static let mouseWheel = RecordingHotkeyMode.mouseWheelHold
 }
 
 /// Application settings stored in UserDefaults.
@@ -35,7 +40,7 @@ class AppSettings: ObservableObject {
         static let hotkeyModifiers: UInt = 0x040000  // Control only
         static let hotkeyKeyCode: UInt16 = 47        // Period key (.)
         static let hotkeyEnabled = true
-        static let recordingHotkeyMode: RecordingHotkeyMode = .keyboard
+        static let recordingHotkeyMode: RecordingHotkeyMode = .keyboardHold
         static let modelHotkeyModifiers: UInt = 0x040000  // Control only
         static let modelHotkeyKeyCode: UInt16 = 46        // M key
         static let modelHotkeyEnabled = true
@@ -82,8 +87,8 @@ class AppSettings: ObservableObject {
     }
 
     var isMouseWheelRecordingEnabled: Bool {
-        get { recordingHotkeyMode == .mouseWheel }
-        set { recordingHotkeyMode = newValue ? .mouseWheel : .keyboard }
+        get { recordingHotkeyMode == .mouseWheelHold }
+        set { recordingHotkeyMode = newValue ? .mouseWheelHold : .keyboardHold }
     }
 
     /// Model change hotkey modifier flags.
