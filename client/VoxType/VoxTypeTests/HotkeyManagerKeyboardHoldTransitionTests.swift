@@ -5,7 +5,8 @@ final class HotkeyManagerKeyboardHoldTransitionTests: XCTestCase {
     func testKeyDownStartsOnlyWhenHotkeyMatches() {
         let startTransition = HotkeyManager.resolveKeyboardHoldTransition(
             type: .keyDown,
-            isKeyboardHoldMode: true,
+            isKeyboardHoldStartEnabled: true,
+            isKeyboardHoldStopEligible: false,
             isKeyDownHotkeyMatch: true,
             isKeyUpConfiguredKeyMatch: false,
             isHotkeyPressed: false,
@@ -15,7 +16,8 @@ final class HotkeyManagerKeyboardHoldTransitionTests: XCTestCase {
 
         let nonStartTransition = HotkeyManager.resolveKeyboardHoldTransition(
             type: .keyDown,
-            isKeyboardHoldMode: true,
+            isKeyboardHoldStartEnabled: true,
+            isKeyboardHoldStopEligible: false,
             isKeyDownHotkeyMatch: false,
             isKeyUpConfiguredKeyMatch: false,
             isHotkeyPressed: false,
@@ -27,7 +29,8 @@ final class HotkeyManagerKeyboardHoldTransitionTests: XCTestCase {
     func testKeyUpStopsEvenWhenMatchingHotkeyIsFalse() {
         let transition = HotkeyManager.resolveKeyboardHoldTransition(
             type: .keyUp,
-            isKeyboardHoldMode: true,
+            isKeyboardHoldStartEnabled: false,
+            isKeyboardHoldStopEligible: true,
             isKeyDownHotkeyMatch: false,
             isKeyUpConfiguredKeyMatch: true,
             isHotkeyPressed: true,
@@ -44,7 +47,8 @@ final class HotkeyManagerKeyboardHoldTransitionTests: XCTestCase {
     func testFlagsChangedStopsOnModifierBreakEvenWhenMatchingHotkeyIsFalse() {
         let transition = HotkeyManager.resolveKeyboardHoldTransition(
             type: .flagsChanged,
-            isKeyboardHoldMode: true,
+            isKeyboardHoldStartEnabled: false,
+            isKeyboardHoldStopEligible: true,
             isKeyDownHotkeyMatch: false,
             isKeyUpConfiguredKeyMatch: false,
             isHotkeyPressed: true,
@@ -61,7 +65,8 @@ final class HotkeyManagerKeyboardHoldTransitionTests: XCTestCase {
     func testIrrelevantKeyUpDoesNotStopWhenNotPressed() {
         let transition = HotkeyManager.resolveKeyboardHoldTransition(
             type: .keyUp,
-            isKeyboardHoldMode: true,
+            isKeyboardHoldStartEnabled: false,
+            isKeyboardHoldStopEligible: true,
             isKeyDownHotkeyMatch: false,
             isKeyUpConfiguredKeyMatch: false,
             isHotkeyPressed: false,
@@ -78,7 +83,8 @@ final class HotkeyManagerKeyboardHoldTransitionTests: XCTestCase {
     func testKeyUpWithDifferentConfiguredKeyDoesNotStop() {
         let transition = HotkeyManager.resolveKeyboardHoldTransition(
             type: .keyUp,
-            isKeyboardHoldMode: true,
+            isKeyboardHoldStartEnabled: false,
+            isKeyboardHoldStopEligible: true,
             isKeyDownHotkeyMatch: false,
             isKeyUpConfiguredKeyMatch: false,
             isHotkeyPressed: true,
@@ -90,7 +96,8 @@ final class HotkeyManagerKeyboardHoldTransitionTests: XCTestCase {
     func testFlagsChangedKeepsRecordingWhenModifierStillPressed() {
         let transition = HotkeyManager.resolveKeyboardHoldTransition(
             type: .flagsChanged,
-            isKeyboardHoldMode: true,
+            isKeyboardHoldStartEnabled: false,
+            isKeyboardHoldStopEligible: true,
             isKeyDownHotkeyMatch: false,
             isKeyUpConfiguredKeyMatch: false,
             isHotkeyPressed: true,
@@ -104,7 +111,8 @@ final class HotkeyManagerKeyboardHoldTransitionTests: XCTestCase {
         for event in events {
             let transition = HotkeyManager.resolveKeyboardHoldTransition(
                 type: event,
-                isKeyboardHoldMode: false,
+                isKeyboardHoldStartEnabled: false,
+                isKeyboardHoldStopEligible: false,
                 isKeyDownHotkeyMatch: true,
                 isKeyUpConfiguredKeyMatch: true,
                 isHotkeyPressed: true,
