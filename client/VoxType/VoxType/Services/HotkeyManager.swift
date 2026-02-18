@@ -6,6 +6,12 @@ import Cocoa
 /// Uses CGEvent tap to monitor keyboard events system-wide.
 @MainActor
 class HotkeyManager: ObservableObject {
+    enum KeyboardHoldTransition {
+        case none
+        case start
+        case stop
+    }
+
     /// Shared instance.
     static let shared = HotkeyManager()
 
@@ -423,39 +429,47 @@ class HotkeyManager: ObservableObject {
 
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
+        let transition = Self.resolveKeyboardHoldTransition(
+            type: type,
+            isKeyboardHoldMode: effectiveRecordingMode() == .keyboardHold,
+            isMatchingHotkey: isMatchingHotkey(keyCode: keyCode, flags: flags),
+            isHotkeyPressed: isHotkeyPressed,
+            isModifierPressed: type == .flagsChanged ? checkModifiersMatch(flags: flags) : false
+        )
 
-        // Check if this is our hotkey
-        guard isMatchingHotkey(keyCode: keyCode, flags: flags) else {
-            return
+        switch transition {
+        case .start:
+            isHotkeyPressed = true
+            activeRecordingMode = .keyboardHold
+            onHotkeyDown?()
+        case .stop:
+            isHotkeyPressed = false
+            activeRecordingMode = nil
+            onHotkeyUp?()
+        case .none:
+            break
         }
+    }
+
+    static func resolveKeyboardHoldTransition(
+        type: CGEventType,
+        isKeyboardHoldMode: Bool,
+        isMatchingHotkey: Bool,
+        isHotkeyPressed: Bool,
+        isModifierPressed: Bool
+    ) -> KeyboardHoldTransition {
+        guard isKeyboardHoldMode else { return .none }
+        guard isMatchingHotkey else { return .none }
 
         switch type {
         case .keyDown:
-            if !isHotkeyPressed {
-                isHotkeyPressed = true
-                activeRecordingMode = .keyboardHold
-                onHotkeyDown?()
-            }
-
+            return isHotkeyPressed ? .none : .start
         case .keyUp:
-            if isHotkeyPressed {
-                isHotkeyPressed = false
-                activeRecordingMode = nil
-                onHotkeyUp?()
-            }
-
+            return isHotkeyPressed ? .stop : .none
         case .flagsChanged:
-            // Handle modifier-only hotkeys or modifier release
-            let isModifierPressed = checkModifiersMatch(flags: flags)
-            if isHotkeyPressed && !isModifierPressed {
-                // Modifiers were released
-                isHotkeyPressed = false
-                activeRecordingMode = nil
-                onHotkeyUp?()
-            }
-
+            return (isHotkeyPressed && !isModifierPressed) ? .stop : .none
         default:
-            break
+            return .none
         }
     }
 
