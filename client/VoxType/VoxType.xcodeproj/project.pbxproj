@@ -8,40 +8,60 @@
 
 /* Begin PBXBuildFile section */
 		11C95B53FB379B153FD9F824 /* ModelSelectionWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6482D76EC02EADE67E028D /* ModelSelectionWindow.swift */; };
+		139AE1F011013AF78EFFB1FD /* RightShiftDoubleTapToggleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F2DE65EB78B07520A5DDFE /* RightShiftDoubleTapToggleTests.swift */; };
 		1AE0BF815E2BEA6A5934A242 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0D574F0A182B8C48AEA831 /* Localization.swift */; };
 		1F0DA61E5523298E8D4EEEC5 /* AudioVisualizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E99F2E3C3B8786BE7F66998A /* AudioVisualizerView.swift */; };
 		22080616ABF7E3C7F1D5AFA4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B0A975F477094249007DFD6B /* Assets.xcassets */; };
-		2B9E1D542F40A61D00A45EC1 /* GlobalDictionaryRequestService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B9E1D532F40A61D00A45EC1 /* GlobalDictionaryRequestService.swift */; };
 		492247172F4D7E53C39BCAA2 /* IMETextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2527D575966A30D09FC2EC7D /* IMETextField.swift */; };
 		4AEBB69FB7A4D00E3537FF17 /* VoxTypeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9AC213F8E69DC509F2EA36 /* VoxTypeApp.swift */; };
 		50651D36BBFBF4CB5D09C7D3 /* RecordingOverlayWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26D1DB6175AE6321CE8A80FE /* RecordingOverlayWindow.swift */; };
 		5A5754F1A8E9B838B9E75B04 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFC5D232DDE09D52CF7D5E4D /* APIClient.swift */; };
 		9BC11348C122CE390028B17C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C828D8BC3197F865E245631 /* SettingsView.swift */; };
+		9EBA35E0758E7309EC160706 /* DoubleTapWindowDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 750C4DEAAEA4AE1F68568FD6 /* DoubleTapWindowDetectorTests.swift */; };
+		A1A8549E5A7CB72D3D985A18 /* HotkeyUiVisibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34E8E64F2F70CC44B0C287FB /* HotkeyUiVisibilityTests.swift */; };
+		A31D82B3FDEFF0E296C5B294 /* RightShiftDoubleTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30AA185DE2BB97B15FC698B1 /* RightShiftDoubleTap.swift */; };
 		B1F7DE75C435E27CBE2D7E46 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3365FD8F07C12E040C289782 /* NotificationManager.swift */; };
 		B9B901E312947BA001AA851A /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 455D671918A8978F487BE5A3 /* AuthService.swift */; };
 		BA9C69312D42362DA4792749 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F09A8CE5B0C5B5909926A2 /* AppState.swift */; };
+		C8E30131C77AEEB97E8BD9EA /* AppSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58EBA91AAE8FB4B261A74C6A /* AppSettingsTests.swift */; };
 		D04BBDD4A6EDC2CBA15EBFA4 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42375CADA68C4F118493F2F /* HotkeyManager.swift */; };
 		D488206B257377A83025E969 /* DictionaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A776921F379AB0CEC10827DD /* DictionaryService.swift */; };
 		D78C770AA9AB5B9FB3411043 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118CE6501676196C95D1D77F /* KeychainHelper.swift */; };
 		E74D7495D2DAC1DCFE31BB0B /* ClipboardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EF6796F518391B6012D0D27 /* ClipboardManager.swift */; };
 		EDFCC927970357BA45BA52E5 /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100CA49AFE8AA792673C599 /* AudioRecorder.swift */; };
+		EED2B09FA2EBAD970E03053A /* GlobalDictionaryRequestService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5B80BF66F2F65A57CBCDCA /* GlobalDictionaryRequestService.swift */; };
 		F04E14CA4D4DCA2E1974A613 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B44D5D20EC188C020F6B2E14 /* AppSettings.swift */; };
 		F15BF20AB9A9CA87A3F4E920 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 174515ACBA50E00885D23261 /* MenuBarView.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		C12BEB01F11A5CC8B7CB53EE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AAEDFB7C1ACD7768531AB8C5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 023D8E8DB875C15BC13D5673;
+			remoteInfo = VoxType;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		0C5B80BF66F2F65A57CBCDCA /* GlobalDictionaryRequestService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalDictionaryRequestService.swift; sourceTree = "<group>"; };
 		10C1F73F50F6814E20419DA4 /* VoxType.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoxType.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		118CE6501676196C95D1D77F /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		174515ACBA50E00885D23261 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		19F2DE65EB78B07520A5DDFE /* RightShiftDoubleTapToggleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RightShiftDoubleTapToggleTests.swift; sourceTree = "<group>"; };
 		1A6482D76EC02EADE67E028D /* ModelSelectionWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSelectionWindow.swift; sourceTree = "<group>"; };
 		2527D575966A30D09FC2EC7D /* IMETextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IMETextField.swift; sourceTree = "<group>"; };
 		26D1DB6175AE6321CE8A80FE /* RecordingOverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingOverlayWindow.swift; sourceTree = "<group>"; };
-		2B9E1D532F40A61D00A45EC1 /* GlobalDictionaryRequestService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalDictionaryRequestService.swift; sourceTree = "<group>"; };
+		30AA185DE2BB97B15FC698B1 /* RightShiftDoubleTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RightShiftDoubleTap.swift; sourceTree = "<group>"; };
 		3365FD8F07C12E040C289782 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		34E8E64F2F70CC44B0C287FB /* HotkeyUiVisibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyUiVisibilityTests.swift; sourceTree = "<group>"; };
 		455D671918A8978F487BE5A3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		58EBA91AAE8FB4B261A74C6A /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
 		5C828D8BC3197F865E245631 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		66F09A8CE5B0C5B5909926A2 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		6A0D574F0A182B8C48AEA831 /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
+		750C4DEAAEA4AE1F68568FD6 /* DoubleTapWindowDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapWindowDetectorTests.swift; sourceTree = "<group>"; };
 		8EF6796F518391B6012D0D27 /* ClipboardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManager.swift; sourceTree = "<group>"; };
 		A100CA49AFE8AA792673C599 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		A776921F379AB0CEC10827DD /* DictionaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryService.swift; sourceTree = "<group>"; };
@@ -51,6 +71,7 @@
 		B44D5D20EC188C020F6B2E14 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		CFC5D232DDE09D52CF7D5E4D /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		D42375CADA68C4F118493F2F /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
+		D5898330F6B472E928994C6E /* VoxTypeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoxTypeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E99F2E3C3B8786BE7F66998A /* AudioVisualizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioVisualizerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -59,6 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				10C1F73F50F6814E20419DA4 /* VoxType.app */,
+				D5898330F6B472E928994C6E /* VoxTypeTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -67,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				EE7A45A19EE126703332CF5A /* VoxType */,
+				C4152E87EA7087C5855CE451 /* VoxTypeTests */,
 				2A4EDE1DE1B56E115564E1F0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -74,15 +97,16 @@
 		63F1BB324CD4A3E60A743794 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				2B9E1D532F40A61D00A45EC1 /* GlobalDictionaryRequestService.swift */,
 				CFC5D232DDE09D52CF7D5E4D /* APIClient.swift */,
 				A100CA49AFE8AA792673C599 /* AudioRecorder.swift */,
 				455D671918A8978F487BE5A3 /* AuthService.swift */,
 				8EF6796F518391B6012D0D27 /* ClipboardManager.swift */,
 				A776921F379AB0CEC10827DD /* DictionaryService.swift */,
+				0C5B80BF66F2F65A57CBCDCA /* GlobalDictionaryRequestService.swift */,
 				D42375CADA68C4F118493F2F /* HotkeyManager.swift */,
 				118CE6501676196C95D1D77F /* KeychainHelper.swift */,
 				3365FD8F07C12E040C289782 /* NotificationManager.swift */,
+				30AA185DE2BB97B15FC698B1 /* RightShiftDoubleTap.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -98,6 +122,17 @@
 				5C828D8BC3197F865E245631 /* SettingsView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		C4152E87EA7087C5855CE451 /* VoxTypeTests */ = {
+			isa = PBXGroup;
+			children = (
+				58EBA91AAE8FB4B261A74C6A /* AppSettingsTests.swift */,
+				750C4DEAAEA4AE1F68568FD6 /* DoubleTapWindowDetectorTests.swift */,
+				34E8E64F2F70CC44B0C287FB /* HotkeyUiVisibilityTests.swift */,
+				19F2DE65EB78B07520A5DDFE /* RightShiftDoubleTapToggleTests.swift */,
+			);
+			path = VoxTypeTests;
 			sourceTree = "<group>";
 		};
 		E270E555263A22B5B78DA23E /* Settings */ = {
@@ -152,6 +187,24 @@
 			productReference = 10C1F73F50F6814E20419DA4 /* VoxType.app */;
 			productType = "com.apple.product-type.application";
 		};
+		3E788CC3310F4001187F6391 /* VoxTypeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 40709DC1569162413249E07F /* Build configuration list for PBXNativeTarget "VoxTypeTests" */;
+			buildPhases = (
+				D0F5D9275F95E119571A4D86 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				786B204E01CF9E88FD877B2F /* PBXTargetDependency */,
+			);
+			name = VoxTypeTests;
+			packageProductDependencies = (
+			);
+			productName = VoxTypeTests;
+			productReference = D5898330F6B472E928994C6E /* VoxTypeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -162,6 +215,10 @@
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					023D8E8DB875C15BC13D5673 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					3E788CC3310F4001187F6391 = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
@@ -182,6 +239,7 @@
 			projectRoot = "";
 			targets = (
 				023D8E8DB875C15BC13D5673 /* VoxType */,
+				3E788CC3310F4001187F6391 /* VoxTypeTests */,
 			);
 		};
 /* End PBXProject section */
@@ -206,11 +264,11 @@
 				F04E14CA4D4DCA2E1974A613 /* AppSettings.swift in Sources */,
 				BA9C69312D42362DA4792749 /* AppState.swift in Sources */,
 				EDFCC927970357BA45BA52E5 /* AudioRecorder.swift in Sources */,
-				2B9E1D542F40A61D00A45EC1 /* GlobalDictionaryRequestService.swift in Sources */,
 				1F0DA61E5523298E8D4EEEC5 /* AudioVisualizerView.swift in Sources */,
 				B9B901E312947BA001AA851A /* AuthService.swift in Sources */,
 				E74D7495D2DAC1DCFE31BB0B /* ClipboardManager.swift in Sources */,
 				D488206B257377A83025E969 /* DictionaryService.swift in Sources */,
+				EED2B09FA2EBAD970E03053A /* GlobalDictionaryRequestService.swift in Sources */,
 				D04BBDD4A6EDC2CBA15EBFA4 /* HotkeyManager.swift in Sources */,
 				492247172F4D7E53C39BCAA2 /* IMETextField.swift in Sources */,
 				D78C770AA9AB5B9FB3411043 /* KeychainHelper.swift in Sources */,
@@ -219,14 +277,51 @@
 				11C95B53FB379B153FD9F824 /* ModelSelectionWindow.swift in Sources */,
 				B1F7DE75C435E27CBE2D7E46 /* NotificationManager.swift in Sources */,
 				50651D36BBFBF4CB5D09C7D3 /* RecordingOverlayWindow.swift in Sources */,
+				A31D82B3FDEFF0E296C5B294 /* RightShiftDoubleTap.swift in Sources */,
 				9BC11348C122CE390028B17C /* SettingsView.swift in Sources */,
 				4AEBB69FB7A4D00E3537FF17 /* VoxTypeApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D0F5D9275F95E119571A4D86 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8E30131C77AEEB97E8BD9EA /* AppSettingsTests.swift in Sources */,
+				9EBA35E0758E7309EC160706 /* DoubleTapWindowDetectorTests.swift in Sources */,
+				A1A8549E5A7CB72D3D985A18 /* HotkeyUiVisibilityTests.swift in Sources */,
+				139AE1F011013AF78EFFB1FD /* RightShiftDoubleTapToggleTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		786B204E01CF9E88FD877B2F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 023D8E8DB875C15BC13D5673 /* VoxType */;
+			targetProxy = C12BEB01F11A5CC8B7CB53EE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		045C1BEC44A9A1DCAE86EE53 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.voxtype.appTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VoxType.app/Contents/MacOS/VoxType";
+			};
+			name = Release;
+		};
 		5B452DBEE818FF788BF58307 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -354,6 +449,23 @@
 			};
 			name = Debug;
 		};
+		B615DE706FAFEB4684868B0E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.voxtype.appTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VoxType.app/Contents/MacOS/VoxType";
+			};
+			name = Debug;
+		};
 		C7E294564975E3D2343FA4A3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -387,6 +499,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		40709DC1569162413249E07F /* Build configuration list for PBXNativeTarget "VoxTypeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B615DE706FAFEB4684868B0E /* Debug */,
+				045C1BEC44A9A1DCAE86EE53 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		4396DF2ED929CB7F8368F16C /* Build configuration list for PBXNativeTarget "VoxType" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -52,3 +52,15 @@ targets:
         com.apple.security.app-sandbox: false
         com.apple.security.device.audio-input: true
         com.apple.security.network.client: true
+
+  VoxTypeTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: VoxTypeTests
+    dependencies:
+      - target: VoxType
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.voxtype.appTests
+        GENERATE_INFOPLIST_FILE: YES

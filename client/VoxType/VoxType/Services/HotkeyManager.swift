@@ -37,6 +37,9 @@ class HotkeyManager: ObservableObject {
     /// Called when mouse hotkey long press ends.
     var onMouseHotkeyUp: (() -> Void)?
 
+    /// Called when right-shift double-tap is detected.
+    var onRightShiftDoubleTapToggle: (() -> Void)?
+
     // MARK: - Private Properties
 
     /// The event tap for monitoring keyboard events.
@@ -56,6 +59,21 @@ class HotkeyManager: ObservableObject {
 
     /// Frontmost app captured on mouse press.
     private var mouseHotkeyTargetApp: NSRunningApplication?
+
+    /// Right-shift key code.
+    nonisolated private static let rightShiftKeyCode: UInt16 = 60
+
+    /// Double-tap state holder for right-shift mode.
+    nonisolated private static let rightShiftTapStateLock = NSLock()
+    nonisolated(unsafe) private static var lastRightShiftTapAt: TimeInterval?
+
+    /// Snapshot mode used by active recording session.
+    private var activeRecordingMode: RecordingHotkeyMode?
+
+    /// Right-shift input-test state.
+    nonisolated private static let rightShiftInputTestLock = NSLock()
+    nonisolated(unsafe) private static var isRightShiftInputTestActive = false
+    private var rightShiftInputTestCompletion: ((Bool) -> Void)?
 
     /// Settings reference for hotkey configuration.
     private let settings = AppSettings.shared
@@ -128,6 +146,7 @@ class HotkeyManager: ObservableObject {
         runLoopSource = nil
         isMonitoring = false
         isHotkeyPressed = false
+        activeRecordingMode = nil
     }
 
     /// Refresh monitoring based on current settings.
@@ -136,6 +155,24 @@ class HotkeyManager: ObservableObject {
             _ = startMonitoring()
         } else {
             stopMonitoring()
+        }
+    }
+
+    /// Run one-shot input test for right shift without starting recording.
+    func runRightShiftInputTest(timeout: TimeInterval = 3.0, completion: @escaping (Bool) -> Void) {
+        guard timeout > 0 else {
+            completion(false)
+            return
+        }
+
+        rightShiftInputTestCompletion = completion
+
+        Self.rightShiftInputTestLock.lock()
+        Self.isRightShiftInputTestActive = true
+        Self.rightShiftInputTestLock.unlock()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in
+            self?.finishRightShiftInputTest(success: false)
         }
     }
 
@@ -179,6 +216,15 @@ class HotkeyManager: ObservableObject {
         let callback: CGEventTapCallBack = { proxy, type, event, refcon in
             guard let refcon = refcon else { return Unmanaged.passRetained(event) }
             let manager = Unmanaged<HotkeyManager>.fromOpaque(refcon).takeUnretainedValue()
+
+            if manager.handleRightShiftInputTestSync(type: type, event: event) {
+                return Unmanaged.passRetained(event)
+            }
+
+            if manager.isRightShiftDoubleTapModeSync() && type == .flagsChanged {
+                let shouldConsume = manager.handleRightShiftDoubleTapSync(event: event)
+                return shouldConsume ? nil : Unmanaged.passRetained(event)
+            }
 
             // Check if this is our hotkey (synchronously, thread-safe)
             let isHotkey = manager.isMatchingHotkeySync(event: event)
@@ -245,7 +291,7 @@ class HotkeyManager: ObservableObject {
         guard isEnabled else { return false }
 
         let mode = UserDefaults.standard.string(forKey: "recordingHotkeyMode") ?? "keyboard"
-        guard mode == "keyboard" else { return false }
+        guard mode == "keyboardHold" || mode == "keyboard" else { return false }
 
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
@@ -318,7 +364,7 @@ class HotkeyManager: ObservableObject {
         guard isEnabled else { return false }
 
         let mode = UserDefaults.standard.string(forKey: "recordingHotkeyMode") ?? "keyboard"
-        guard mode == "mouseWheel" else { return false }
+        guard mode == "mouseWheelHold" || mode == "mouseWheel" else { return false }
 
         let buttonNumber = event.getIntegerValueField(.mouseEventButtonNumber)
         return buttonNumber == 2
@@ -340,10 +386,13 @@ class HotkeyManager: ObservableObject {
         mouseHoldTimer?.invalidate()
         mouseHoldTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
             guard let self else { return }
-            guard self.isMousePressed else { return }
+            Task { @MainActor in
+                guard self.isMousePressed else { return }
 
-            self.isMouseHoldActive = true
-            self.onMouseHotkeyDown?(self.mouseHotkeyTargetApp)
+                self.isMouseHoldActive = true
+                self.activeRecordingMode = .mouseWheelHold
+                self.onMouseHotkeyDown?(self.mouseHotkeyTargetApp)
+            }
         }
     }
 
@@ -356,6 +405,7 @@ class HotkeyManager: ObservableObject {
 
         if isMouseHoldActive {
             isMouseHoldActive = false
+            activeRecordingMode = nil
             onMouseHotkeyUp?()
         }
 
@@ -367,6 +417,10 @@ class HotkeyManager: ObservableObject {
     }
 
     private func handleEvent(type: CGEventType, event: CGEvent) {
+        if effectiveRecordingMode() == .rightShiftDoubleTap {
+            return
+        }
+
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
 
@@ -379,12 +433,14 @@ class HotkeyManager: ObservableObject {
         case .keyDown:
             if !isHotkeyPressed {
                 isHotkeyPressed = true
+                activeRecordingMode = .keyboardHold
                 onHotkeyDown?()
             }
 
         case .keyUp:
             if isHotkeyPressed {
                 isHotkeyPressed = false
+                activeRecordingMode = nil
                 onHotkeyUp?()
             }
 
@@ -394,6 +450,7 @@ class HotkeyManager: ObservableObject {
             if isHotkeyPressed && !isModifierPressed {
                 // Modifiers were released
                 isHotkeyPressed = false
+                activeRecordingMode = nil
                 onHotkeyUp?()
             }
 
@@ -404,7 +461,7 @@ class HotkeyManager: ObservableObject {
 
     private func isMatchingHotkey(keyCode: UInt16, flags: CGEventFlags) -> Bool {
         guard settings.hotkeyEnabled else { return false }
-        guard settings.recordingHotkeyMode == .keyboard else { return false }
+        guard effectiveRecordingMode() == .keyboardHold else { return false }
 
         // Get configured hotkey
         let configuredKeyCode = settings.hotkeyKeyCode
@@ -415,6 +472,97 @@ class HotkeyManager: ObservableObject {
 
         // Check modifiers
         return checkModifiersMatch(flags: flags, required: configuredModifiers)
+    }
+
+    private func effectiveRecordingMode() -> RecordingHotkeyMode {
+        if isHotkeyPressed, let activeRecordingMode {
+            return activeRecordingMode
+        }
+        return settings.recordingHotkeyMode
+    }
+
+    nonisolated private func isRightShiftDoubleTapModeSync() -> Bool {
+        let mode = UserDefaults.standard.string(forKey: "recordingHotkeyMode") ?? "keyboard"
+        return mode == "rightShiftDoubleTap"
+    }
+
+    nonisolated private func handleRightShiftDoubleTapSync(event: CGEvent) -> Bool {
+        let isEnabled = UserDefaults.standard.object(forKey: "hotkeyEnabled") as? Bool ?? true
+        guard isEnabled else { return false }
+
+        let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
+        let isShiftPressed = event.flags.contains(.maskShift)
+        let isAutoRepeat = event.getIntegerValueField(.keyboardEventAutorepeat) != 0
+
+        if keyCode != Self.rightShiftKeyCode {
+            Self.rightShiftTapStateLock.lock()
+            Self.lastRightShiftTapAt = nil
+            Self.rightShiftTapStateLock.unlock()
+            return false
+        }
+
+        guard isShiftPressed, !isAutoRepeat else { return false }
+
+        let now = CFAbsoluteTimeGetCurrent()
+
+        Self.rightShiftTapStateLock.lock()
+        defer { Self.rightShiftTapStateLock.unlock() }
+
+        let shouldToggle: Bool
+        if let last = Self.lastRightShiftTapAt, now - last <= 0.4 {
+            shouldToggle = true
+            Self.lastRightShiftTapAt = nil
+        } else {
+            shouldToggle = false
+            Self.lastRightShiftTapAt = now
+        }
+
+        guard shouldToggle else { return false }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.isHotkeyPressed.toggle()
+            if self.isHotkeyPressed {
+                self.activeRecordingMode = .rightShiftDoubleTap
+                self.onHotkeyDown?()
+            } else {
+                self.activeRecordingMode = nil
+                self.onHotkeyUp?()
+            }
+            self.onRightShiftDoubleTapToggle?()
+        }
+
+        return true
+    }
+
+    nonisolated private func handleRightShiftInputTestSync(type: CGEventType, event: CGEvent) -> Bool {
+        guard type == .flagsChanged else { return false }
+
+        Self.rightShiftInputTestLock.lock()
+        let isActive = Self.isRightShiftInputTestActive
+        Self.rightShiftInputTestLock.unlock()
+        guard isActive else { return false }
+
+        let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
+        let isShiftPressed = event.flags.contains(.maskShift)
+        guard keyCode == Self.rightShiftKeyCode, isShiftPressed else { return false }
+
+        DispatchQueue.main.async { [weak self] in
+            self?.finishRightShiftInputTest(success: true)
+        }
+        return true
+    }
+
+    private func finishRightShiftInputTest(success: Bool) {
+        Self.rightShiftInputTestLock.lock()
+        let wasActive = Self.isRightShiftInputTestActive
+        Self.isRightShiftInputTestActive = false
+        Self.rightShiftInputTestLock.unlock()
+        guard wasActive else { return }
+
+        let completion = rightShiftInputTestCompletion
+        rightShiftInputTestCompletion = nil
+        completion?(success)
     }
 
     private func checkModifiersMatch(flags: CGEventFlags, required: UInt? = nil) -> Bool {

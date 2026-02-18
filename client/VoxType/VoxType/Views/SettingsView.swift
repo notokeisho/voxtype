@@ -1,5 +1,47 @@
 import SwiftUI
 
+struct HotkeyUiVisibility {
+    let showModePicker: Bool
+    let showKeyboardEditor: Bool
+    let showRightShiftHint: Bool
+    let showMouseHoldHint: Bool
+
+    static func resolve(hotkeyEnabled: Bool, mode: RecordingHotkeyMode) -> HotkeyUiVisibility {
+        guard hotkeyEnabled else {
+            return HotkeyUiVisibility(
+                showModePicker: false,
+                showKeyboardEditor: false,
+                showRightShiftHint: false,
+                showMouseHoldHint: false
+            )
+        }
+
+        switch mode {
+        case .keyboardHold:
+            return HotkeyUiVisibility(
+                showModePicker: true,
+                showKeyboardEditor: true,
+                showRightShiftHint: false,
+                showMouseHoldHint: false
+            )
+        case .rightShiftDoubleTap:
+            return HotkeyUiVisibility(
+                showModePicker: true,
+                showKeyboardEditor: false,
+                showRightShiftHint: true,
+                showMouseHoldHint: false
+            )
+        case .mouseWheelHold:
+            return HotkeyUiVisibility(
+                showModePicker: true,
+                showKeyboardEditor: false,
+                showRightShiftHint: false,
+                showMouseHoldHint: true
+            )
+        }
+    }
+}
+
 /// Settings view for the application.
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
@@ -410,6 +452,9 @@ struct HotkeySettingsView: View {
     @State private var modelUseControl = false
     @State private var modelUseOption = true
     @State private var modelSelectedKeyCode: UInt16 = 49  // Space
+    @State private var isRunningRightShiftTest = false
+    @State private var rightShiftTestMessage: String?
+    @State private var isRightShiftTestError = false
 
     // Available keys for selection
     private let availableKeys: [(String, UInt16)] = [
@@ -474,10 +519,22 @@ struct HotkeySettingsView: View {
                     Toggle(localization.t("hotkey.recordingEnabled"), isOn: $settings.hotkeyEnabled)
                         .toggleStyle(.switch)
 
-                    if settings.hotkeyEnabled {
+                    let visibility = HotkeyUiVisibility.resolve(
+                        hotkeyEnabled: settings.hotkeyEnabled,
+                        mode: settings.recordingHotkeyMode
+                    )
+
+                    if visibility.showModePicker {
                         Divider()
 
-                        if settings.recordingHotkeyMode == .keyboard {
+                        Picker(localization.t("hotkey.recordingMode"), selection: $settings.recordingHotkeyMode) {
+                            Text(localization.t("hotkey.mode.rightShiftDoubleTap")).tag(RecordingHotkeyMode.rightShiftDoubleTap)
+                            Text(localization.t("hotkey.mode.keyboardHold")).tag(RecordingHotkeyMode.keyboardHold)
+                            Text(localization.t("hotkey.mode.mouseWheelHold")).tag(RecordingHotkeyMode.mouseWheelHold)
+                        }
+                        .pickerStyle(.menu)
+
+                        if visibility.showKeyboardEditor {
                             HStack {
                                 Text(localization.t("hotkey.current"))
                                     .font(.headline)
@@ -547,22 +604,40 @@ struct HotkeySettingsView: View {
                                 }
                                 .padding()
                                 .background(Color.secondary.opacity(0.1))
-                                .cornerRadius(8)
+                                    .cornerRadius(8)
                             }
-                            Toggle(localization.t("hotkey.mouseHoldEnabled"), isOn: $settings.isMouseWheelRecordingEnabled)
-                                .toggleStyle(.switch)
 
                             Text(localization.t("hotkey.description"))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                        } else {
-                            Toggle(localization.t("hotkey.mouseHoldEnabled"), isOn: $settings.isMouseWheelRecordingEnabled)
-                                .toggleStyle(.switch)
+                        } else if visibility.showRightShiftHint {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(localization.t("hotkey.rightShiftHint"))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
 
+                                Button(localization.t("hotkey.rightShiftTest")) {
+                                    runRightShiftInputTest()
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(isRunningRightShiftTest)
+
+                                if let rightShiftTestMessage {
+                                    Text(rightShiftTestMessage)
+                                        .font(.caption)
+                                        .foregroundColor(isRightShiftTestError ? .red : .green)
+                                }
+                            }
+                        } else if visibility.showMouseHoldHint {
                             Text(localization.t("hotkey.mouseHoldHint"))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
+                        } else {
+                            Text(localization.t("hotkey.description"))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
+
                     }
                 }
             } header: {
@@ -684,6 +759,9 @@ struct HotkeySettingsView: View {
         .onChange(of: settings.hotkeyEnabled) { newValue in
             if !newValue {
                 isEditing = false
+                isRunningRightShiftTest = false
+                rightShiftTestMessage = nil
+                isRightShiftTestError = false
             }
         }
         .onChange(of: settings.modelHotkeyEnabled) { newValue in
@@ -758,6 +836,25 @@ struct HotkeySettingsView: View {
         if modelUseShift { modifiers |= (1 << 17) }
         if modelUseCommand { modifiers |= (1 << 20) }
         return modifiers
+    }
+
+    private func runRightShiftInputTest() {
+        isRunningRightShiftTest = true
+        isRightShiftTestError = false
+        rightShiftTestMessage = localization.t("hotkey.rightShiftTestInstruction")
+
+        hotkeyManager.runRightShiftInputTest { success in
+            Task { @MainActor in
+                isRunningRightShiftTest = false
+                if success {
+                    isRightShiftTestError = false
+                    rightShiftTestMessage = localization.t("hotkey.rightShiftTestSuccess")
+                } else {
+                    isRightShiftTestError = true
+                    rightShiftTestMessage = localization.t("hotkey.rightShiftTestFailed")
+                }
+            }
+        }
     }
 }
 
