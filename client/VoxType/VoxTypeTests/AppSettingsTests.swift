@@ -15,27 +15,27 @@ final class AppSettingsTests: XCTestCase {
     }
 
     @MainActor
-    func testRecordingHotkeyModeDefaultIsKeyboardHold() {
+    func testRecordingHotkeyModeDefaultIsRightShiftDoubleTap() {
         let settings = AppSettings.shared
         settings.resetToDefaults()
 
         XCTAssertEqual(
             settings.recordingHotkeyMode.rawValue,
-            "keyboardHold",
-            "録音方式の既定値は keyboardHold である必要があります。"
+            "rightShiftDoubleTap",
+            "録音方式の既定値は rightShiftDoubleTap である必要があります。"
         )
     }
 
     @MainActor
-    func testRecordingHotkeyModePersistedValueIsKeyboardHold() {
+    func testRecordingHotkeyModePersistedValueIsRightShiftDoubleTap() {
         let settings = AppSettings.shared
         settings.resetToDefaults()
 
         let stored = UserDefaults.standard.string(forKey: recordingHotkeyModeKey)
         XCTAssertEqual(
             stored,
-            "keyboardHold",
-            "recordingHotkeyMode の保存値は keyboardHold である必要があります。"
+            "rightShiftDoubleTap",
+            "recordingHotkeyMode の保存値は rightShiftDoubleTap である必要があります。"
         )
     }
 }
