@@ -6,7 +6,8 @@ final class HotkeyManagerKeyboardHoldTransitionTests: XCTestCase {
         let transition = HotkeyManager.resolveKeyboardHoldTransition(
             type: .keyUp,
             isKeyboardHoldMode: true,
-            isMatchingHotkey: false,
+            isKeyDownHotkeyMatch: false,
+            isKeyUpConfiguredKeyMatch: true,
             isHotkeyPressed: true,
             isModifierPressed: false
         )
@@ -22,7 +23,8 @@ final class HotkeyManagerKeyboardHoldTransitionTests: XCTestCase {
         let transition = HotkeyManager.resolveKeyboardHoldTransition(
             type: .flagsChanged,
             isKeyboardHoldMode: true,
-            isMatchingHotkey: false,
+            isKeyDownHotkeyMatch: false,
+            isKeyUpConfiguredKeyMatch: false,
             isHotkeyPressed: true,
             isModifierPressed: false
         )
@@ -38,7 +40,8 @@ final class HotkeyManagerKeyboardHoldTransitionTests: XCTestCase {
         let transition = HotkeyManager.resolveKeyboardHoldTransition(
             type: .keyUp,
             isKeyboardHoldMode: true,
-            isMatchingHotkey: false,
+            isKeyDownHotkeyMatch: false,
+            isKeyUpConfiguredKeyMatch: false,
             isHotkeyPressed: false,
             isModifierPressed: false
         )

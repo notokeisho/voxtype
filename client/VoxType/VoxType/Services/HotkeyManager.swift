@@ -429,10 +429,16 @@ class HotkeyManager: ObservableObject {
 
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
+        let isKeyboardHoldMode = effectiveRecordingMode() == .keyboardHold
+        let isKeyDownHotkeyMatch = isMatchingHotkey(keyCode: keyCode, flags: flags)
+        let isKeyUpConfiguredKeyMatch = settings.hotkeyEnabled
+            && isKeyboardHoldMode
+            && keyCode == settings.hotkeyKeyCode
         let transition = Self.resolveKeyboardHoldTransition(
             type: type,
-            isKeyboardHoldMode: effectiveRecordingMode() == .keyboardHold,
-            isMatchingHotkey: isMatchingHotkey(keyCode: keyCode, flags: flags),
+            isKeyboardHoldMode: isKeyboardHoldMode,
+            isKeyDownHotkeyMatch: isKeyDownHotkeyMatch,
+            isKeyUpConfiguredKeyMatch: isKeyUpConfiguredKeyMatch,
             isHotkeyPressed: isHotkeyPressed,
             isModifierPressed: type == .flagsChanged ? checkModifiersMatch(flags: flags) : false
         )
@@ -454,18 +460,18 @@ class HotkeyManager: ObservableObject {
     static func resolveKeyboardHoldTransition(
         type: CGEventType,
         isKeyboardHoldMode: Bool,
-        isMatchingHotkey: Bool,
+        isKeyDownHotkeyMatch: Bool,
+        isKeyUpConfiguredKeyMatch: Bool,
         isHotkeyPressed: Bool,
         isModifierPressed: Bool
     ) -> KeyboardHoldTransition {
         guard isKeyboardHoldMode else { return .none }
-        guard isMatchingHotkey else { return .none }
 
         switch type {
         case .keyDown:
-            return isHotkeyPressed ? .none : .start
+            return (!isHotkeyPressed && isKeyDownHotkeyMatch) ? .start : .none
         case .keyUp:
-            return isHotkeyPressed ? .stop : .none
+            return (isHotkeyPressed && isKeyUpConfiguredKeyMatch) ? .stop : .none
         case .flagsChanged:
             return (isHotkeyPressed && !isModifierPressed) ? .stop : .none
         default:
