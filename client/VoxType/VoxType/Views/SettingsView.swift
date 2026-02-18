@@ -528,8 +528,8 @@ struct HotkeySettingsView: View {
                         Divider()
 
                         Picker(localization.t("hotkey.recordingMode"), selection: $settings.recordingHotkeyMode) {
-                            Text(localization.t("hotkey.mode.keyboardHold")).tag(RecordingHotkeyMode.keyboardHold)
                             Text(localization.t("hotkey.mode.rightShiftDoubleTap")).tag(RecordingHotkeyMode.rightShiftDoubleTap)
+                            Text(localization.t("hotkey.mode.keyboardHold")).tag(RecordingHotkeyMode.keyboardHold)
                             Text(localization.t("hotkey.mode.mouseWheelHold")).tag(RecordingHotkeyMode.mouseWheelHold)
                         }
                         .pickerStyle(.menu)

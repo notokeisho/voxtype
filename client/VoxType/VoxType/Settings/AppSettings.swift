@@ -40,7 +40,7 @@ class AppSettings: ObservableObject {
         static let hotkeyModifiers: UInt = 0x040000  // Control only
         static let hotkeyKeyCode: UInt16 = 47        // Period key (.)
         static let hotkeyEnabled = true
-        static let recordingHotkeyMode: RecordingHotkeyMode = .keyboardHold
+        static let recordingHotkeyMode: RecordingHotkeyMode = .rightShiftDoubleTap
         static let modelHotkeyModifiers: UInt = 0x040000  // Control only
         static let modelHotkeyKeyCode: UInt16 = 46        // M key
         static let modelHotkeyEnabled = true
