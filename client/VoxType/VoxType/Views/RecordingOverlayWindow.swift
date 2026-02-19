@@ -13,6 +13,12 @@ class RecordingOverlayWindow: NSPanel {
     /// Reference to app state for audio level updates.
     private weak var appState: AppState?
 
+    /// Temporary message displayed in overlay.
+    private var temporaryMessage: String?
+
+    /// Work item for clearing temporary message.
+    private var temporaryMessageWorkItem: DispatchWorkItem?
+
     /// Window width.
     private let windowWidth: CGFloat = 200
 
@@ -125,13 +131,35 @@ class RecordingOverlayWindow: NSPanel {
         }
     }
 
+    /// Show a temporary centered message over the overlay.
+    func showTemporaryMessage(_ message: String, duration: TimeInterval) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            self.temporaryMessageWorkItem?.cancel()
+            self.temporaryMessage = message
+            self.updateContent()
+
+            let work = DispatchWorkItem { [weak self] in
+                guard let self = self else { return }
+                self.temporaryMessage = nil
+                self.updateContent()
+            }
+            self.temporaryMessageWorkItem = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: work)
+        }
+    }
+
     // MARK: - Private Methods
 
     /// Update the SwiftUI content view.
     private func updateContent() {
         guard let appState = appState else { return }
 
-        let contentView = RecordingOverlayContentView(appState: appState)
+        let contentView = RecordingOverlayContentView(
+            appState: appState,
+            message: temporaryMessage
+        )
             .frame(width: windowWidth, height: windowHeight)
 
         if let hostingView = hostingView {
@@ -150,6 +178,7 @@ class RecordingOverlayWindow: NSPanel {
 /// SwiftUI content view for the recording overlay.
 private struct RecordingOverlayContentView: View {
     @ObservedObject var appState: AppState
+    let message: String?
 
     var body: some View {
         ZStack {
@@ -165,6 +194,14 @@ private struct RecordingOverlayContentView: View {
             AudioVisualizerView(audioLevel: appState.audioLevel)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
+
+            if let message {
+                Text(message)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 12)
+            }
         }
     }
 }
@@ -195,7 +232,7 @@ private struct VisualEffectView: NSViewRepresentable {
 #if DEBUG
 struct RecordingOverlayContentView_Previews: PreviewProvider {
     static var previews: some View {
-        RecordingOverlayContentView(appState: AppState())
+        RecordingOverlayContentView(appState: AppState(), message: nil)
             .frame(width: 200, height: 50)
             .previewDisplayName("Overlay Content")
     }
