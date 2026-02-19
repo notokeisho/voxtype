@@ -102,6 +102,9 @@ class AppState: ObservableObject {
     /// Timer for syncing recording state.
     private var syncTimer: Timer?
 
+    /// Guard to ensure stop-processing flow runs only once.
+    private var isStopProcessingInFlight = false
+
     /// Cancellables for Combine subscriptions.
     private var cancellables = Set<AnyCancellable>()
 
@@ -170,6 +173,7 @@ class AppState: ObservableObject {
     @discardableResult
     func startRecording() -> Bool {
         cancelTimers()
+        isStopProcessingInFlight = false
 
         guard audioRecorder.startRecording() else {
             setError(audioRecorder.errorMessage ?? "Failed to start recording")
@@ -195,6 +199,8 @@ class AppState: ObservableObject {
     @discardableResult
     func stopRecording() -> URL? {
         guard status == .recording else { return nil }
+        guard !isStopProcessingInFlight else { return nil }
+        isStopProcessingInFlight = true
 
         syncTimer?.invalidate()
         syncTimer = nil
@@ -206,9 +212,25 @@ class AppState: ObservableObject {
         return url
     }
 
+    /// Handle auto-stopped recording and transition to processing once.
+    @discardableResult
+    func handleAutoStoppedRecording(url: URL?) -> URL? {
+        guard status == .recording else { return nil }
+        guard !isStopProcessingInFlight else { return nil }
+        isStopProcessingInFlight = true
+
+        syncTimer?.invalidate()
+        syncTimer = nil
+        audioLevel = 0
+        status = .processing
+
+        return url
+    }
+
     /// Cancel recording without processing.
     func cancelRecording() {
         guard status == .recording else { return }
+        isStopProcessingInFlight = false
 
         syncTimer?.invalidate()
         syncTimer = nil
@@ -244,6 +266,7 @@ class AppState: ObservableObject {
     /// Reset the state to idle.
     func reset() {
         cancelTimers()
+        isStopProcessingInFlight = false
         status = .idle
         lastError = nil
         audioLevel = 0
