@@ -210,6 +210,7 @@ class LocalizationManager: ObservableObject {
         "status.processing": "Processing...",
         "status.completed": "Completed",
         "status.error": "Error",
+        "overlay.autoStop60s": "Auto-stopped at 60 seconds",
 
         // Errors
         "error.loginRequired": "Please log in to use voice transcription",
@@ -369,6 +370,7 @@ class LocalizationManager: ObservableObject {
         "status.processing": "処理中...",
         "status.completed": "完了",
         "status.error": "エラー",
+        "overlay.autoStop60s": "60秒で自動停止しました",
 
         // Errors
         "error.loginRequired": "音声文字起こしを使用するにはログインしてください",

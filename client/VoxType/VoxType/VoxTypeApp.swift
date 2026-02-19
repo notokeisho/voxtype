@@ -223,10 +223,15 @@ class AppCoordinator: ObservableObject {
         guard appState.status == .recording else { return }
 
         hotkeyManager?.resetRecordingInputState()
-        recordingOverlay.hideWithAnimation()
+        let autoStopMessage = LocalizationManager.shared.t("overlay.autoStop60s")
+        recordingOverlay.showTemporaryMessage(autoStopMessage, duration: 0.8)
 
         guard let validURL = appState.handleAutoStoppedRecording(url: url) else { return }
-        processRecording(url: validURL)
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 800_000_000)
+            recordingOverlay.hideWithAnimation()
+            processRecording(url: validURL)
+        }
     }
 
     private func handleModelHotkeyPressed() {
