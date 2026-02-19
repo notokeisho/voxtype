@@ -58,6 +58,7 @@ class AppCoordinator: ObservableObject {
     private weak var appState: AppState?
     private weak var authService: AuthService?
     private weak var hotkeyManager: HotkeyManager?
+    private let audioRecorder = AudioRecorder.shared
 
     /// Recording overlay window for visual feedback.
     private let recordingOverlay = RecordingOverlayWindow.shared
@@ -84,6 +85,7 @@ class AppCoordinator: ObservableObject {
         recordingOverlay.setup(appState: appState)
 
         setupHotkeyCallbacks()
+        setupAudioRecorderCallbacks()
         startHotkeyMonitoring()
         setupPreviousAppTracking()
 
@@ -148,6 +150,16 @@ class AppCoordinator: ObservableObject {
         }
     }
 
+    private func setupAudioRecorderCallbacks() {
+        audioRecorder.onRecordingStopped = { [weak self] url, reason in
+            Task { @MainActor in
+                guard let self else { return }
+                guard reason == .autoLimit else { return }
+                self.handleAutoLimitStop(url: url)
+            }
+        }
+    }
+
     private func setupPreviousAppTracking() {
         // Initialize with current frontmost app (if not VoxType)
         if let currentApp = NSWorkspace.shared.frontmostApplication,
@@ -204,6 +216,17 @@ class AppCoordinator: ObservableObject {
         if let url = audioURL {
             processRecording(url: url)
         }
+    }
+
+    private func handleAutoLimitStop(url: URL?) {
+        guard let appState = appState else { return }
+        guard appState.status == .recording else { return }
+
+        hotkeyManager?.resetRecordingInputState()
+        recordingOverlay.hideWithAnimation()
+
+        guard let validURL = appState.handleAutoStoppedRecording(url: url) else { return }
+        processRecording(url: validURL)
     }
 
     private func handleModelHotkeyPressed() {
