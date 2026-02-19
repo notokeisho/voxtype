@@ -6,6 +6,12 @@ import Cocoa
 /// Uses CGEvent tap to monitor keyboard events system-wide.
 @MainActor
 class HotkeyManager: ObservableObject {
+    enum KeyboardHoldTransition {
+        case none
+        case start
+        case stop
+    }
+
     /// Shared instance.
     static let shared = HotkeyManager()
 
@@ -69,6 +75,8 @@ class HotkeyManager: ObservableObject {
 
     /// Snapshot mode used by active recording session.
     private var activeRecordingMode: RecordingHotkeyMode?
+    /// Whether current recording session was started by keyboard hold.
+    private var isKeyboardHoldSessionActive = false
 
     /// Right-shift input-test state.
     nonisolated private static let rightShiftInputTestLock = NSLock()
@@ -147,6 +155,7 @@ class HotkeyManager: ObservableObject {
         isMonitoring = false
         isHotkeyPressed = false
         activeRecordingMode = nil
+        isKeyboardHoldSessionActive = false
     }
 
     /// Refresh monitoring based on current settings.
@@ -390,6 +399,7 @@ class HotkeyManager: ObservableObject {
                 guard self.isMousePressed else { return }
 
                 self.isMouseHoldActive = true
+                self.isKeyboardHoldSessionActive = false
                 self.activeRecordingMode = .mouseWheelHold
                 self.onMouseHotkeyDown?(self.mouseHotkeyTargetApp)
             }
@@ -423,40 +433,68 @@ class HotkeyManager: ObservableObject {
 
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
+        let isKeyboardHoldStartEnabled = settings.hotkeyEnabled && settings.recordingHotkeyMode == .keyboardHold
+        let isKeyboardHoldStopEligible = isKeyboardHoldSessionActive
+        let isKeyDownHotkeyMatch = isKeyboardHoldStartEnabled && isMatchingHotkey(keyCode: keyCode, flags: flags)
+        let isKeyUpConfiguredKeyMatch = settings.hotkeyEnabled && keyCode == settings.hotkeyKeyCode
+        let transition = Self.resolveKeyboardHoldTransition(
+            type: type,
+            isKeyboardHoldStartEnabled: isKeyboardHoldStartEnabled,
+            isKeyboardHoldStopEligible: isKeyboardHoldStopEligible,
+            isKeyDownHotkeyMatch: isKeyDownHotkeyMatch,
+            isKeyUpConfiguredKeyMatch: isKeyUpConfiguredKeyMatch,
+            isHotkeyPressed: isHotkeyPressed,
+            isModifierPressed: type == .flagsChanged ? checkModifiersMatch(flags: flags) : false
+        )
 
-        // Check if this is our hotkey
-        guard isMatchingHotkey(keyCode: keyCode, flags: flags) else {
-            return
-        }
-
-        switch type {
-        case .keyDown:
-            if !isHotkeyPressed {
-                isHotkeyPressed = true
-                activeRecordingMode = .keyboardHold
-                onHotkeyDown?()
-            }
-
-        case .keyUp:
-            if isHotkeyPressed {
-                isHotkeyPressed = false
-                activeRecordingMode = nil
-                onHotkeyUp?()
-            }
-
-        case .flagsChanged:
-            // Handle modifier-only hotkeys or modifier release
-            let isModifierPressed = checkModifiersMatch(flags: flags)
-            if isHotkeyPressed && !isModifierPressed {
-                // Modifiers were released
-                isHotkeyPressed = false
-                activeRecordingMode = nil
-                onHotkeyUp?()
-            }
-
-        default:
+        switch transition {
+        case .start:
+            startKeyboardHoldRecording()
+        case .stop:
+            stopKeyboardHoldRecordingIfNeeded()
+        case .none:
             break
         }
+    }
+
+    static func resolveKeyboardHoldTransition(
+        type: CGEventType,
+        isKeyboardHoldStartEnabled: Bool,
+        isKeyboardHoldStopEligible: Bool,
+        isKeyDownHotkeyMatch: Bool,
+        isKeyUpConfiguredKeyMatch: Bool,
+        isHotkeyPressed: Bool,
+        isModifierPressed: Bool
+    ) -> KeyboardHoldTransition {
+        switch type {
+        case .keyDown:
+            guard isKeyboardHoldStartEnabled else { return .none }
+            return (!isHotkeyPressed && isKeyDownHotkeyMatch) ? .start : .none
+        case .keyUp:
+            guard isKeyboardHoldStopEligible else { return .none }
+            return (isHotkeyPressed && isKeyUpConfiguredKeyMatch) ? .stop : .none
+        case .flagsChanged:
+            guard isKeyboardHoldStopEligible else { return .none }
+            return (isHotkeyPressed && !isModifierPressed) ? .stop : .none
+        default:
+            return .none
+        }
+    }
+
+    private func startKeyboardHoldRecording() {
+        guard !isHotkeyPressed else { return }
+        isHotkeyPressed = true
+        isKeyboardHoldSessionActive = true
+        activeRecordingMode = .keyboardHold
+        onHotkeyDown?()
+    }
+
+    private func stopKeyboardHoldRecordingIfNeeded() {
+        guard isHotkeyPressed else { return }
+        isHotkeyPressed = false
+        isKeyboardHoldSessionActive = false
+        activeRecordingMode = nil
+        onHotkeyUp?()
     }
 
     private func isMatchingHotkey(keyCode: UInt16, flags: CGEventFlags) -> Bool {
@@ -523,9 +561,11 @@ class HotkeyManager: ObservableObject {
             guard let self else { return }
             self.isHotkeyPressed.toggle()
             if self.isHotkeyPressed {
+                self.isKeyboardHoldSessionActive = false
                 self.activeRecordingMode = .rightShiftDoubleTap
                 self.onHotkeyDown?()
             } else {
+                self.isKeyboardHoldSessionActive = false
                 self.activeRecordingMode = nil
                 self.onHotkeyUp?()
             }
