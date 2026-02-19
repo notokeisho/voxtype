@@ -1,6 +1,11 @@
 import Foundation
 import AVFoundation
 
+enum RecordingStopReason {
+    case manual
+    case autoLimit
+}
+
 /// Audio recorder for capturing voice input.
 /// Records in WAV format (16kHz, mono, 16-bit) for whisper.cpp compatibility.
 @MainActor
@@ -49,8 +54,8 @@ class AudioRecorder: NSObject, ObservableObject {
     /// URL of the current/last recording.
     private(set) var recordingURL: URL?
 
-    /// Callback when recording is stopped (either manually or by max duration).
-    var onRecordingStopped: ((URL?) -> Void)?
+    /// Callback when recording is stopped with stop reason.
+    var onRecordingStopped: ((URL?, RecordingStopReason) -> Void)?
 
     // MARK: - Initialization
 
@@ -72,7 +77,7 @@ class AudioRecorder: NSObject, ObservableObject {
 
         // Stop any existing recording
         if isRecording {
-            stopRecording()
+            stopRecording(reason: .manual)
         }
 
         // Create temporary file URL for recording
@@ -114,6 +119,14 @@ class AudioRecorder: NSObject, ObservableObject {
     /// - Returns: URL of the recorded audio file, or `nil` if no recording was in progress.
     @discardableResult
     func stopRecording() -> URL? {
+        stopRecording(reason: .manual)
+    }
+
+    /// Stop recording with explicit reason and return the audio file URL.
+    /// - Parameter reason: Manual stop or auto-limit stop.
+    /// - Returns: URL of the recorded audio file, or `nil` if no recording was in progress.
+    @discardableResult
+    func stopRecording(reason: RecordingStopReason) -> URL? {
         guard isRecording else { return nil }
 
         // Stop timers
@@ -126,7 +139,7 @@ class AudioRecorder: NSObject, ObservableObject {
         let url = recordingURL
 
         // Notify callback
-        onRecordingStopped?(url)
+        onRecordingStopped?(url, reason)
 
         return url
     }
@@ -210,7 +223,7 @@ class AudioRecorder: NSObject, ObservableObject {
             Task { @MainActor in
                 guard let self = self, self.isRecording else { return }
                 // Auto-stop when max duration reached
-                _ = self.stopRecording()
+                _ = self.stopRecording(reason: .autoLimit)
             }
         }
     }
