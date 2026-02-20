@@ -126,7 +126,7 @@ struct MenuBarView: View {
                 .opacity(pulsingOpacity)
                 .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: pulsingOpacity)
 
-            Text("\(localization.t(\"menu.recording\")) \(appState.recordingDurationText)")
+            Text(localization.t("menu.recording") + " " + appState.recordingDurationText)
                 .font(.system(.subheadline, design: .monospaced))
                 .foregroundColor(.red)
 
