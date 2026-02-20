@@ -337,7 +337,8 @@ struct MenuBarLabel: View {
 
             // Show recording time in menu bar during recording
             if appState.status == .recording {
-                Text(appState.recordingDurationText)
+                let seconds = Int(appState.recordingDuration)
+                Text("\(seconds)s")
                     .font(.system(.caption, design: .monospaced))
                     .foregroundColor(.secondary)
             }
