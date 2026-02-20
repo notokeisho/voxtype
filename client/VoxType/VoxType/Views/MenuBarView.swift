@@ -120,27 +120,17 @@ struct MenuBarView: View {
 
     private var recordingInfo: some View {
         HStack {
-            // Recording indicator
             Circle()
                 .fill(Color.red)
                 .frame(width: 8, height: 8)
                 .opacity(pulsingOpacity)
                 .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: pulsingOpacity)
 
-            Text(localization.t("menu.recording"))
-                .font(.subheadline)
+            Text("\(localization.t(\"menu.recording\")) \(appState.recordingDurationText)")
+                .font(.system(.subheadline, design: .monospaced))
                 .foregroundColor(.red)
 
             Spacer()
-
-            // Duration
-            Text(appState.recordingDurationText)
-                .font(.system(.subheadline, design: .monospaced))
-                .foregroundColor(.secondary)
-
-            Text("/ \(formatDuration(appState.maxRecordingDuration))")
-                .font(.caption)
-                .foregroundColor(.secondary)
         }
     }
 
@@ -289,12 +279,6 @@ struct MenuBarView: View {
         NSPasteboard.general.setString(text, forType: .string)
     }
 
-    // MARK: - Helpers
-
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let seconds = Int(duration)
-        return String(format: "%02d:%02d", seconds / 60, seconds % 60)
-    }
 }
 
 // MARK: - Custom Button Style
