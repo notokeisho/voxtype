@@ -325,7 +325,9 @@ struct MenuBarLabel: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            if appState.status == .idle {
+            if appState.status == .recording {
+                recordingStatusIcon
+            } else if appState.status == .idle {
                 Image("MenuBarIcon")
                     .renderingMode(.template)
                     .foregroundStyle(iconColor)
@@ -343,6 +345,18 @@ struct MenuBarLabel: View {
                     .foregroundColor(.secondary)
             }
         }
+    }
+
+    private var recordingStatusIcon: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.primary, lineWidth: 2)
+                .frame(width: 12, height: 12)
+            Circle()
+                .fill(Color.primary)
+                .frame(width: 3.5, height: 3.5)
+        }
+        .accessibilityLabel("Recording Indicator")
     }
 
     private var iconColor: Color {
