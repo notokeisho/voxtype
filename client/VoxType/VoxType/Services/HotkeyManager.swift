@@ -167,6 +167,23 @@ class HotkeyManager: ObservableObject {
         }
     }
 
+    /// Reset recording-related input state after non-hotkey stop (e.g. auto-limit stop).
+    func resetRecordingInputState() {
+        isHotkeyPressed = false
+        activeRecordingMode = nil
+        isKeyboardHoldSessionActive = false
+
+        isMousePressed = false
+        isMouseHoldActive = false
+        mouseHoldTimer?.invalidate()
+        mouseHoldTimer = nil
+        mouseHotkeyTargetApp = nil
+
+        Self.rightShiftTapStateLock.lock()
+        Self.lastRightShiftTapAt = nil
+        Self.rightShiftTapStateLock.unlock()
+    }
+
     /// Run one-shot input test for right shift without starting recording.
     func runRightShiftInputTest(timeout: TimeInterval = 3.0, completion: @escaping (Bool) -> Void) {
         guard timeout > 0 else {

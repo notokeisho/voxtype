@@ -41,12 +41,19 @@ voxtype/
 └── plan/          # 計画ドキュメント
 ```
 
+### 未使用のファイル
+
+| ファイル | 状態 |
+|----------|------|
+| `docker-compose.yml` | 未使用。2026-01-31 以降メンテナンスされておらず、現在の構成と一致しない。ローカル開発は Makefile、本番は `docker-compose.prod.yml` を使う |
+
 ## セットアップ
 
 ### 必要環境
 
-- Docker / Docker Compose
-- Python 3.11+
+- Docker
+- GNU Make
+- Python 3.11+ / uv
 - Node.js 18+
 - Xcode 15+ (Mac クライアントビルド用)
 
@@ -54,37 +61,66 @@ voxtype/
 
 | 変数名 | 必須 | 説明 | 例 |
 |--------|------|------|-----|
-| `DATABASE_URL` | Yes | データベース接続URL | `sqlite+aiosqlite:///./voice.db` |
+| `DATABASE_URL` | Yes | データベース接続URL | `postgresql+asyncpg://voice:password@localhost:5434/voice_server` |
 | `JWT_SECRET` | Yes | JWT署名用シークレットキー | ランダムな文字列 |
 | `GITHUB_CLIENT_ID` | Yes | GitHub OAuth App Client ID | `Iv1.xxxxxxxxxx` |
 | `GITHUB_CLIENT_SECRET` | Yes | GitHub OAuth App Client Secret | `xxxxxxxxxxxxxxxx` |
-| `OPENAI_API_KEY` | No | OpenAI API Key（将来の拡張用） | `sk-xxxxxxxx` |
-| `WHISPER_SERVER_URL` | No | whisper.cppサーバーURL | `http://localhost:8080` |
+| `WHISPER_SERVER_URL_FAST` | No | whisper.cppサーバーURL（fast） | `http://localhost:8080` |
+| `WHISPER_SERVER_URL_SMART` | No | whisper.cppサーバーURL（smart） | `http://localhost:8081` |
+| `VOICE_LANGUAGE` | No | 認識言語 | `ja` / `en` / `auto` |
+| `VAD_ENABLED` | No | VADによる無音判定 | `true` / `false` |
+| `VAD_SPEECH_THRESHOLD` | No | VADの発話判定しきい値 | `0.3` |
 | `APP_NAME` | No | アプリケーション名 | `VoxType` |
 | `DEBUG` | No | デバッグモード | `true` / `false` |
 
-### サーバー起動
+### ローカル開発環境の起動
+
+ローカル開発では Makefile を使います。`docker-compose.yml` は未使用のため参照しないでください。
 
 ```bash
 # 環境変数を設定
 cp .env.example .env
 # .env を編集して GitHub OAuth 情報を設定
 
-# コンテナ起動
-docker compose up -d
-
 # whisper モデルをダウンロード (初回のみ)
-cd whisper/whisper.cpp/models
-./download-ggml-model.sh large-v3-q8_0
+make download-models
+
+# PostgreSQL と whisper サーバーを起動し、マイグレーションを実行
+make up
+
+# バックエンドを起動 (別ターミナル)
+make backend
 ```
+
+`make up` が起動するものは次のとおりです。
+
+| サービス | 起動方法 | ポート | 備考 |
+|----------|----------|--------|------|
+| PostgreSQL | `voice-postgres` コンテナ | 5434 | postgres:15 |
+| whisper-fast | `whisper-fast` コンテナ | 8080 | small モデル |
+| whisper-smart | `whisper-smart` コンテナ | 8081 | medium モデル |
+
+バックエンドはコンテナではなくホスト上で uvicorn として動きます。そのため `.env` の `DATABASE_URL` と `WHISPER_SERVER_URL` は `localhost` を指します。
+
+主な Makefile ターゲットは次のとおりです。
+
+| コマンド | 内容 |
+|----------|------|
+| `make up` | db と whisper を起動してマイグレーションを実行 |
+| `make backend` | バックエンドを 8000 で起動 |
+| `make admin` | 管理画面を 5173 で起動 |
+| `make status` | 各サービスの起動状態を確認 |
+| `make down` | コンテナを停止 |
+| `make clean` | コンテナを停止して削除 |
+| `make test` | サーバーのテストを実行 |
+| `make help` | 全ターゲットの一覧 |
 
 ### 開発環境
 
 ```bash
-# サーバー開発
+# サーバーの依存関係を同期
 cd server
 uv sync
-uv run uvicorn app.main:app --reload
 
 # テスト実行
 uv run pytest

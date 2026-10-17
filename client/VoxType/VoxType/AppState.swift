@@ -69,6 +69,25 @@ enum AppStatus: Equatable {
     }
 }
 
+/// Single-shot guard for the post-stop flow shared by manual and auto stop.
+/// Keeps a late key-up or mouse-up after an auto stop from starting a second flow.
+struct RecordingStopGate {
+    private(set) var isInFlight = false
+
+    /// Approves the post-stop flow only for the first stop while recording.
+    mutating func approveStopFlow(isRecording: Bool) -> Bool {
+        guard isRecording else { return false }
+        guard !isInFlight else { return false }
+
+        isInFlight = true
+        return true
+    }
+
+    mutating func reset() {
+        isInFlight = false
+    }
+}
+
 /// Observable object that manages the application state.
 @MainActor
 class AppState: ObservableObject {
@@ -101,6 +120,9 @@ class AppState: ObservableObject {
 
     /// Timer for syncing recording state.
     private var syncTimer: Timer?
+
+    /// Guard to ensure stop-processing flow runs only once.
+    private var stopGate = RecordingStopGate()
 
     /// Cancellables for Combine subscriptions.
     private var cancellables = Set<AnyCancellable>()
@@ -170,6 +192,7 @@ class AppState: ObservableObject {
     @discardableResult
     func startRecording() -> Bool {
         cancelTimers()
+        stopGate.reset()
 
         guard audioRecorder.startRecording() else {
             setError(audioRecorder.errorMessage ?? "Failed to start recording")
@@ -194,7 +217,7 @@ class AppState: ObservableObject {
     /// - Returns: URL of the recorded audio file.
     @discardableResult
     func stopRecording() -> URL? {
-        guard status == .recording else { return nil }
+        guard stopGate.approveStopFlow(isRecording: status == .recording) else { return nil }
 
         syncTimer?.invalidate()
         syncTimer = nil
@@ -206,9 +229,23 @@ class AppState: ObservableObject {
         return url
     }
 
+    /// Handle auto-stopped recording and transition to processing once.
+    @discardableResult
+    func handleAutoStoppedRecording(url: URL?) -> URL? {
+        guard stopGate.approveStopFlow(isRecording: status == .recording) else { return nil }
+
+        syncTimer?.invalidate()
+        syncTimer = nil
+        audioLevel = 0
+        status = .processing
+
+        return url
+    }
+
     /// Cancel recording without processing.
     func cancelRecording() {
         guard status == .recording else { return }
+        stopGate.reset()
 
         syncTimer?.invalidate()
         syncTimer = nil
@@ -244,6 +281,7 @@ class AppState: ObservableObject {
     /// Reset the state to idle.
     func reset() {
         cancelTimers()
+        stopGate.reset()
         status = .idle
         lastError = nil
         audioLevel = 0

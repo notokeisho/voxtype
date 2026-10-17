@@ -4,6 +4,7 @@ import Foundation
 struct DoubleTapWindowDetector {
     let windowSeconds: TimeInterval
     private(set) var lastTapAt: TimeInterval?
+    private let comparisonEpsilon: TimeInterval = 0.000_001
 
     init(windowSeconds: TimeInterval) {
         self.windowSeconds = windowSeconds
@@ -16,7 +17,8 @@ struct DoubleTapWindowDetector {
             return false
         }
 
-        return now - lastTapAt <= windowSeconds
+        // Avoid floating-point boundary drift at exact threshold values like 0.4s.
+        return now - lastTapAt <= windowSeconds + comparisonEpsilon
     }
 
     mutating func reset() {

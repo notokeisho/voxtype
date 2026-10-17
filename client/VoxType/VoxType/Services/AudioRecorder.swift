@@ -1,6 +1,28 @@
 import Foundation
 import AVFoundation
 
+enum RecordingStopReason {
+    case manual
+    case autoLimit
+}
+
+/// Decides whether an in-progress recording has reached the automatic stop limit.
+struct RecordingLimitPolicy {
+    let limit: TimeInterval
+    private let comparisonEpsilon: TimeInterval = 0.000_001
+
+    init(limit: TimeInterval) {
+        self.limit = limit
+    }
+
+    /// Stop reason for the elapsed recording time, or `nil` while still under the limit.
+    /// Avoids floating-point drift at the exact threshold value like 60.0s.
+    func stopReason(elapsed: TimeInterval) -> RecordingStopReason? {
+        guard elapsed + comparisonEpsilon >= limit else { return nil }
+        return .autoLimit
+    }
+}
+
 /// Audio recorder for capturing voice input.
 /// Records in WAV format (16kHz, mono, 16-bit) for whisper.cpp compatibility.
 @MainActor
@@ -40,17 +62,19 @@ class AudioRecorder: NSObject, ObservableObject {
     /// Audio recorder instance.
     private var audioRecorder: AVAudioRecorder?
 
-    /// Timer for tracking recording duration.
+    /// Timer for tracking recording duration and the auto-stop limit.
     private var durationTimer: Timer?
 
-    /// Timer for max duration limit.
-    private var maxDurationTimer: Timer?
+    /// Auto-stop policy for the max recording duration.
+    private lazy var limitPolicy = RecordingLimitPolicy(limit: maxDuration)
 
     /// URL of the current/last recording.
     private(set) var recordingURL: URL?
 
-    /// Callback when recording is stopped (either manually or by max duration).
-    var onRecordingStopped: ((URL?) -> Void)?
+    /// Callback when recording is stopped with stop reason.
+    /// Called synchronously on the main actor so a late key-up cannot slip in
+    /// between the recorder stopping and the stop flow claiming the gate.
+    var onRecordingStopped: (@MainActor (URL?, RecordingStopReason) -> Void)?
 
     // MARK: - Initialization
 
@@ -72,7 +96,7 @@ class AudioRecorder: NSObject, ObservableObject {
 
         // Stop any existing recording
         if isRecording {
-            stopRecording()
+            stopRecording(reason: .manual)
         }
 
         // Create temporary file URL for recording
@@ -97,11 +121,8 @@ class AudioRecorder: NSObject, ObservableObject {
             recordingDuration = 0
             errorMessage = nil
 
-            // Start duration timer
+            // Start duration timer (also drives the auto-stop limit)
             startDurationTimer()
-
-            // Start max duration timer
-            startMaxDurationTimer()
 
             return true
         } catch {
@@ -114,6 +135,14 @@ class AudioRecorder: NSObject, ObservableObject {
     /// - Returns: URL of the recorded audio file, or `nil` if no recording was in progress.
     @discardableResult
     func stopRecording() -> URL? {
+        stopRecording(reason: .manual)
+    }
+
+    /// Stop recording with explicit reason and return the audio file URL.
+    /// - Parameter reason: Manual stop or auto-limit stop.
+    /// - Returns: URL of the recorded audio file, or `nil` if no recording was in progress.
+    @discardableResult
+    func stopRecording(reason: RecordingStopReason) -> URL? {
         guard isRecording else { return nil }
 
         // Stop timers
@@ -126,7 +155,7 @@ class AudioRecorder: NSObject, ObservableObject {
         let url = recordingURL
 
         // Notify callback
-        onRecordingStopped?(url)
+        onRecordingStopped?(url, reason)
 
         return url
     }
@@ -200,17 +229,16 @@ class AudioRecorder: NSObject, ObservableObject {
         durationTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self = self, self.isRecording else { return }
-                self.recordingDuration += 0.1
-            }
-        }
-    }
+                guard let recorder = self.audioRecorder, recorder.isRecording else { return }
 
-    private func startMaxDurationTimer() {
-        maxDurationTimer = Timer.scheduledTimer(withTimeInterval: maxDuration, repeats: false) { [weak self] _ in
-            Task { @MainActor in
-                guard let self = self, self.isRecording else { return }
+                // Audio timeline, not wall clock: unaffected by system clock changes.
+                let elapsed = recorder.currentTime
+                self.recordingDuration = elapsed
+
                 // Auto-stop when max duration reached
-                _ = self.stopRecording()
+                if self.limitPolicy.stopReason(elapsed: elapsed) != nil {
+                    _ = self.stopRecording(reason: .autoLimit)
+                }
             }
         }
     }
@@ -218,8 +246,6 @@ class AudioRecorder: NSObject, ObservableObject {
     private func stopTimers() {
         durationTimer?.invalidate()
         durationTimer = nil
-        maxDurationTimer?.invalidate()
-        maxDurationTimer = nil
     }
 }
 

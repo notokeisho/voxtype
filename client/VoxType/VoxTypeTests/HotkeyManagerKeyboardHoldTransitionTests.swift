@@ -1,6 +1,7 @@
 import XCTest
 @testable import VoxType
 
+@MainActor
 final class HotkeyManagerKeyboardHoldTransitionTests: XCTestCase {
     func testKeyDownStartsOnlyWhenHotkeyMatches() {
         let startTransition = HotkeyManager.resolveKeyboardHoldTransition(
