@@ -65,9 +65,6 @@ class AudioRecorder: NSObject, ObservableObject {
     /// Timer for tracking recording duration and the auto-stop limit.
     private var durationTimer: Timer?
 
-    /// Wall-clock start time of the current recording.
-    private var recordingStartedAt: Date?
-
     /// Auto-stop policy for the max recording duration.
     private lazy var limitPolicy = RecordingLimitPolicy(limit: maxDuration)
 
@@ -75,7 +72,9 @@ class AudioRecorder: NSObject, ObservableObject {
     private(set) var recordingURL: URL?
 
     /// Callback when recording is stopped with stop reason.
-    var onRecordingStopped: ((URL?, RecordingStopReason) -> Void)?
+    /// Called synchronously on the main actor so a late key-up cannot slip in
+    /// between the recorder stopping and the stop flow claiming the gate.
+    var onRecordingStopped: (@MainActor (URL?, RecordingStopReason) -> Void)?
 
     // MARK: - Initialization
 
@@ -119,7 +118,6 @@ class AudioRecorder: NSObject, ObservableObject {
             }
 
             isRecording = true
-            recordingStartedAt = Date()
             recordingDuration = 0
             errorMessage = nil
 
@@ -231,9 +229,10 @@ class AudioRecorder: NSObject, ObservableObject {
         durationTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self = self, self.isRecording else { return }
-                guard let startedAt = self.recordingStartedAt else { return }
+                guard let recorder = self.audioRecorder, recorder.isRecording else { return }
 
-                let elapsed = Date().timeIntervalSince(startedAt)
+                // Audio timeline, not wall clock: unaffected by system clock changes.
+                let elapsed = recorder.currentTime
                 self.recordingDuration = elapsed
 
                 // Auto-stop when max duration reached
@@ -247,7 +246,6 @@ class AudioRecorder: NSObject, ObservableObject {
     private func stopTimers() {
         durationTimer?.invalidate()
         durationTimer = nil
-        recordingStartedAt = nil
     }
 }
 

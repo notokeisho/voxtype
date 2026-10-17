@@ -152,11 +152,9 @@ class AppCoordinator: ObservableObject {
 
     private func setupAudioRecorderCallbacks() {
         audioRecorder.onRecordingStopped = { [weak self] url, reason in
-            Task { @MainActor in
-                guard let self else { return }
-                guard reason == .autoLimit else { return }
-                self.handleAutoLimitStop(url: url)
-            }
+            guard let self else { return }
+            guard reason == .autoLimit else { return }
+            self.handleAutoLimitStop(url: url)
         }
     }
 
