@@ -142,39 +142,81 @@ npm run dev
 
 ## 本番環境デプロイ
 
+本番は Proxmox VM 上の Docker Compose で動かす。外部公開は Cloudflare Tunnel 経由で、SSL は Cloudflare が終端する。サーバー側でポートを開けず、証明書も管理しない。
+
+```
+[インターネット] → [Cloudflare] → (Tunnel) → [VM]
+                                                ├─ cloudflared
+                                                ├─ nginx（サブドメイン振り分け）
+                                                ├─ server (API)
+                                                ├─ admin-web
+                                                ├─ whisper-fast / whisper-smart（GPU）
+                                                └─ db (PostgreSQL)
+```
+
+| サブドメイン | 向き先 | 認証 |
+|--------------|--------|------|
+| `voxtype.oshiruko.dev` | server:8000 | API の JWT（GitHub OAuth） |
+| `voxtype-admin.oshiruko.dev` | admin-web:80 | Cloudflare Zero Trust（GitHub） |
+
 ### 1. GitHub OAuth アプリ設定
 
-1. [GitHub Developer Settings](https://github.com/settings/developers) で新しい OAuth App を作成
-2. Authorization callback URL: `https://api.yourdomain.com/auth/callback`
-3. Client ID と Client Secret を `.env` に設定
+1. [GitHub Developer Settings](https://github.com/settings/developers) で OAuth App を作成
+2. Authorization callback URL: `https://voxtype.oshiruko.dev/auth/callback`
+3. Client ID と Client Secret を `.env.prod` に設定
 
-### 2. SSL証明書の取得
+### 2. Cloudflare Tunnel
+
+1. Cloudflare Zero Trust の Networks > Tunnels でトンネルを作成
+2. Public hostname を2つ登録し、どちらも `http://nginx:80` に向ける
+3. トークンを `.env.prod` の `TUNNEL_TOKEN` に設定
+4. 管理画面側のホスト名に Zero Trust Access のポリシー（GitHub 認証）を設定
+
+### 3. リポジトリの取得
+
+whisper.cpp はサブモジュールなので、必ず `--recurse-submodules` を付ける。
 
 ```bash
-# certbot で Let's Encrypt 証明書を取得
-docker compose -f docker-compose.prod.yml run --rm certbot certonly \
-  --webroot --webroot-path=/var/www/certbot \
-  -d api.yourdomain.com -d admin.yourdomain.com
+git clone --recurse-submodules https://github.com/notokeisho/voxtype.git
+cd voxtype
 ```
 
-### 3. 本番環境起動
+### 4. 環境変数
 
 ```bash
-# 環境変数を設定
-cp .env.example .env
-# .env を本番用に編集
-
-# nginx設定のドメインを変更
-# nginx/nginx.prod.conf の server_name を実際のドメインに変更
-
-# 本番環境起動
-docker compose -f docker-compose.prod.yml up -d
+cp .env.prod.example .env.prod
+# .env.prod を編集
 ```
 
-### 4. DNS設定
+`JWT_SECRET` と `POSTGRES_PASSWORD` は `openssl rand -hex 32` で生成する。
 
-- `api.yourdomain.com` → サーバーIP
-- `admin.yourdomain.com` → サーバーIP
+### 5. GPU の準備
+
+whisper は `whisper/Dockerfile.gpu`（CUDA）でビルドし、GPU 上で動かす。ホスト側に NVIDIA ドライバと NVIDIA Container Toolkit が必要になる。
+
+```bash
+# コンテナから GPU が見えることを確認してから進む
+docker run --rm --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi
+```
+
+### 6. モデル取得・ビルド・起動
+
+```bash
+make prod-download-models   # small と medium（約2GB）
+make prod-build             # CUDA ビルド。10〜20分かかる
+make prod-migrate           # マイグレーション
+make prod-up                # 全サービス起動
+make prod-ps                # 状態確認
+```
+
+### 7. 動作確認
+
+```bash
+# GPU で動いているかログで確認
+docker compose -f docker-compose.prod.yml --env-file .env.prod logs whisper-fast --tail 30
+```
+
+`ggml_cuda_init: found 1 CUDA devices` が出ていれば GPU を使っている。
 
 ## トラブルシューティング
 
