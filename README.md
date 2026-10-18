@@ -70,8 +70,11 @@ voxtype/
 | `VOICE_LANGUAGE` | No | 認識言語 | `ja` / `en` / `auto` |
 | `VAD_ENABLED` | No | VADによる無音判定 | `true` / `false` |
 | `VAD_SPEECH_THRESHOLD` | No | VADの発話判定しきい値 | `0.3` |
+| `RMS_SILENCE_THRESHOLD` | No | RMSの無音判定しきい値（VADが無効なときに使用） | `0.005` |
 | `APP_NAME` | No | アプリケーション名 | `VoxType` |
 | `DEBUG` | No | デバッグモード | `true` / `false` |
+
+無音判定はVADとRMSのどちらか一方が必ず動く。`VAD_ENABLED` が `true` でクライアントから届く発話判定しきい値が0より大きいときはVADを使い、それ以外ではRMSを使う。RMSは音声を20msのフレームに分け、音量上位10%のフレームの平均値を `RMS_SILENCE_THRESHOLD` と比較する。
 
 ### ローカル開発環境の起動
 
