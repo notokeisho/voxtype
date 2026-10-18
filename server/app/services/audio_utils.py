@@ -33,13 +33,22 @@ def compute_speech_rms_wav(file_path: str) -> float | None:
         if max_possible == 0:
             return 0.0
 
+        # 8-bit WAV samples are unsigned with 128 as silence, while audioop
+        # reads them as signed. Recentre them or silence reads as full scale.
+        if sample_width == 1:
+            frames = audioop.bias(frames, 1, 128)
+
         samples_per_frame = max(1, round(sample_rate * FRAME_MS / 1000))
         frame_bytes = samples_per_frame * sample_width * channels
 
-        frame_rms = [
-            audioop.rms(frames[offset : offset + frame_bytes], sample_width)
-            for offset in range(0, len(frames), frame_bytes)
-        ]
+        frame_rms = []
+        for offset in range(0, len(frames), frame_bytes):
+            chunk = frames[offset : offset + frame_bytes]
+            # Pad the trailing chunk so a short fragment is not weighted as a
+            # whole frame, which would let an end-of-recording click pass.
+            if len(chunk) < frame_bytes:
+                chunk += bytes(frame_bytes - len(chunk))
+            frame_rms.append(audioop.rms(chunk, sample_width))
 
         # Always keep at least one frame so short audio stays measurable.
         top_count = max(1, math.ceil(len(frame_rms) * TOP_FRAME_RATIO))

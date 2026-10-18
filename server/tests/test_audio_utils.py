@@ -19,6 +19,18 @@ def write_wav(path: Path, samples: list[int], sample_rate: int = SAMPLE_RATE) ->
         wav_file.writeframes(array("h", samples).tobytes())
 
 
+def write_raw_wav(
+    path: Path, raw: bytes, sample_width: int = 2, channels: int = 1,
+    sample_rate: int = SAMPLE_RATE,
+) -> None:
+    """Write a WAV file from raw frame bytes."""
+    with wave.open(str(path), "wb") as wav_file:
+        wav_file.setnchannels(channels)
+        wav_file.setsampwidth(sample_width)
+        wav_file.setframerate(sample_rate)
+        wav_file.writeframes(raw)
+
+
 def tone(duration_sec: float, amplitude: int, sample_rate: int = SAMPLE_RATE) -> list[int]:
     """Generate a 440Hz sine wave."""
     count = int(duration_sec * sample_rate)
@@ -119,3 +131,75 @@ def test_invalid_file_returns_none(tmp_path: Path):
     path.write_bytes(b"not a wav file")
 
     assert compute_speech_rms_wav(str(path)) is None
+
+
+def test_trailing_fragment_is_padded_to_a_whole_frame(tmp_path: Path):
+    """A partial final frame must weigh the same as a zero-padded frame.
+
+    One loud sample is 1/320th of a 20ms frame. Measuring only the samples
+    present would score it as if it filled the frame, so a click at the end
+    of a recording would read as speech.
+    """
+    fragment = tmp_path / "fragment.wav"
+    padded = tmp_path / "padded.wav"
+    write_wav(fragment, silence(1.0) + [32767])
+    write_wav(padded, silence(1.0) + [32767] + silence(319 / SAMPLE_RATE))
+
+    assert compute_speech_rms_wav(str(fragment)) == compute_speech_rms_wav(str(padded))
+
+
+def test_trailing_fragment_is_not_measured_in_isolation(tmp_path: Path):
+    """The fragment must not reach the score of a frame full of that sample."""
+    path = tmp_path / "tail.wav"
+    write_wav(path, silence(1.0) + [32767])
+
+    rms = compute_speech_rms_wav(str(path))
+
+    assert rms is not None
+    # A frame entirely at full scale would put the top-10% mean near 0.166.
+    assert rms < 0.02
+
+
+def test_trailing_fragment_does_not_change_a_whole_frame_result(tmp_path: Path):
+    """Appending one silent sample must not move the result."""
+    exact = tmp_path / "exact.wav"
+    ragged = tmp_path / "ragged.wav"
+    write_wav(exact, tone(0.1, 10000))
+    write_wav(ragged, tone(0.1, 10000) + [0])
+
+    assert compute_speech_rms_wav(str(exact)) == compute_speech_rms_wav(str(ragged))
+
+
+def test_eight_bit_silence_is_zero(tmp_path: Path):
+    """8-bit PCM is unsigned, so its silence value is 128, not 0."""
+    path = tmp_path / "u8_silence.wav"
+    write_raw_wav(path, bytes([128]) * SAMPLE_RATE, sample_width=1)
+
+    assert compute_speech_rms_wav(str(path)) == 0.0
+
+
+def test_eight_bit_tone_is_non_zero(tmp_path: Path):
+    """8-bit PCM speech must still register."""
+    path = tmp_path / "u8_tone.wav"
+    raw = bytes(
+        128 + int(100 * math.sin(2 * math.pi * 440 * i / SAMPLE_RATE))
+        for i in range(SAMPLE_RATE)
+    )
+    write_raw_wav(path, raw, sample_width=1)
+
+    rms = compute_speech_rms_wav(str(path))
+
+    assert rms is not None
+    assert rms > 0.1
+
+
+def test_stereo_frames_are_grouped_per_channel_pair(tmp_path: Path):
+    """Frame width accounts for channel count, so stereo stays 20ms."""
+    path = tmp_path / "stereo.wav"
+    samples = [v for value in tone(1.0, 10000) for v in (value, value)]
+    write_raw_wav(path, array("h", samples).tobytes(), channels=2)
+
+    rms = compute_speech_rms_wav(str(path))
+
+    assert rms is not None
+    assert rms > 0.01

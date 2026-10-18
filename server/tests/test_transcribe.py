@@ -123,12 +123,14 @@ def bypass_silence_gate():
     makes the RMS branch accept everything instead.
     """
     original_vad = settings.vad_enabled
-    original_threshold = settings.rms_silence_threshold
+    original_vad_threshold = settings.vad_speech_threshold
+    original_rms_threshold = settings.rms_silence_threshold
     settings.vad_enabled = False
     settings.rms_silence_threshold = 0.0
     yield
     settings.vad_enabled = original_vad
-    settings.rms_silence_threshold = original_threshold
+    settings.vad_speech_threshold = original_vad_threshold
+    settings.rms_silence_threshold = original_rms_threshold
 
 
 class TestTranscribeEndpointAuthentication:
@@ -339,7 +341,7 @@ class TestTranscribeSilenceGate:
 
             with (
                 patch("app.api.transcribe.compute_speech_rms_wav") as mock_rms,
-                patch("app.api.transcribe.detect_speech_wav", return_value=True),
+                patch("app.api.transcribe.detect_speech_wav", return_value=True) as mock_vad,
                 patch(
                     "app.api.transcribe.whisper_client.transcribe",
                     new_callable=AsyncMock,
@@ -354,7 +356,41 @@ class TestTranscribeSilenceGate:
 
             assert response.status_code == status.HTTP_200_OK
             assert response.json()["text"] == "テスト"
+            mock_vad.assert_called_once()
             mock_rms.assert_not_called()
+        finally:
+            cleanup_test_user(github_id)
+
+    def test_rms_falls_back_when_vad_cannot_judge_the_file(self):
+        """VAD returning None must hand the decision to RMS, not skip it."""
+        github_id = "transcribe_gate_test_4"
+        client = TestClient(app)
+
+        try:
+            user_id = setup_test_user(github_id)
+            token = create_jwt_token(user_id=user_id, github_id=github_id)
+            audio_data, filename = create_test_audio_file()
+
+            settings.vad_enabled = True
+            settings.vad_speech_threshold = 0.3
+            settings.rms_silence_threshold = 0.01
+
+            with (
+                patch("app.api.transcribe.compute_speech_rms_wav", return_value=0.0) as mock_rms,
+                patch("app.api.transcribe.detect_speech_wav", return_value=None),
+                patch("app.api.transcribe.whisper_client.transcribe") as mock_transcribe,
+            ):
+                response = client.post(
+                    "/api/transcribe",
+                    files={"audio": (filename, audio_data, "audio/wav")},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+
+            assert response.status_code == status.HTTP_200_OK
+            assert response.json()["text"] == ""
+            assert response.json()["raw_text"] == ""
+            mock_rms.assert_called_once()
+            mock_transcribe.assert_not_called()
         finally:
             cleanup_test_user(github_id)
 

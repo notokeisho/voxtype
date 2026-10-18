@@ -67,12 +67,14 @@ async def transcribe_audio(
         content = await audio.read()
         temp_path.write_bytes(content)
 
-        # Exactly one silence check runs: VAD when it is active, RMS otherwise.
-        # Leaving both off would let silent audio reach Whisper, which then
-        # tends to invent text.
+        # A silence check always runs: VAD when it can judge the file, RMS
+        # otherwise. Letting silent audio reach Whisper makes it invent text.
+        # VAD returns None for anything but 16kHz mono 16-bit, so that case
+        # falls back to RMS rather than skipping the check.
         effective_vad_threshold = (
             settings.vad_speech_threshold if vad_speech_threshold is None else vad_speech_threshold
         )
+        vad_result = None
         if settings.vad_enabled and effective_vad_threshold > 0:
             vad_result = detect_speech_wav(
                 str(temp_path), effective_vad_threshold
@@ -82,7 +84,8 @@ async def transcribe_audio(
                     "text": "",
                     "raw_text": "",
                 }
-        else:
+
+        if vad_result is None:
             rms_value = compute_speech_rms_wav(str(temp_path))
             if rms_value is not None and rms_value < settings.rms_silence_threshold:
                 return {
