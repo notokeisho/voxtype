@@ -13,11 +13,17 @@ COPY whisper.cpp/ ./whisper.cpp/
 
 WORKDIR /build/whisper.cpp
 
-# Build with CUDA support
+# Build with CUDA support.
+# Only whisper-server is shipped, so building the other examples and the tests
+# costs time and can fail on targets this image never runs.
+# CMAKE_CUDA_ARCHITECTURES=86 is the RTX 3060 (Ampere); the default list builds
+# several extra architectures.
 RUN cmake -B build \
     -DWHISPER_BUILD_SERVER=ON \
+    -DWHISPER_BUILD_TESTS=OFF \
     -DGGML_CUDA=ON \
-    && cmake --build build --config Release -j$(nproc)
+    -DCMAKE_CUDA_ARCHITECTURES=86 \
+    && cmake --build build --config Release -j$(nproc) --target whisper-server
 
 FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
 
