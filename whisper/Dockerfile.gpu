@@ -13,6 +13,10 @@ COPY whisper.cpp/ ./whisper.cpp/
 
 WORKDIR /build/whisper.cpp
 
+# Compile jobs. The CUDA build is memory hungry, so a small VM may need fewer
+# than the available cores: docker compose build --build-arg BUILD_JOBS=2
+ARG BUILD_JOBS=4
+
 # Build with CUDA support.
 # Only whisper-server is shipped, so building the other examples and the tests
 # costs time and can fail on targets this image never runs.
@@ -23,7 +27,7 @@ RUN cmake -B build \
     -DWHISPER_BUILD_TESTS=OFF \
     -DGGML_CUDA=ON \
     -DCMAKE_CUDA_ARCHITECTURES=86 \
-    && cmake --build build --config Release -j$(nproc) --target whisper-server
+    && cmake --build build --config Release -j${BUILD_JOBS} --target whisper-server
 
 FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
 
