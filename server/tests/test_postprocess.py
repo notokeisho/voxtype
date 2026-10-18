@@ -33,9 +33,7 @@ async def _setup_test_data(github_id: str = "postprocess_test_user"):
                 f"(SELECT id FROM users WHERE github_id = '{github_id}')"
             )
         )
-        await session.execute(
-            text("DELETE FROM global_dictionary WHERE pattern IN ('くろーど', 'AI', 'claude')")
-        )
+        await _delete_test_global_entries(session)
         await session.execute(text(f"DELETE FROM users WHERE github_id = '{github_id}'"))
         await session.commit()
 
@@ -50,6 +48,20 @@ async def _setup_test_data(github_id: str = "postprocess_test_user"):
     return user_id
 
 
+# Global dictionary patterns inserted by tests, removed again on cleanup.
+# Seeded with the patterns earlier revisions deleted by name, so rows left
+# behind by an interrupted run are still cleared.
+_added_global_patterns: set[str] = {"くろーど", "AI", "claude"}
+
+
+async def _delete_test_global_entries(session) -> None:
+    """Remove every global dictionary entry these tests created."""
+    await session.execute(
+        text("DELETE FROM global_dictionary WHERE pattern = ANY(:patterns)"),
+        {"patterns": sorted(_added_global_patterns)},
+    )
+
+
 async def _cleanup_test_data(github_id: str = "postprocess_test_user"):
     """Clean up test data."""
     engine = create_async_engine(settings.database_url)
@@ -62,9 +74,7 @@ async def _cleanup_test_data(github_id: str = "postprocess_test_user"):
                 f"(SELECT id FROM users WHERE github_id = '{github_id}')"
             )
         )
-        await session.execute(
-            text("DELETE FROM global_dictionary WHERE pattern IN ('くろーど', 'AI', 'claude')")
-        )
+        await _delete_test_global_entries(session)
         await session.execute(text(f"DELETE FROM users WHERE github_id = '{github_id}'"))
         await session.commit()
 
@@ -72,8 +82,14 @@ async def _cleanup_test_data(github_id: str = "postprocess_test_user"):
 
 
 async def _add_global_entry(pattern: str, replacement: str):
-    """Add a global dictionary entry."""
+    """Add a global dictionary entry.
+
+    The pattern is recorded so cleanup removes it again. Global entries are
+    shared state: one left behind rewrites text in every later test.
+    """
     from app.models.global_dictionary import add_global_entry
+
+    _added_global_patterns.add(pattern)
 
     engine = create_async_engine(settings.database_url)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
