@@ -17,6 +17,13 @@ WORKDIR /build/whisper.cpp
 # than the available cores: docker compose build --build-arg BUILD_JOBS=2
 ARG BUILD_JOBS=4
 
+# libcuda.so.1 comes from the NVIDIA driver at runtime, injected by the
+# container toolkit. The devel image only ships a link-time stub named
+# libcuda.so, so the SONAME that libggml-cuda.so records cannot be resolved
+# when the executable is linked. The symlink and -rpath-link below exist only
+# in this build stage; neither ends up in the binary or the runtime image.
+RUN ln -s libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1
+
 # Build with CUDA support.
 # Only whisper-server is shipped, so building the other examples and the tests
 # costs time and can fail on targets this image never runs.
@@ -27,6 +34,7 @@ RUN cmake -B build \
     -DWHISPER_BUILD_TESTS=OFF \
     -DGGML_CUDA=ON \
     -DCMAKE_CUDA_ARCHITECTURES=86 \
+    -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath-link,/usr/local/cuda/lib64/stubs" \
     && cmake --build build --config Release -j${BUILD_JOBS} --target whisper-server
 
 FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
