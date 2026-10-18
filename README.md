@@ -9,6 +9,40 @@ whisper.cpp を使用した音声認識サーバーと Mac クライアントで
 - Mac メニューバーアプリでホットキー録音、テキスト挿入
 - React 管理画面でユーザーと辞書を管理
 
+## ドキュメント
+
+| 文書 | 内容 |
+|---|---|
+| [docs/server-setup.md](docs/server-setup.md) | サーバーの構築手順（Ubuntu Server、GPU、Docker、Cloudflare Tunnel） |
+| [docs/operations.md](docs/operations.md) | 運用手順（バックアップ、更新、障害時の確認） |
+
+## 変更履歴
+
+### v1.6.0
+
+本番環境を GPU 対応にし、サーバー構成を整理した。
+
+- whisper の推論を GPU で実行するようにした。`whisper/Dockerfile.gpu`（CUDA 12.2）でビルドし、NVIDIA Container Toolkit 経由で GPU を割り当てる
+- whisper のイメージを1つに統合した。fast と smart は同じイメージをモデル違いで起動する。コンパイルの並列数は `BUILD_JOBS` で指定する
+- OAuth のコールバック先を許可リストで検証するようにした。検証していなかったため、細工されたログイン URL で JWT が外部へ渡る経路があった
+- CORS の許可オリジンを設定可能にし、本番では管理画面のオリジンのみを許可するようにした
+- nginx のレート制限を実クライアント単位にした。Cloudflare Tunnel 経由では全利用者が同じ制限枠を共有していた
+- 必須の環境変数が未設定のときに compose が停止するようにした
+- データベース全体のバックアップスクリプト（`scripts/pg-backup.sh`）を追加した
+- サーバーの構築手順と運用手順を `docs/` に整理した
+
+### v1.5.5
+
+- 長尺録音で発話しているのに空の結果が返る問題を修正した。RMS の無音判定を、音声全体の平均から20msフレームの上位10%平均へ変更した
+- 無音チェックが一つも走らない経路を塞いだ。VAD が判定できない音声形式では RMS へフォールバックする
+- 設定キー `RMS_CHECK_ENABLED` を廃止した
+
+### v1.5.4
+
+- 録音の60秒自動停止と、停止後の自動文字起こしを追加した
+- 録音方式を3択（キー長押し / 右Shiftダブルタップ / マウスホイール長押し）に再構成した
+- キー長押しモードで停止を取りこぼす問題を修正した
+
 ## システム構成
 
 ```mermaid
@@ -38,6 +72,8 @@ voxtype/
 ├── whisper/       # whisper.cpp サーバー
 ├── admin-web/     # React 管理画面
 ├── client/        # Mac クライアント
+├── docs/          # 構築・運用ドキュメント
+├── scripts/       # 運用スクリプト
 └── plan/          # 計画ドキュメント
 ```
 
@@ -142,10 +178,10 @@ npm run dev
 
 ## 本番環境デプロイ
 
-本番は Proxmox VM 上の Docker Compose で動かす。外部公開は Cloudflare Tunnel 経由で、SSL は Cloudflare が終端する。サーバー側でポートを開けず、証明書も管理しない。
+本番は Ubuntu Server 上の Docker Compose で動かす。外部公開は Cloudflare Tunnel 経由で、SSL は Cloudflare が終端する。サーバー側でポートを開けず、証明書も管理しない。
 
 ```
-[インターネット] → [Cloudflare] → (Tunnel) → [VM]
+[インターネット] → [Cloudflare] → (Tunnel) → [サーバー]
                                                 ├─ cloudflared
                                                 ├─ nginx（サブドメイン振り分け）
                                                 ├─ server (API)
@@ -159,74 +195,9 @@ npm run dev
 | `voxtype.oshiruko.dev` | server:8000 | API の JWT（GitHub OAuth） |
 | `voxtype-admin.oshiruko.dev` | admin-web:80 | Cloudflare Zero Trust（GitHub） |
 
-### 1. GitHub OAuth アプリ設定
+whisper は CUDA でビルドしたイメージを使い、NVIDIA Container Toolkit 経由で GPU を割り当てる。fast（small モデル）と smart（medium モデル）は同じイメージをモデル違いで起動する。
 
-1. [GitHub Developer Settings](https://github.com/settings/developers) で OAuth App を作成
-2. Authorization callback URL: `https://voxtype.oshiruko.dev/auth/github/callback`
-3. Client ID と Client Secret を `.env.prod` に設定
-
-### 2. Cloudflare Tunnel
-
-1. Cloudflare Zero Trust の Networks > Tunnels でトンネルを作成
-2. Public hostname を2つ登録し、どちらも `http://nginx:80` に向ける
-3. トークンを `.env.prod` の `TUNNEL_TOKEN` に設定
-4. 管理画面側のホスト名に Zero Trust Access のポリシー（GitHub 認証）を設定
-
-### 3. リポジトリの取得
-
-whisper.cpp はサブモジュールなので、必ず `--recurse-submodules` を付ける。
-
-```bash
-git clone --recurse-submodules https://github.com/notokeisho/voxtype.git
-cd voxtype
-```
-
-### 4. 環境変数
-
-```bash
-cp .env.prod.example .env.prod
-# .env.prod を編集
-```
-
-`JWT_SECRET` と `POSTGRES_PASSWORD` は `openssl rand -hex 32` で生成する。
-
-### 5. GPU の準備
-
-whisper は `whisper/Dockerfile.gpu`（CUDA）でビルドし、GPU 上で動かす。ホスト側に NVIDIA ドライバと NVIDIA Container Toolkit が必要になる。
-
-```bash
-# コンテナから GPU が見えることを確認してから進む
-docker run --rm --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi
-```
-
-### 6. モデル取得・ビルド・起動
-
-```bash
-make prod-download-models   # small と medium（約2GB）
-make prod-build             # CUDA ビルド。10〜20分かかる
-make prod-migrate           # マイグレーション
-make prod-up                # 全サービス起動
-make prod-ps                # 状態確認
-```
-
-### 7. バックアップ
-
-アプリ内のバックアップはグローバル辞書のxlsxのみ。DB全体は `scripts/pg-backup.sh` で取得する。cron で1日1回実行する。
-
-```
-0 4 * * * /path/to/voxtype/scripts/pg-backup.sh >> /path/to/pg-backup.log 2>&1
-```
-
-出力先は `./data/backups/postgres`、保持は既定14日。`docker compose ... down -v` はDBボリュームを削除するため使わない。
-
-### 8. 動作確認
-
-```bash
-# GPU で動いているかログで確認
-docker compose -f docker-compose.prod.yml --env-file .env.prod logs whisper-fast --tail 30
-```
-
-`ggml_cuda_init: found 1 CUDA devices` が出ていれば GPU を使っている。
+構築手順は [docs/server-setup.md](docs/server-setup.md)、運用手順は [docs/operations.md](docs/operations.md) を参照。
 
 ## トラブルシューティング
 
