@@ -17,11 +17,6 @@ if [ ! -f "$env_file" ]; then
     exit 1
 fi
 
-# shellcheck disable=SC1090
-set -a
-. "./$env_file"
-set +a
-
 backup_dir=${PG_BACKUP_DIR:-./data/backups/postgres}
 retention_days=${PG_BACKUP_RETENTION_DAYS:-14}
 mkdir -p "$backup_dir"
@@ -29,8 +24,10 @@ mkdir -p "$backup_dir"
 stamp=$(date +%Y%m%d-%H%M%S)
 target="$backup_dir/voxtype-$stamp.sql.gz"
 
+# Read the credentials from the container's own environment rather than
+# sourcing the env file, which would execute whatever it contains.
 docker compose -f docker-compose.prod.yml --env-file "$env_file" exec -T db \
-    pg_dump -U "${POSTGRES_USER:-voxtype}" -d "${POSTGRES_DB:-voxtype}" \
+    sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
     | gzip > "$target"
 
 # A dump that failed mid-stream leaves a short file behind; keep it out of the
