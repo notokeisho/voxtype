@@ -162,7 +162,7 @@ npm run dev
 ### 1. GitHub OAuth アプリ設定
 
 1. [GitHub Developer Settings](https://github.com/settings/developers) で OAuth App を作成
-2. Authorization callback URL: `https://voxtype.oshiruko.dev/auth/callback`
+2. Authorization callback URL: `https://voxtype.oshiruko.dev/auth/github/callback`
 3. Client ID と Client Secret を `.env.prod` に設定
 
 ### 2. Cloudflare Tunnel
@@ -209,7 +209,17 @@ make prod-up                # 全サービス起動
 make prod-ps                # 状態確認
 ```
 
-### 7. 動作確認
+### 7. バックアップ
+
+アプリ内のバックアップはグローバル辞書のxlsxのみ。DB全体は `scripts/pg-backup.sh` で取得する。cron で1日1回実行する。
+
+```
+0 4 * * * /path/to/voxtype/scripts/pg-backup.sh >> /path/to/pg-backup.log 2>&1
+```
+
+出力先は `./data/backups/postgres`、保持は既定14日。`docker compose ... down -v` はDBボリュームを削除するため使わない。
+
+### 8. 動作確認
 
 ```bash
 # GPU で動いているかログで確認

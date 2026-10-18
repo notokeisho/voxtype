@@ -250,7 +250,7 @@ prod-download-models: ## Download all Whisper models for production (skip existi
 	@echo "=== Model download complete ==="
 
 prod-migrate: ## Run production database migrations
-	docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm server uv run alembic upgrade head
+	docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm --no-deps server uv run alembic upgrade head
 
 prod-up: ## Start production services
 	docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
