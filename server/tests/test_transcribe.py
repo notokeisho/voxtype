@@ -324,6 +324,117 @@ class TestTranscribeEndpointSuccess:
             cleanup_test_user(github_id)
 
 
+class TestTranscribeSilenceGate:
+    """Tests for the RMS/VAD silence gate.
+
+    Exactly one silence check must run: VAD when it is active, RMS otherwise.
+    """
+
+    def test_rms_is_skipped_when_vad_is_active(self):
+        """Active VAD owns the silence decision, so RMS must not run."""
+        github_id = "transcribe_gate_test_1"
+        client = TestClient(app)
+
+        try:
+            user_id = setup_test_user(github_id)
+            token = create_jwt_token(user_id=user_id, github_id=github_id)
+            audio_data, filename = create_test_audio_file()
+
+            settings.vad_enabled = True
+            settings.vad_speech_threshold = 0.3
+
+            with (
+                patch("app.api.transcribe.compute_speech_rms_wav") as mock_rms,
+                patch("app.api.transcribe.detect_speech_wav", return_value=True),
+                patch(
+                    "app.api.transcribe.whisper_client.transcribe",
+                    new_callable=AsyncMock,
+                    return_value="テスト",
+                ),
+            ):
+                response = client.post(
+                    "/api/transcribe",
+                    files={"audio": (filename, audio_data, "audio/wav")},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+
+            assert response.status_code == status.HTTP_200_OK
+            assert response.json()["text"] == "テスト"
+            mock_rms.assert_not_called()
+        finally:
+            cleanup_test_user(github_id)
+
+    def test_rms_runs_when_request_disables_vad(self):
+        """A per-request threshold of zero disables VAD, so RMS must run."""
+        github_id = "transcribe_gate_test_2"
+        client = TestClient(app)
+
+        try:
+            user_id = setup_test_user(github_id)
+            token = create_jwt_token(user_id=user_id, github_id=github_id)
+            audio_data, filename = create_test_audio_file()
+
+            settings.vad_enabled = True
+            settings.vad_speech_threshold = 0.3
+            settings.rms_silence_threshold = 0.01
+
+            with (
+                patch("app.api.transcribe.compute_speech_rms_wav", return_value=0.0) as mock_rms,
+                patch("app.api.transcribe.detect_speech_wav") as mock_vad,
+                patch("app.api.transcribe.whisper_client.transcribe") as mock_transcribe,
+            ):
+                response = client.post(
+                    "/api/transcribe",
+                    files={"audio": (filename, audio_data, "audio/wav")},
+                    data={"vad_speech_threshold": "0"},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+
+            assert response.status_code == status.HTTP_200_OK
+            assert response.json()["text"] == ""
+            assert response.json()["raw_text"] == ""
+            mock_rms.assert_called_once()
+            mock_vad.assert_not_called()
+            mock_transcribe.assert_not_called()
+        finally:
+            cleanup_test_user(github_id)
+
+    def test_rms_runs_when_vad_is_disabled_by_settings(self):
+        """Server-side VAD off also hands the silence decision to RMS."""
+        github_id = "transcribe_gate_test_3"
+        client = TestClient(app)
+
+        try:
+            user_id = setup_test_user(github_id)
+            token = create_jwt_token(user_id=user_id, github_id=github_id)
+            audio_data, filename = create_test_audio_file()
+
+            settings.vad_enabled = False
+            settings.rms_silence_threshold = 0.01
+
+            with (
+                patch("app.api.transcribe.compute_speech_rms_wav", return_value=0.5) as mock_rms,
+                patch("app.api.transcribe.detect_speech_wav") as mock_vad,
+                patch(
+                    "app.api.transcribe.whisper_client.transcribe",
+                    new_callable=AsyncMock,
+                    return_value="テスト",
+                ),
+            ):
+                response = client.post(
+                    "/api/transcribe",
+                    files={"audio": (filename, audio_data, "audio/wav")},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+
+            assert response.status_code == status.HTTP_200_OK
+            assert response.json()["text"] == "テスト"
+            mock_rms.assert_called_once()
+            mock_vad.assert_not_called()
+        finally:
+            cleanup_test_user(github_id)
+
+
 class TestTranscribeEndpointFileHandling:
     """Tests for file upload and cleanup."""
 
