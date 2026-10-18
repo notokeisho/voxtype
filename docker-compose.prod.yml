@@ -2,7 +2,7 @@ services:
   # Cloudflare Tunnel
   cloudflared:
     image: cloudflare/cloudflared:2026.1.2
-    command: tunnel run --token ${TUNNEL_TOKEN}
+    command: tunnel run --token ${TUNNEL_TOKEN:?TUNNEL_TOKEN is required}
     restart: unless-stopped
     depends_on:
       nginx:
@@ -22,7 +22,7 @@ services:
         condition: service_started
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "nginx", "-t"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -37,10 +37,10 @@ services:
     volumes:
       - ./data:/app/data
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:?GITHUB_CLIENT_ID is required}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:?GITHUB_CLIENT_SECRET is required}
       - INITIAL_ADMIN_GITHUB_ID=${INITIAL_ADMIN_GITHUB_ID}
       - INITIAL_ADMIN_GITHUB_USERNAME=${INITIAL_ADMIN_GITHUB_USERNAME}
       - WHISPER_SERVER_URL_FAST=http://whisper-fast:8080
@@ -49,6 +49,8 @@ services:
       - VAD_ENABLED=${VAD_ENABLED:-true}
       - VAD_SPEECH_THRESHOLD=${VAD_SPEECH_THRESHOLD:-0.3}
       - RMS_SILENCE_THRESHOLD=${RMS_SILENCE_THRESHOLD:-0.005}
+      - CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS:-https://voxtype-admin.oshiruko.dev}
+      - OAUTH_CALLBACK_ALLOWLIST=${OAUTH_CALLBACK_ALLOWLIST:-voxtype://callback,https://voxtype-admin.oshiruko.dev/auth/callback}
       - APP_NAME=${APP_NAME:-VoxType}
       - DEBUG=${DEBUG:-false}
     depends_on:
@@ -60,7 +62,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/status | grep -q '\"database\":\"connected\"'"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -72,7 +74,7 @@ services:
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-voxtype}
       - POSTGRES_USER=${POSTGRES_USER:-voxtype}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped

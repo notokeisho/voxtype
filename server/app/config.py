@@ -33,6 +33,40 @@ class Settings(BaseSettings):
     github_client_id: str = ""
     github_client_secret: str = ""
 
+    # OAuth callback destinations the server is willing to redirect to.
+    # The callback carries a JWT, so an unvalidated value leaks it.
+    oauth_callback_allowlist: str = (
+        "voxtype://callback,"
+        "https://voxtype-admin.oshiruko.dev/auth/callback,"
+        "http://localhost:5173/auth/callback,"
+        "http://localhost:5174/auth/callback,"
+        "http://localhost:5175/auth/callback,"
+        "http://localhost:5176/auth/callback,"
+        "http://localhost:5177/auth/callback,"
+        "http://localhost:3000/auth/callback"
+    )
+
+    # Browser origins allowed to call the API with credentials.
+    cors_allow_origins: str = (
+        "http://localhost:5173,"
+        "http://localhost:5174,"
+        "http://localhost:5175,"
+        "http://localhost:5176,"
+        "http://localhost:5177,"
+        "http://localhost:3000,"
+        "https://voxtype-admin.oshiruko.dev"
+    )
+
+    @property
+    def oauth_callback_list(self) -> list[str]:
+        """Allowed OAuth callback URLs, parsed from the comma separated value."""
+        return [item.strip() for item in self.oauth_callback_allowlist.split(",") if item.strip()]
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        """Allowed CORS origins, parsed from the comma separated value."""
+        return [item.strip() for item in self.cors_allow_origins.split(",") if item.strip()]
+
     # Initial admin (optional, for bootstrapping)
     initial_admin_github_id: str | None = None
     initial_admin_github_username: str | None = None

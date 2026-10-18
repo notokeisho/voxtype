@@ -2,15 +2,25 @@
 
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 
 from app.auth.dependencies import get_current_user
 from app.auth.jwt import create_jwt_token
 from app.auth.oauth import oauth
+from app.config import settings
 from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _is_allowed_callback(callback: str) -> bool:
+    """Check a client callback URL against the configured allowlist.
+
+    The callback receives the JWT as a query parameter, so an arbitrary value
+    would hand the token to whoever crafted the login URL.
+    """
+    return callback in settings.oauth_callback_list
 
 
 async def _handle_login(request: Request):
@@ -27,6 +37,12 @@ async def _handle_login(request: Request):
     client_callback = request.query_params.get("callback", "")
     if not client_callback:
         client_callback = request.query_params.get("redirect_uri", "")
+
+    if client_callback and not _is_allowed_callback(client_callback):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Callback URL is not allowed",
+        )
 
     request.session["client_callback"] = client_callback
 
@@ -67,8 +83,12 @@ async def callback(request: Request):
     Returns:
         RedirectResponse to client callback URL
     """
-    # Get client callback URL from session
+    # Get client callback URL from session. It was checked when the login
+    # started, but the session could predate an allowlist change, so check
+    # again before attaching a token to it.
     client_callback = request.session.get("client_callback", "")
+    if client_callback and not _is_allowed_callback(client_callback):
+        client_callback = ""
 
     def redirect_with_error(error_code: str, message: str) -> RedirectResponse:
         """Helper to redirect with error parameters."""
@@ -110,10 +130,7 @@ async def callback(request: Request):
     # Import here to avoid circular imports
     from sqlalchemy import select
 
-    from app.auth.jwt import create_jwt_token
-    from app.config import settings
     from app.database import async_session_factory
-    from app.models.user import User
     from app.models.whitelist import is_whitelisted
 
     github_id = str(user_info.get("id"))
