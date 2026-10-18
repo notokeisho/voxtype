@@ -209,7 +209,17 @@ make prod-up                # 全サービス起動
 make prod-ps                # 状態確認
 ```
 
-### 7. 動作確認
+### 7. バックアップ
+
+アプリ内のバックアップはグローバル辞書のxlsxのみ。DB全体は `scripts/pg-backup.sh` で取得する。cron で1日1回実行する。
+
+```
+0 4 * * * /path/to/voxtype/scripts/pg-backup.sh >> /path/to/pg-backup.log 2>&1
+```
+
+出力先は `./data/backups/postgres`、保持は既定14日。`docker compose ... down -v` はDBボリュームを削除するため使わない。
+
+### 8. 動作確認
 
 ```bash
 # GPU で動いているかログで確認

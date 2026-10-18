@@ -39,6 +39,52 @@ class TestLoginRedirect:
         assert "redirect_uri" in location
 
 
+class TestOAuthCallbackAllowlist:
+    """Tests for the OAuth callback allowlist."""
+
+    def test_allowed_callback_starts_oauth(self, client: TestClient):
+        """An allowlisted callback is accepted and the OAuth flow starts."""
+        response = client.get(
+            "/auth/github/login?callback=voxtype://callback",
+            follow_redirects=False,
+        )
+        assert response.status_code == status.HTTP_302_FOUND
+        assert "github.com" in response.headers["location"]
+
+    def test_unknown_callback_is_rejected(self, client: TestClient):
+        """A callback outside the allowlist is rejected before reaching GitHub."""
+        response = client.get(
+            "/auth/github/login?callback=https://attacker.example.com/steal",
+            follow_redirects=False,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_unknown_redirect_uri_is_rejected(self, client: TestClient):
+        """The admin-web parameter name is checked the same way."""
+        response = client.get(
+            "/auth/login?redirect_uri=https://attacker.example.com/steal",
+            follow_redirects=False,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_callback_rejects_session_value_outside_allowlist(self, client: TestClient):
+        """A session value that is no longer allowed does not receive a token."""
+        original = settings.oauth_callback_allowlist
+        settings.oauth_callback_allowlist = "voxtype://callback"
+        try:
+            client.get(
+                "/auth/github/login?callback=voxtype://callback",
+                follow_redirects=False,
+            )
+            settings.oauth_callback_allowlist = "https://voxtype-admin.oshiruko.dev/auth/callback"
+            response = client.get("/auth/callback", follow_redirects=False)
+        finally:
+            settings.oauth_callback_allowlist = original
+
+        location = response.headers.get("location", "")
+        assert "voxtype://callback" not in location
+
+
 class TestJWTToken:
     """Tests for JWT token creation and verification."""
 
