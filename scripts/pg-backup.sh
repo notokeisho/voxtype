@@ -8,6 +8,10 @@
 # Usage: scripts/pg-backup.sh   (run from anywhere; paths resolve to the repo)
 set -eu
 
+# The dump contains users, whitelist entries and dictionaries, so keep it
+# readable only by the user running the backup.
+umask 077
+
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$repo_dir"
 
@@ -23,20 +27,25 @@ mkdir -p "$backup_dir"
 
 stamp=$(date +%Y%m%d-%H%M%S)
 target="$backup_dir/voxtype-$stamp.sql.gz"
+work="$backup_dir/.voxtype-$stamp.sql"
 
+trap 'rm -f "$work"' EXIT
+
+# Write the dump uncompressed first. A pipeline reports the exit status of its
+# last command, so piping pg_dump straight into gzip would look successful even
+# when pg_dump failed and gzip compressed an empty stream.
+#
 # Read the credentials from the container's own environment rather than
 # sourcing the env file, which would execute whatever it contains.
 docker compose -f docker-compose.prod.yml --env-file "$env_file" exec -T db \
-    sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
-    | gzip > "$target"
+    sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$work"
 
-# A dump that failed mid-stream leaves a short file behind; keep it out of the
-# backup set so a later restore does not pick it up.
-if [ ! -s "$target" ]; then
-    echo "backup is empty, removing: $target" >&2
-    rm -f "$target"
+if [ ! -s "$work" ]; then
+    echo "dump is empty, aborting" >&2
     exit 1
 fi
+
+gzip -c "$work" > "$target"
 
 find "$backup_dir" -name 'voxtype-*.sql.gz' -mtime "+$retention_days" -delete
 

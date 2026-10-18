@@ -1,9 +1,10 @@
 """Authentication routes for GitHub OAuth."""
 
+import html
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from app.auth.dependencies import get_current_user
 from app.auth.jwt import create_jwt_token
@@ -88,7 +89,10 @@ async def callback(request: Request):
     # again before attaching a token to it.
     client_callback = request.session.get("client_callback", "")
     if client_callback and not _is_allowed_callback(client_callback):
-        client_callback = ""
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Callback URL is not allowed",
+        )
 
     def redirect_with_error(error_code: str, message: str) -> RedirectResponse:
         """Helper to redirect with error parameters."""
@@ -104,7 +108,6 @@ async def callback(request: Request):
             params = urlencode({"token": token})
             return RedirectResponse(url=f"{client_callback}?{params}", status_code=302)
         # Fallback: return JSON if no callback (for testing)
-        from fastapi.responses import JSONResponse
         return JSONResponse({"access_token": token, "token_type": "bearer"})
 
     # Check for error from GitHub
@@ -224,12 +227,11 @@ async def auth_error(request: Request):
     <body>
         <div class="error-box">
             <h1>Authentication Failed</h1>
-            <p><strong>Error:</strong> {error}</p>
-            <p>{message}</p>
+            <p><strong>Error:</strong> {html.escape(error)}</p>
+            <p>{html.escape(message)}</p>
             <p>Please close this window and try again.</p>
         </div>
     </body>
     </html>
     """
-    from fastapi.responses import HTMLResponse
     return HTMLResponse(content=html_content, status_code=400)

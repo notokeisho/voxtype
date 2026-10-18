@@ -162,7 +162,7 @@ npm run dev
 ### 1. GitHub OAuth アプリ設定
 
 1. [GitHub Developer Settings](https://github.com/settings/developers) で OAuth App を作成
-2. Authorization callback URL: `https://voxtype.oshiruko.dev/auth/callback`
+2. Authorization callback URL: `https://voxtype.oshiruko.dev/auth/github/callback`
 3. Client ID と Client Secret を `.env.prod` に設定
 
 ### 2. Cloudflare Tunnel

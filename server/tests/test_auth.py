@@ -68,7 +68,7 @@ class TestOAuthCallbackAllowlist:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_callback_rejects_session_value_outside_allowlist(self, client: TestClient):
-        """A session value that is no longer allowed does not receive a token."""
+        """A session value that is no longer allowed never reaches a token."""
         original = settings.oauth_callback_allowlist
         settings.oauth_callback_allowlist = "voxtype://callback"
         try:
@@ -77,12 +77,13 @@ class TestOAuthCallbackAllowlist:
                 follow_redirects=False,
             )
             settings.oauth_callback_allowlist = "https://voxtype-admin.oshiruko.dev/auth/callback"
-            response = client.get("/auth/callback", follow_redirects=False)
+            response = client.get("/auth/github/callback?code=dummy", follow_redirects=False)
         finally:
             settings.oauth_callback_allowlist = original
 
-        location = response.headers.get("location", "")
-        assert "voxtype://callback" not in location
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "voxtype://callback" not in response.headers.get("location", "")
+        assert "token" not in response.text
 
 
 class TestJWTToken:
@@ -154,14 +155,21 @@ class TestJWTToken:
 
 
 class TestCallbackEndpoint:
-    """Tests for the /auth/callback endpoint."""
+    """Tests for the /auth/github/callback endpoint."""
 
     def test_callback_without_code_returns_error(self, client: TestClient):
         """Test that callback without code returns an error."""
-        response = client.get("/auth/callback")
+        response = client.get("/auth/github/callback")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_callback_with_error_returns_error(self, client: TestClient):
         """Test that callback with error parameter returns an error."""
-        response = client.get("/auth/callback?error=access_denied")
+        response = client.get("/auth/github/callback?error=access_denied")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_error_page_escapes_reflected_values(self, client: TestClient):
+        """The error page must not reflect query values as markup."""
+        response = client.get("/auth/error?error=x&message=<script>alert(1)</script>")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "<script>alert(1)</script>" not in response.text
+        assert "&lt;script&gt;" in response.text
