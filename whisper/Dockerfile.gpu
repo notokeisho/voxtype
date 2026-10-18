@@ -57,7 +57,9 @@ COPY start.sh /app/
 RUN ldconfig && chmod +x /app/start.sh /app/whisper-server
 
 # Fail the build instead of shipping an image that cannot start.
-RUN ! ldd /app/whisper-server | grep -q "not found"
+# libcuda.so.1 is expected to be missing here: the NVIDIA container toolkit
+# injects the driver at runtime, so only the other libraries must resolve.
+RUN ! ldd /app/whisper-server | grep "not found" | grep -qv "libcuda.so.1"
 
 EXPOSE 8080
 
