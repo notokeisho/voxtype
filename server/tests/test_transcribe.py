@@ -115,21 +115,20 @@ def create_test_audio_file() -> tuple[bytes, str]:
 
 
 @pytest.fixture(autouse=True)
-def disable_rms_check():
-    """Disable RMS check for existing tests."""
-    original_enabled = settings.rms_check_enabled
-    settings.rms_check_enabled = False
-    yield
-    settings.rms_check_enabled = original_enabled
+def bypass_silence_gate():
+    """Keep the silence gate out of the way for tests about other behaviour.
 
-
-@pytest.fixture(autouse=True)
-def disable_vad_check():
-    """Disable VAD check for existing tests."""
-    original_enabled = settings.vad_enabled
+    VAD and RMS are mutually exclusive, so disabling VAD alone would hand the
+    decision to RMS and reject the silent fixture audio. A zero threshold
+    makes the RMS branch accept everything instead.
+    """
+    original_vad = settings.vad_enabled
+    original_threshold = settings.rms_silence_threshold
     settings.vad_enabled = False
+    settings.rms_silence_threshold = 0.0
     yield
-    settings.vad_enabled = original_enabled
+    settings.vad_enabled = original_vad
+    settings.rms_silence_threshold = original_threshold
 
 
 class TestTranscribeEndpointAuthentication:
@@ -202,11 +201,10 @@ class TestTranscribeEndpointSuccess:
             token = create_jwt_token(user_id=user_id, github_id=github_id)
             audio_data, filename = create_test_audio_file()
 
-            settings.rms_check_enabled = True
             settings.rms_silence_threshold = 0.01
 
             with (
-                patch("app.api.transcribe.compute_rms_wav", return_value=0.0),
+                patch("app.api.transcribe.compute_speech_rms_wav", return_value=0.0),
                 patch("app.api.transcribe.whisper_client.transcribe") as mock_transcribe,
             ):
                 response = client.post(
@@ -232,13 +230,10 @@ class TestTranscribeEndpointSuccess:
             token = create_jwt_token(user_id=user_id, github_id=github_id)
             audio_data, filename = create_test_audio_file()
 
-            settings.rms_check_enabled = True
-            settings.rms_silence_threshold = 0.01
             settings.vad_enabled = True
             settings.vad_speech_threshold = 0.3
 
             with (
-                patch("app.api.transcribe.compute_rms_wav", return_value=0.5),
                 patch("app.api.transcribe.detect_speech_wav", return_value=False),
                 patch("app.api.transcribe.whisper_client.transcribe") as mock_transcribe,
             ):
@@ -265,13 +260,12 @@ class TestTranscribeEndpointSuccess:
             token = create_jwt_token(user_id=user_id, github_id=github_id)
             audio_data, filename = create_test_audio_file()
 
-            settings.rms_check_enabled = True
             settings.rms_silence_threshold = 0.01
             settings.vad_enabled = True
             settings.vad_speech_threshold = 0.3
 
             with (
-                patch("app.api.transcribe.compute_rms_wav", return_value=0.5),
+                patch("app.api.transcribe.compute_speech_rms_wav", return_value=0.5),
                 patch("app.api.transcribe.detect_speech_wav", return_value=False) as mock_vad,
                 patch(
                     "app.api.transcribe.whisper_client.transcribe",

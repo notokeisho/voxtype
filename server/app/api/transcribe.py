@@ -10,7 +10,7 @@ from app.auth.dependencies import get_current_user
 from app.config import settings
 from app.models.user import User
 from app.services.postprocess import apply_dictionary
-from app.services.audio_utils import compute_rms_wav
+from app.services.audio_utils import compute_speech_rms_wav
 from app.services.vad_utils import detect_speech_wav
 from app.services.whisper_client import WhisperError, whisper_client
 
@@ -67,14 +67,9 @@ async def transcribe_audio(
         content = await audio.read()
         temp_path.write_bytes(content)
 
-        if settings.rms_check_enabled:
-            rms_value = compute_rms_wav(str(temp_path))
-            if rms_value is not None and rms_value < settings.rms_silence_threshold:
-                return {
-                    "text": "",
-                    "raw_text": "",
-                }
-
+        # Exactly one silence check runs: VAD when it is active, RMS otherwise.
+        # Leaving both off would let silent audio reach Whisper, which then
+        # tends to invent text.
         effective_vad_threshold = (
             settings.vad_speech_threshold if vad_speech_threshold is None else vad_speech_threshold
         )
@@ -83,6 +78,13 @@ async def transcribe_audio(
                 str(temp_path), effective_vad_threshold
             )
             if vad_result is False:
+                return {
+                    "text": "",
+                    "raw_text": "",
+                }
+        else:
+            rms_value = compute_speech_rms_wav(str(temp_path))
+            if rms_value is not None and rms_value < settings.rms_silence_threshold:
                 return {
                     "text": "",
                     "raw_text": "",
