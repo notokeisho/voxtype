@@ -87,10 +87,16 @@ services:
       retries: 5
 
   # Whisper Speech Recognition - Fast (GPU, small model)
+  # This service owns the build. whisper-smart runs the same image with a
+  # different model, so building it twice would compile CUDA twice, in
+  # parallel, and exhaust the machine.
   whisper-fast:
+    image: voxtype-whisper-gpu:local
     build:
       context: ./whisper
       dockerfile: Dockerfile.gpu
+      args:
+        BUILD_JOBS: ${BUILD_JOBS:-4}
     environment:
       - VOICE_LANGUAGE=${VOICE_LANGUAGE:-ja}
       - WHISPER_MODEL=/app/models/ggml-small.bin
@@ -115,10 +121,9 @@ services:
               capabilities: [gpu]
 
   # Whisper Speech Recognition - Smart (GPU, medium model)
+  # Shares the image built by whisper-fast, so run a build before the first up.
   whisper-smart:
-    build:
-      context: ./whisper
-      dockerfile: Dockerfile.gpu
+    image: voxtype-whisper-gpu:local
     environment:
       - VOICE_LANGUAGE=${VOICE_LANGUAGE:-ja}
       - WHISPER_MODEL=/app/models/ggml-medium.bin
