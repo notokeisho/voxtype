@@ -19,7 +19,7 @@ dependencies = [
     "python-jose[cryptography]>=3.3.0",
     "itsdangerous>=2.1.0",
     "openpyxl>=3.1.0",
-    "silero-vad-lite>=0.2.1",
+    "silero-vad-lite>=0.4.0",
 ]
 
 [project.optional-dependencies]
