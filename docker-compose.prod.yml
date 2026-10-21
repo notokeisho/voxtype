@@ -101,7 +101,7 @@ services:
         BUILD_JOBS: ${BUILD_JOBS:-4}
     environment:
       - VOICE_LANGUAGE=${VOICE_LANGUAGE:-ja}
-      - WHISPER_MODEL=/app/models/ggml-small.bin
+      - WHISPER_MODEL=/app/models/ggml-large-v3-turbo-q8_0.bin
       - ENABLE_VAD=false
     expose:
       - "8080"
@@ -122,14 +122,14 @@ services:
               count: 1
               capabilities: [gpu]
 
-  # Whisper Speech Recognition - Smart (GPU, medium model)
+  # Whisper Speech Recognition - Smart (GPU, large-v3-turbo model)
   # Runs the image built by whisper-fast. Compose builds that image before it
   # resolves this one, so `up` on its own still works.
   whisper-smart:
     image: voxtype-whisper-gpu:local
     environment:
       - VOICE_LANGUAGE=${VOICE_LANGUAGE:-ja}
-      - WHISPER_MODEL=/app/models/ggml-medium.bin
+      - WHISPER_MODEL=/app/models/ggml-large-v3-turbo.bin
       - ENABLE_VAD=false
     expose:
       - "8080"

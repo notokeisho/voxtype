@@ -136,8 +136,8 @@ make backend
 | サービス | 起動方法 | ポート | 備考 |
 |----------|----------|--------|------|
 | PostgreSQL | `voice-postgres` コンテナ | 5434 | postgres:15 |
-| whisper-fast | `whisper-fast` コンテナ | 8080 | small モデル |
-| whisper-smart | `whisper-smart` コンテナ | 8081 | medium モデル |
+| whisper-fast | `whisper-fast` コンテナ | 8080 | large-v3-turbo-q8_0 モデル |
+| whisper-smart | `whisper-smart` コンテナ | 8081 | large-v3-turbo モデル |
 
 バックエンドはコンテナではなくホスト上で uvicorn として動きます。そのため `.env` の `DATABASE_URL` と `WHISPER_SERVER_URL` は `localhost` を指します。
 
@@ -195,7 +195,7 @@ npm run dev
 | `voxtype.oshiruko.dev` | server:8000 | API の JWT（GitHub OAuth） |
 | `voxtype-admin.oshiruko.dev` | admin-web:80 | Cloudflare Zero Trust（GitHub） |
 
-whisper は CUDA でビルドしたイメージを使い、NVIDIA Container Toolkit 経由で GPU を割り当てる。fast（small モデル）と smart（medium モデル）は同じイメージをモデル違いで起動する。
+whisper は CUDA でビルドしたイメージを使い、NVIDIA Container Toolkit 経由で GPU を割り当てる。fast（large-v3-turbo-q8_0 モデル）と smart（large-v3-turbo モデル）は同じイメージをモデル違いで起動する。
 
 構築手順は [docs/server-setup.md](docs/server-setup.md)、運用手順は [docs/operations.md](docs/operations.md) を参照。
 
