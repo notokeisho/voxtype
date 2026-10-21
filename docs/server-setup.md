@@ -339,25 +339,25 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod config -q
 
 ## 7. モデルの取得
 
-small と medium を取得する。合計で約2GB。
+large-v3-turbo を量子化版と f16 版の2つ取得する。合計で約2.4GB。fast が量子化版、smart が f16 版を読む。
 
 ```bash
 cd whisper/whisper.cpp/models
 ```
 
 ```bash
-./download-ggml-model.sh small && mv ggml-small.bin ../../models/
+./download-ggml-model.sh large-v3-turbo-q8_0 && mv ggml-large-v3-turbo-q8_0.bin ../../models/
 ```
 
 ```bash
-./download-ggml-model.sh medium && mv ggml-medium.bin ../../models/
+./download-ggml-model.sh large-v3-turbo && mv ggml-large-v3-turbo.bin ../../models/
 ```
 
 ```bash
 cd ~/voxtype && ls -lh whisper/models/
 ```
 
-`ggml-small.bin` と `ggml-medium.bin` の2つがあればよい。
+`ggml-large-v3-turbo-q8_0.bin` と `ggml-large-v3-turbo.bin` の2つがあればよい。
 
 ## 8. ビルド
 
@@ -421,7 +421,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 docker compose -f docker-compose.prod.yml --env-file .env.prod ps
 ```
 
-`db`、`nginx`、`server`、`whisper-fast`、`whisper-smart` が healthy になる。`whisper-smart` は medium モデルを読むため60秒ほどかかる。
+`db`、`nginx`、`server`、`whisper-fast`、`whisper-smart` が healthy になる。`whisper-smart` はモデルが大きいため60秒ほどかかる。
 
 ## 11. 動作確認
 

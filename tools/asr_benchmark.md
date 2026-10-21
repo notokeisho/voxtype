@@ -96,13 +96,13 @@ docker stop bench-turbo-q8
 jsut
 model                        CER   median      p95     RTF      GPU
 -------------------------------------------------------------------
-turbo-q8                   7.12%    0.31s    0.44s   0.082   1820MB
-medium                     9.95%    0.58s    0.79s   0.153   2410MB
+turbo-q8                   8.10%    0.22s    0.25s   0.056   4184MB
+medium                    10.18%    0.28s    0.39s   0.075   4948MB
 
-turbo-q8: worst 5 utterances
-  CER 9.1%
-    ref: 水をマレーシアから買わなくてはならないのです
-    hyp: 水をマレーシアから買わなくてはならないんです
+turbo-q8: worst 3 utterances
+  CER 41.2%
+    ref: むかしむかし1人の老人が住んでいた
+    hyp: 昔昔一人の老人が住んでいた
 ```
 
 誤りの大きい発話が並ぶので、漢字の誤変換がどこで起きているかを目で確認できる。全発話の結果は `--out` の JSON に残る。

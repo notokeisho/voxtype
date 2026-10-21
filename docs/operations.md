@@ -166,7 +166,7 @@ dcp logs whisper-fast | grep -i -E "cuda|device|backend"
 2. `docker run --rm --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi` が通るか
 3. 通らない場合は `nvidia-ctk runtime configure` の後に docker を再起動したか、`/etc/docker/daemon.json` に nvidia ランタイムがあるか
 
-CPU で動作していると、medium モデルの推論が nginx のタイムアウト（120秒）を超えて 504 になることがある。
+CPU で動作していると、推論が nginx のタイムアウト（120秒）を超えて 504 になることがある。
 
 ### 無音なのに文字が入る、発話したのに空が返る
 
