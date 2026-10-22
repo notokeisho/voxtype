@@ -1,0 +1,46 @@
+# GPU (CUDA) image for the parakeet ASR server.
+# The NVIDIA PyTorch image already carries a CUDA build of torch that matches
+# its driver requirements, which keeps NeMo from pulling a mismatched wheel.
+FROM nvcr.io/nvidia/pytorch:24.08-py3
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
+# libsndfile is what soundfile binds to; NeMo reads audio through it.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libsndfile1 \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# NeMo 2.0.0 declares its dependencies with >=, so a plain install pulls the
+# newest pytorch-lightning, transformers, datasets and huggingface-hub. Those
+# no longer work against the torch 2.5 this base image pins: lightning 2.6
+# dropped NeptuneLogger, which NeMo imports; transformers 5 requires torch
+# 2.6 and disables itself; and datasets 4 needs a newer huggingface-hub.
+# The versions below are the ones verified to import and transcribe here.
+RUN pip install --no-cache-dir \
+    "nemo_toolkit[asr]==2.0.0" \
+    "pytorch-lightning==2.4.0" \
+    "transformers==4.44.2" \
+    "huggingface-hub==0.24.6" \
+    "datasets==2.21.0" \
+    "fastapi==0.115.0" \
+    "uvicorn==0.30.6" \
+    "python-multipart==0.0.9"
+
+WORKDIR /app
+
+# Weights are downloaded on first start and cached here. Mounting a volume on
+# this path keeps a container restart from fetching them again.
+ENV HF_HOME=/app/cache
+ENV NEMO_CACHE_DIR=/app/cache
+
+COPY app.py start.sh ./
+RUN chmod +x start.sh
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=180s \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+CMD ["./start.sh"]

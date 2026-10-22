@@ -46,7 +46,7 @@ services:
       - INITIAL_ADMIN_GITHUB_ID=${INITIAL_ADMIN_GITHUB_ID}
       - INITIAL_ADMIN_GITHUB_USERNAME=${INITIAL_ADMIN_GITHUB_USERNAME}
       - WHISPER_SERVER_URL_FAST=http://whisper-fast:8080
-      - WHISPER_SERVER_URL_SMART=http://whisper-smart:8080
+      - WHISPER_SERVER_URL_SMART=http://parakeet:8080
       - VOICE_LANGUAGE=${VOICE_LANGUAGE:-ja}
       - VAD_ENABLED=${VAD_ENABLED:-true}
       - VAD_SPEECH_THRESHOLD=${VAD_SPEECH_THRESHOLD:-0.3}
@@ -60,7 +60,7 @@ services:
         condition: service_healthy
       whisper-fast:
         condition: service_healthy
-      whisper-smart:
+      parakeet:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
@@ -88,10 +88,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Whisper Speech Recognition - Fast (GPU, small model)
-  # This service owns the build. whisper-smart runs the same image with a
-  # different model, so building it twice would compile CUDA twice, in
-  # parallel, and exhaust the machine.
+  # Whisper Speech Recognition - Fast (GPU, large-v3-turbo-q8 model)
   whisper-fast:
     image: voxtype-whisper-gpu:local
     build:
@@ -122,26 +119,31 @@ services:
               count: 1
               capabilities: [gpu]
 
-  # Whisper Speech Recognition - Smart (GPU, large-v3-turbo model)
-  # Runs the image built by whisper-fast. Compose builds that image before it
-  # resolves this one, so `up` on its own still works.
-  whisper-smart:
-    image: voxtype-whisper-gpu:local
-    environment:
-      - VOICE_LANGUAGE=${VOICE_LANGUAGE:-ja}
-      - WHISPER_MODEL=/app/models/ggml-large-v3-turbo.bin
-      - ENABLE_VAD=false
+  # Speech Recognition - Smart (GPU, parakeet-tdt_ctc-0.6b-ja)
+  # Speaks the same HTTP contract as whisper-server, so the server reaches it
+  # through WHISPER_SERVER_URL_SMART without any code change.
+  parakeet:
+    image: voxtype-parakeet-gpu:local
+    build:
+      context: ./parakeet
+      dockerfile: Dockerfile.gpu
     expose:
       - "8080"
     volumes:
-      - ./whisper/models:/app/models:ro
+      # Weights are fetched from HuggingFace on first start. Without this
+      # mount every recreated container downloads them again.
+      - ./parakeet/cache:/app/cache
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      # Loading the model takes well over a minute, and the very first
+      # start also downloads 2.4GB of weights. The window has to cover that
+      # download, or the first `up` marks parakeet unhealthy and the server
+      # never starts behind its depends_on.
+      start_period: 900s
     deploy:
       resources:
         reservations:
