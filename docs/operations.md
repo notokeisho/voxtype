@@ -98,6 +98,12 @@ dcp run --rm --no-deps server uv run alembic upgrade head
 dcp up -d
 ```
 
+compose からサービスが消えた場合は、古いコンテナが孤児として残り続ける。`docker ps` に見覚えのない名前があれば `--remove-orphans` を付けて実行し直す。
+
+```bash
+dcp up -d --remove-orphans
+```
+
 ### whisper の更新
 
 whisper 側の Dockerfile や whisper.cpp のサブモジュールを更新した場合のみ、再ビルドが必要になる。CUDA のコンパイルが走るため10〜20分かかる。
