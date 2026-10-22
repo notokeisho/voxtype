@@ -4,6 +4,7 @@ The endpoints mirror whisper-server so that both the application and
 tools/asr_benchmark.py can talk to either backend without changes.
 """
 
+import asyncio
 import logging
 import os
 import tempfile
@@ -18,6 +19,7 @@ MODEL_NAME = os.environ.get("PARAKEET_MODEL", "nvidia/parakeet-tdt_ctc-0.6b-ja")
 # The model ships both decoders. TDT is the default and the one the model card
 # reports its headline numbers with; CTC is marginally faster but less accurate.
 DECODER = os.environ.get("PARAKEET_DECODER", "tdt")
+DECODERS = ("tdt", "ctc")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("parakeet")
@@ -25,8 +27,16 @@ logger = logging.getLogger("parakeet")
 state: dict = {}
 
 
+class UnknownResultShape(Exception):
+    """NeMo returned something this wrapper cannot read a transcript out of."""
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Fail at startup rather than silently transcribing with the wrong decoder.
+    if DECODER not in DECODERS:
+        raise ValueError(f"PARAKEET_DECODER must be one of {DECODERS}, got {DECODER!r}")
+
     # Load before the server starts listening, the way whisper-server does.
     # A request that arrives first must not pay for the model load, or the
     # benchmark's first_inference_s would measure something else.
@@ -36,6 +46,9 @@ async def lifespan(app: FastAPI):
         model.change_decoding_strategy(decoder_type="ctc")
     model.eval()
     state["model"] = model
+    # One model on one GPU: concurrent transcribe() calls would race over the
+    # same weights, so requests queue here instead.
+    state["lock"] = asyncio.Lock()
     logger.info("model ready")
     yield
     state.clear()
@@ -46,7 +59,9 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/health")
 async def health() -> dict:
-    return {"status": "ok" if "model" in state else "loading"}
+    # Uvicorn only starts accepting connections once lifespan has yielded, so
+    # anything that reaches this point is talking to a loaded model.
+    return {"status": "ok"}
 
 
 @app.post("/inference")
@@ -67,32 +82,59 @@ async def inference(file: UploadFile = File(...)) -> JSONResponse:
 
     # NeMo transcribes from a path, so the upload has to land on disk first.
     suffix = Path(file.filename or "audio.wav").suffix or ".wav"
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as handle:
-        handle.write(audio)
-        temp_path = handle.name
-
+    temp_path = None
     try:
-        results = model.transcribe([temp_path], verbose=False)
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as handle:
+            temp_path = handle.name
+            handle.write(audio)
+        # transcribe() is synchronous and takes hundreds of milliseconds, which
+        # would block the event loop and stall the health check along with
+        # every other request. Hand it to a thread, one caller at a time.
+        async with state["lock"]:
+            results = await asyncio.to_thread(model.transcribe, [temp_path], verbose=False)
+        text = extract_text(results)
+    except UnknownResultShape:
+        logger.exception("unreadable transcription result")
+        return JSONResponse({"error": "unreadable transcription result"}, status_code=500)
     except Exception:
         logger.exception("transcription failed")
         return JSONResponse({"error": "transcription failed"}, status_code=500)
     finally:
-        os.unlink(temp_path)
+        if temp_path is not None:
+            try:
+                Path(temp_path).unlink(missing_ok=True)
+            except OSError:
+                # Losing a temp file is not worth masking the real outcome.
+                logger.warning("could not remove %s", temp_path)
 
-    return JSONResponse({"text": extract_text(results)})
+    return JSONResponse({"text": text})
 
 
 def extract_text(results) -> str:
-    """Pull the transcript out of whatever shape NeMo returned.
+    """Pull the transcript out of what NeMo returned.
 
-    The hybrid TDT-CTC model answers with a tuple of two hypothesis lists,
-    one per decoder, and the first holds the active decoder's output. Other
-    NeMo models answer with a single list, whose items are either strings or
-    objects carrying .text. Walk the nesting instead of pinning a shape.
+    NeMo's transcribe() contract (GenericTranscriptionType) allows a list, a
+    list of lists, a tuple, or a dict of lists. The hybrid TDT-CTC model
+    answers with a (best_hypotheses, all_hypotheses) tuple for the decoder in
+    use, so the first element is the one to read -- the tuple is not one entry
+    per decoder. Items are either strings or objects carrying .text.
+
+    Raises:
+        UnknownResultShape: when the nesting bottoms out on something with no
+            readable transcript. Returning "" there would hand the caller a
+            successful-looking empty result.
     """
     value = results
     while isinstance(value, (tuple, list)):
         if not value:
             return ""
         value = value[0]
-    return value if isinstance(value, str) else getattr(value, "text", "")
+
+    if isinstance(value, str):
+        return value
+
+    text = getattr(value, "text", None)
+    if isinstance(text, str):
+        return text
+
+    raise UnknownResultShape(f"no transcript in {type(value).__name__}: {value!r:.200}")

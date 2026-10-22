@@ -191,6 +191,16 @@ RMS は音声を20msのフレームに分け、音量上位10%のフレームの
 dcp up -d --force-recreate server
 ```
 
+### server を作り直したあと外から 502 が返る
+
+nginx は起動時に upstream 名を一度だけ解決して保持する。`server` を作り直すとコンテナの IP が変わるため、nginx は消えた IP に繋ぎに行って 502 を返し続ける。ログに `connect() failed (111: Connection refused)` と古い IP が出ていればこれ。
+
+コンテナ内からは通るのに外から 502 になる、という形で現れる。
+
+```bash
+dcp restart nginx
+```
+
 ### nginx が unhealthy
 
 healthcheck は default server の `/healthz` を叩いている。

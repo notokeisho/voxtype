@@ -139,9 +139,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      # Loading the model takes well over a minute, and the very first start
-      # also downloads 2.4GB of weights.
-      start_period: 180s
+      # Loading the model takes well over a minute, and the very first
+      # start also downloads 2.4GB of weights. The window has to cover that
+      # download, or the first `up` marks parakeet unhealthy and the server
+      # never starts behind its depends_on.
+      start_period: 900s
     deploy:
       resources:
         reservations:
