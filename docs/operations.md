@@ -95,14 +95,14 @@ dcp run --rm --no-deps server uv run alembic upgrade head
 ```
 
 ```bash
-dcp up -d
+dcp down && dcp up -d
 ```
 
-compose からサービスが消えた場合は、古いコンテナが孤児として残り続ける。`docker ps` に見覚えのない名前があれば `--remove-orphans` を付けて実行し直す。
+更新時は差分だけを作り直すのではなく、全体を落としてから起動し直す。
 
-```bash
-dcp up -d --remove-orphans
-```
+`up -d` は変更があったサービスだけを作り直す。これだと2つの取りこぼしが起きる。compose から消えたサービスのコンテナが孤児として残り続けること、`server` を作り直したときに nginx が古い IP を掴んだままになることの2つ。全体を起動し直せばどちらも起きない。
+
+whisper と parakeet はモデルの読み込みがあるため、停止から復帰まで1〜2分かかる。
 
 ### whisper の更新
 
@@ -129,7 +129,7 @@ dcp build parakeet
 nginx の設定はファイルをマウントしているだけなので、再ビルドは要らない。
 
 ```bash
-dcp up -d --force-recreate nginx
+dcp down && dcp up -d
 ```
 
 ### カーネル更新後
@@ -185,20 +185,20 @@ CPU で動作していると、推論が nginx のタイムアウト（120秒）
 - `VAD_ENABLED=true` でクライアントから届く発話しきい値が0より大きいとき: VAD を使う
 - VAD が無効、または VAD が判定できない音声形式のとき: RMS を使う
 
-RMS は音声を20msのフレームに分け、音量上位10%のフレームの平均値を `RMS_SILENCE_THRESHOLD`（既定 0.005）と比較する。しきい値を変えた場合は `server` の再作成が必要。
+RMS は音声を20msのフレームに分け、音量上位10%のフレームの平均値を `RMS_SILENCE_THRESHOLD`（既定 0.005）と比較する。しきい値を変えた場合は起動し直す。
 
 ```bash
-dcp up -d --force-recreate server
+dcp down && dcp up -d
 ```
 
-### server を作り直したあと外から 502 が返る
+### コンテナは healthy なのに外から 502 が返る
 
-nginx は起動時に upstream 名を一度だけ解決して保持する。`server` を作り直すとコンテナの IP が変わるため、nginx は消えた IP に繋ぎに行って 502 を返し続ける。ログに `connect() failed (111: Connection refused)` と古い IP が出ていればこれ。
+nginx は起動時に upstream 名を一度だけ解決して保持する。`server` だけを作り直すとコンテナの IP が変わり、nginx は消えた IP に繋ぎに行って 502 を返し続ける。ログに `connect() failed (111: Connection refused)` と古い IP が出ていればこれ。
 
-コンテナ内からは通るのに外から 502 になる、という形で現れる。
+コンテナ内からは通るのに外からは 502 になる、という形で現れる。
 
 ```bash
-dcp restart nginx
+dcp down && dcp up -d
 ```
 
 ### nginx が unhealthy
