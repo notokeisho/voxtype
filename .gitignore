@@ -90,6 +90,9 @@ xcuserdata/
 # whisper models (large files)
 whisper/models/*.bin
 
+# parakeet model weights (downloaded on first start)
+parakeet/cache/
+
 # Logs
 *.log
 logs/
