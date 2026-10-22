@@ -247,5 +247,3 @@ docker compose up -d
 - [React](https://reactjs.org/) - MIT License
 - [shadcn/ui](https://ui.shadcn.com/) - MIT License
 - [Tailwind CSS](https://tailwindcss.com/) - MIT License
-
-parakeet-tdt_ctc-0.6b-ja は CC BY 4.0 のため、利用にあたって NVIDIA への表示が必要になる。
