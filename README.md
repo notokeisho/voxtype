@@ -102,7 +102,7 @@ voxtype/
 | `GITHUB_CLIENT_ID` | Yes | GitHub OAuth App Client ID | `Iv1.xxxxxxxxxx` |
 | `GITHUB_CLIENT_SECRET` | Yes | GitHub OAuth App Client Secret | `xxxxxxxxxxxxxxxx` |
 | `WHISPER_SERVER_URL_FAST` | No | whisper.cppサーバーURL（fast） | `http://localhost:8080` |
-| `WHISPER_SERVER_URL_SMART` | No | whisper.cppサーバーURL（smart） | `http://localhost:8081` |
+| `WHISPER_SERVER_URL_SMART` | No | 音声認識サーバーURL（smart） | `http://localhost:8081` |
 | `VOICE_LANGUAGE` | No | 認識言語 | `ja` / `en` / `auto` |
 | `VAD_ENABLED` | No | VADによる無音判定 | `true` / `false` |
 | `VAD_SPEECH_THRESHOLD` | No | VADの発話判定しきい値 | `0.3` |
@@ -186,7 +186,7 @@ npm run dev
                                                 ├─ nginx（サブドメイン振り分け）
                                                 ├─ server (API)
                                                 ├─ admin-web
-                                                ├─ whisper-fast / whisper-smart（GPU）
+                                                ├─ whisper-fast / parakeet（GPU）
                                                 └─ db (PostgreSQL)
 ```
 
@@ -195,7 +195,9 @@ npm run dev
 | `voxtype.oshiruko.dev` | server:8000 | API の JWT（GitHub OAuth） |
 | `voxtype-admin.oshiruko.dev` | admin-web:80 | Cloudflare Zero Trust（GitHub） |
 
-whisper は CUDA でビルドしたイメージを使い、NVIDIA Container Toolkit 経由で GPU を割り当てる。fast（large-v3-turbo-q8_0 モデル）と smart（large-v3-turbo モデル）は同じイメージをモデル違いで起動する。
+どちらも NVIDIA Container Toolkit 経由で GPU を割り当てる。fast は CUDA でビルドした whisper.cpp（large-v3-turbo-q8_0 モデル）、smart は NeMo の parakeet-tdt_ctc-0.6b-ja を使う。parakeet は whisper-server と同じ HTTP 契約を持つため、サーバー側からは接続先の違いでしかない。
+
+ローカル開発環境（`make up`）は fast / smart とも whisper のまま。parakeet は NVIDIA GPU が要るため。
 
 構築手順は [docs/server-setup.md](docs/server-setup.md)、運用手順は [docs/operations.md](docs/operations.md) を参照。
 

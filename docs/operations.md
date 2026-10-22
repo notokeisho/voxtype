@@ -112,7 +112,11 @@ dcp build whisper-fast
 BUILD_JOBS=2 dcp build whisper-fast
 ```
 
-`whisper-smart` は `whisper-fast` と同じイメージを使うため、個別のビルドは不要。
+parakeet は別のイメージを使う。ビルドには NeMo の依存解決を含めて20分ほどかかる。
+
+```bash
+dcp build parakeet
+```
 
 ### 設定だけの変更
 

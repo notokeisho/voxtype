@@ -12,7 +12,7 @@ VoxType の本番サーバーをゼロから構築する手順。Ubuntu Server 2
 | GPU | NVIDIA 製（検証環境は GeForce RTX 3060 12GB） |
 | CPU | 6コア以上 |
 | メモリ | 12GB以上（ビルド時のピークで決まる） |
-| ディスク | 100GB以上 |
+| ディスク | 150GB以上 |
 | 外部公開 | Cloudflare Tunnel（ポート開放と証明書管理は不要） |
 
 GPU が OS から見えていることを確認する。
@@ -47,9 +47,11 @@ sudo resize2fs /dev/ubuntu-vg/ubuntu-lv
 | OS と NVIDIA ドライバ | 8GB |
 | CUDA devel イメージ（ビルド用） | 7GB |
 | CUDA runtime と whisper イメージ | 4GB |
+| parakeet イメージ（NVIDIA PyTorch 込み） | 32GB |
 | ビルドキャッシュ | 10〜15GB |
 | その他のイメージ | 2GB |
-| Whisper モデル（small + medium） | 2GB |
+| whisper モデル（large-v3-turbo-q8_0） | 1GB |
+| parakeet の重み | 2.4GB |
 
 ## インストールするパッケージ
 
@@ -339,7 +341,9 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod config -q
 
 ## 7. モデルの取得
 
-large-v3-turbo を量子化版と f16 版の2つ取得する。合計で約2.4GB。fast が量子化版、smart が f16 版を読む。
+fast が読む whisper のモデルを取得する。約0.8GB。
+
+smart の parakeet はここでは何もしない。重みは初回起動時に HuggingFace から取得され、`parakeet/cache` に残る。
 
 ```bash
 cd whisper/whisper.cpp/models
@@ -350,23 +354,25 @@ cd whisper/whisper.cpp/models
 ```
 
 ```bash
-./download-ggml-model.sh large-v3-turbo && mv ggml-large-v3-turbo.bin ../../models/
-```
-
-```bash
 cd ~/voxtype && ls -lh whisper/models/
 ```
 
-`ggml-large-v3-turbo-q8_0.bin` と `ggml-large-v3-turbo.bin` の2つがあればよい。
+`ggml-large-v3-turbo-q8_0.bin` があればよい。
 
 ## 8. ビルド
 
-whisper のイメージは `whisper-fast` が1回だけビルドし、`whisper-smart` は同じイメージを使う。CUDA のコンパイルは1回で済む。
+whisper と parakeet は別のイメージなので、それぞれビルドする。
 
-CUDA の devel イメージが約7GB、コンパイルに10〜20分かかる。
+whisper は CUDA の devel イメージが約7GB、コンパイルに10〜20分かかる。
 
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.prod build whisper-fast
+```
+
+parakeet は NVIDIA PyTorch イメージを土台にする。展開後で約32GB、ビルドに20分ほどかかる。学習にも使えるようツール一式が入ったイメージをそのまま採用している。
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod build parakeet
 ```
 
 メモリや CPU が苦しい場合はコンパイルの並列数を下げる。既定は4。
@@ -421,7 +427,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 docker compose -f docker-compose.prod.yml --env-file .env.prod ps
 ```
 
-`db`、`nginx`、`server`、`whisper-fast`、`whisper-smart` が healthy になる。`whisper-smart` はモデルが大きいため60秒ほどかかる。
+`db`、`nginx`、`server`、`whisper-fast`、`parakeet` が healthy になる。parakeet は初回のみ重みのダウンロード（2.4GB）を含むため数分かかる。2回目以降はモデルの読み込みだけで1〜2分。
 
 ## 11. 動作確認
 
@@ -439,7 +445,13 @@ ggml_cuda_init: found 1 CUDA devices:
 whisper_backend_init_gpu: using CUDA0 backend
 ```
 
-CPU にフォールバックしている場合は CUDA 関連の行が出ない。`whisper-smart` も同様に確認する。
+CPU にフォールバックしている場合は CUDA 関連の行が出ない。
+
+parakeet はログの出し方が違うため、GPU の割り当ては `nvidia-smi` で確認する。モデルの読み込みが終わると2GB台後半を占める。
+
+```bash
+nvidia-smi
+```
 
 ### 外部からの疎通
 
@@ -459,7 +471,7 @@ curl -i https://<APIのホスト名>/
 nvidia-smi
 ```
 
-whisper-server のプロセスが VRAM を使っていれば GPU 推論が効いている。small と medium の両方を常駐させるため、合計2GB前後を使う。
+whisper-server と parakeet のプロセスが VRAM を使っていれば GPU 推論が効いている。両方を常駐させるため、合計4GB前後を使う。
 
 無音判定もあわせて確認する。
 
